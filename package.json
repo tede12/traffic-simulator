@@ -2,16 +2,58 @@
   "name": "traffic-simulator",
   "version": "0.1.0",
   "private": true,
+  "config": {
+    "blanket": {
+      "pattern": "/coffee/",
+      "loader": "./node-loaders/coffee-script",
+      "data-cover-reporter-options": {
+        "shortnames": true
+      }
+    }
+  },
   "dependencies": {
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@mui/material": "^5.11.13",
+    "blanket": "^1.2.3",
+    "chai": "^4.3.7",
+    "chroma-js": "^2.4.2",
+    "dat-gui": "^0.5.0",
+    "jquery": "^3.6.4",
+    "jquery-mousewheel": "^3.1.13",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "underscore": "^1.13.6",
+    "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.3",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "browserify": "^17.0.0",
+    "coffee-script": "^1.12.7",
+    "coffeeify": "^3.0.1",
+    "coffeescript": "^2.7.0",
+    "gulp": "^4.0.2",
+    "gulp-coffee": "^3.0.3",
+    "gulp-coffeelint": "^0.6.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-mocha": "^8.0.0",
+    "gulp-notify": "^4.0.0",
+    "gulp-plumber": "^1.2.1",
+    "gulp-rename": "^2.0.0",
+    "gulp-uglify": "^3.0.2",
+    "gulp-util": "^3.0.8",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "vinyl-source-stream": "^2.0.0"
   },
   "scripts": {
+    "//": "-----COFFEE SCRIPTS-----",
+    "ctest": "gulp test",
+    "cstart": "gulp watch",
+    "cbuild": "gulp build",
+    "///": "-----REACT SCRIPTS-----",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
