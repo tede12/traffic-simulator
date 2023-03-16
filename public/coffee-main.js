@@ -21241,7 +21241,7 @@ return jQuery;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],8:[function(require,module,exports){
 'use strict';
-var $, DAT, Visualizer, World, _, settings;
+var $, DAT, Visualizer, World, _, settings, waitForElements;
 
 require('./helpers');
 
@@ -21257,25 +21257,41 @@ World = require('./model/world');
 
 settings = require('./settings');
 
-$(function() {
-  var gui, guiVisualizer, guiWorld, targetElement, waitForCanvas;
+waitForElements = function(ids, callback) {
+  var observer, remaining;
+  remaining = ids.length;
+  observer = new MutationObserver(function(mutationsList, observer) {
+    return mutationsList.forEach(function(mutation) {
+      var i, id, len;
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+// Check if the added nodes include any of the target elements
+        for (i = 0, len = ids.length; i < len; i++) {
+          id = ids[i];
+          if (document.getElementById(id)) {
+            remaining -= 1;
+          }
+        }
+        if (remaining === 0) {
+          callback();
+          return observer.disconnect();
+        }
+      }
+    });
+  });
+  return observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+};
+
+waitForElements(['canvas', 'gui'], function() {
+  var gui, guiVisualizer, guiWorld, targetElement;
   // Created in the React component
   //  canvas = $('<canvas />', {id: 'canvas'})
   //  $(document.body).append(canvas)
 
-  // Wait for the canvas element to be added to the DOM
-  // Id = 'canvas'
-  waitForCanvas = function() {
-    var canvasElements;
-    canvasElements = document.getElementById('canvas') && document.getElementById('gui');
-    if (!canvasElements) {
-      // Canvas element not found, wait and try again
-      setTimeout(waitForCanvas, 100);
-    }
-  };
-  // Canvas element found, continue with code here
-  waitForCanvas();
   // App code
+  console.log('App started');
   window.world = new World();
   world.load();
   if (world.intersections.length === 0) {

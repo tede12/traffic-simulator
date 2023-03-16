@@ -8,23 +8,32 @@ DAT = require 'dat-gui'
 World = require './model/world'
 settings = require './settings'
 
-$ ->
+
+waitForElements = (ids, callback) ->
+    remaining = ids.length
+    observer = new MutationObserver (mutationsList, observer) ->
+        mutationsList.forEach (mutation) ->
+            if mutation.type is 'childList' and mutation.addedNodes.length > 0
+# Check if the added nodes include any of the target elements
+                for id in ids
+                    if document.getElementById(id)
+                        remaining -= 1
+                if remaining is 0
+                    callback()
+                    observer.disconnect()
+    observer.observe document.body,
+        childList: true,
+        subtree: true
+
+
+waitForElements ['canvas', 'gui'], ->
+
 # Created in the React component
 #  canvas = $('<canvas />', {id: 'canvas'})
 #  $(document.body).append(canvas)
 
-# Wait for the canvas element to be added to the DOM
-# Id = 'canvas'
-    waitForCanvas = ->
-        canvasElements = document.getElementById('canvas') && document.getElementById('gui')
-        if not canvasElements
-# Canvas element not found, wait and try again
-            setTimeout waitForCanvas, 100
-            return
-    # Canvas element found, continue with code here
-    waitForCanvas()
-
-    # App code
+# App code
+    console.log 'App started'
     window.world = new World()
     world.load()
     if world.intersections.length is 0
