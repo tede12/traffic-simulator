@@ -18,11 +18,22 @@ settings =
     lightsFlipInterval: 160
     gridSize: 14
     defaultTimeFactor: 5
-    defaultZoomLevel: 3   # Change this value to change the default zoom level
+    defaultZoomLevel: 6   # Change this value to change the default zoom level (default is 3)
 
-    # See updateCanvasSize() in visualizer.coffee
+# See updateCanvasSize() in visualizer.coffee
     canvasWidth: 1400    # fullscreen == true -> $(window).width
     canvasHeight: 1100 # fullscreen == true -> $(window).height
     fullScreen: true
+
+# signals settings
+    showRedLights: true
+    triangles: true     # false -> circles
+
+    carsNumber: 10
+
+# car settings
+    myCar:
+        id: "MACCHINA"
+        color: "#000000"
 
 module.exports = settings

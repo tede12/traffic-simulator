@@ -21292,11 +21292,12 @@ waitForElements(['canvas', 'gui'], function() {
 
   // App code
   console.log('App started');
+  window.settings = settings;
   window.world = new World();
   world.load();
   if (world.intersections.length === 0) {
     world.generateMap();
-    world.carsNumber = 100;
+    world.carsNumber = settings.carsNumber;
   }
   window.visualizer = new Visualizer(world);
   visualizer.start();
@@ -21323,6 +21324,8 @@ waitForElements(['canvas', 'gui'], function() {
   guiVisualizer.open();
   guiVisualizer.add(visualizer, 'running').listen();
   guiVisualizer.add(visualizer, 'debug').listen();
+  gui.add(settings, 'showRedLights').listen();
+  gui.add(settings, 'triangles').listen();
   guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen();
   guiVisualizer.add(visualizer, 'timeFactor', 0.1, 10).listen();
   guiWorld.add(world, 'carsNumber').min(0).max(200).step(1).listen();
@@ -21670,16 +21673,32 @@ module.exports = Segment;
 
 },{"../helpers":13}],13:[function(require,module,exports){
 'use strict';
-module.exports = {};
+var idCounter, uniqueId;
 
+//_ = require 'underscore'
+//id = _.uniqueId 'car'      # old code
+
+//module.exports = {}
 Function.prototype.property = function(prop, desc) {
   return Object.defineProperty(this.prototype, prop, desc);
 };
 
+// Generate a unique integer id (unique within the entire client session).
+// Useful for temporary DOM ids.
+idCounter = {};
+
+uniqueId = function(prefix) {
+  var id;
+  id = ++idCounter[prefix] || (idCounter[prefix] = 1);
+  return prefix + id;
+};
+
+module.exports = uniqueId;
+
 
 },{}],14:[function(require,module,exports){
 'use strict';
-var Car, Trajectory, _, max, min, random, sqrt;
+var Car, Trajectory, _, max, min, random, sqrt, uniqueId;
 
 ({max, min, random, sqrt} = Math);
 
@@ -21689,10 +21708,12 @@ _ = require('underscore');
 
 Trajectory = require('./trajectory');
 
+uniqueId = require('../helpers');
+
 Car = (function() {
   class Car {
     constructor(lane, position) {
-      this.id = _.uniqueId('car');
+      this.id = uniqueId('car'); // @id = _.uniqueId 'car'
       this.color = (300 + 240 * random() | 0) % 360;
       this._speed = 0;
       this.width = 1.7;
@@ -21705,6 +21726,7 @@ Car = (function() {
       this.trajectory = new Trajectory(this, lane, position);
       this.alive = true;
       this.preferedLane = null;
+      this.tooLongStop = 0;
     }
 
     release() {
@@ -21752,6 +21774,13 @@ Car = (function() {
         }
       }
       step = this.speed * delta + 0.5 * acceleration * delta ** 2;
+      // Added by me
+      if (step <= 0) {
+        this.tooLongStop += 1;
+        if (this.tooLongStop > 1000) {
+          this.alive = false;
+        }
+      }
       if (this.trajectory.nextCarDistance.distance < step) {
         // TODO: hacks, should have changed speed
         console.log('bad IDM');
@@ -21962,7 +21991,7 @@ module.exports = ControlSignals;
 
 },{"../helpers":13,"../settings":23}],16:[function(require,module,exports){
 'use strict';
-var ControlSignals, Intersection, Rect, _;
+var ControlSignals, Intersection, Rect, _, uniqueId;
 
 require('../helpers');
 
@@ -21972,10 +22001,12 @@ ControlSignals = require('./control-signals');
 
 Rect = require('../geom/rect');
 
+uniqueId = require('../helpers');
+
 Intersection = class Intersection {
   constructor(rect) {
     this.rect = rect;
-    this.id = _.uniqueId('intersection');
+    this.id = uniqueId('intersection'); // @id = _.uniqueId 'intersection'
     this.roads = [];
     this.inRoads = [];
     this.controlSignals = new ControlSignals(this);
@@ -22024,18 +22055,20 @@ module.exports = Intersection;
 
 },{"../geom/rect":11,"../helpers":13,"./control-signals":15,"underscore":7}],17:[function(require,module,exports){
 'use strict';
-var LanePosition, _;
+var LanePosition, _, uniqueId;
 
 require('../helpers');
 
 _ = require('underscore');
+
+uniqueId = require('../helpers');
 
 LanePosition = (function() {
   class LanePosition {
     constructor(car, lane, position) {
       this.car = car;
       this.position = position;
-      this.id = _.uniqueId('laneposition');
+      this.id = uniqueId('laneposition'); // @id = _.uniqueId 'laneposition'
       this.free = true;
       this.lane = lane;
     }
@@ -22303,7 +22336,7 @@ module.exports = Pool;
 
 },{"../helpers":13}],20:[function(require,module,exports){
 'use strict';
-var Lane, Road, _, max, min, settings;
+var Lane, Road, _, max, min, settings, uniqueId;
 
 ({min, max} = Math);
 
@@ -22315,12 +22348,14 @@ Lane = require('./lane');
 
 settings = require('../settings');
 
+uniqueId = require('../helpers');
+
 Road = (function() {
   class Road {
     constructor(source, target) {
       this.source = source;
       this.target = target;
-      this.id = _.uniqueId('road');
+      this.id = uniqueId('road'); // @id = _.uniqueId 'road'
       this.lanes = [];
       this.lanesNumber = null;
       this.update();
@@ -22476,6 +22511,9 @@ Trajectory = (function() {
         return true;
       }
       intersection = this.nextIntersection;
+      if (!intersection) {
+        return false; // Added by me
+      }
       turnNumber = sourceLane.getTurnDirection(nextLane);
       sideId = sourceLane.road.targetSideId;
       return intersection.controlSignals.state[sideId][turnNumber];
@@ -22761,7 +22799,7 @@ World = (function() {
       map = {};
       gridSize = settings.gridSize;
       step = 5 * gridSize;
-      this.carsNumber = 100;
+      this.carsNumber = settings.carsNumber;
       while (intersectionsNumber > 0) {
         x = _.random(minX, maxX);
         y = _.random(minY, maxY);
@@ -22945,12 +22983,21 @@ settings = {
   lightsFlipInterval: 160,
   gridSize: 14,
   defaultTimeFactor: 5,
-  defaultZoomLevel: 3, // Change this value to change the default zoom level
+  defaultZoomLevel: 6, // Change this value to change the default zoom level (default is 3)
   
   // See updateCanvasSize() in visualizer.coffee
   canvasWidth: 1400, // fullscreen == true -> $(window).width
   canvasHeight: 1100, // fullscreen == true -> $(window).height
-  fullScreen: true
+  fullScreen: true,
+  // signals settings
+  showRedLights: true,
+  triangles: true, // false -> circles
+  carsNumber: 10,
+  // car settings
+  myCar: {
+    id: "MACCHINA",
+    color: "#000000"
+  }
 };
 
 module.exports = settings;
@@ -23051,6 +23098,15 @@ Graphics = class Graphics {
     this.moveTo(p1);
     this.lineTo(p2);
     return this.lineTo(p3);
+  }
+
+  drawCircle(center, radius, width, color) { // Added by me
+    this.ctx.beginPath();
+    this.ctx.arc(center.x, center.y, radius, 0, 2 * PI);
+    this.ctx.lineWidth = width;
+    if (color) {
+      return this.stroke(color);
+    }
   }
 
   fill(style, alpha) {
@@ -23330,14 +23386,20 @@ module.exports = Mover;
 
 },{"../helpers.coffee":13,"./tool.coffee":30}],29:[function(require,module,exports){
 'use strict';
-var Road, Tool, ToolRoadBuilder,
+var Car, Road, Tool, ToolRoadBuilder, _, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
 
 require('../helpers.coffee');
 
+_ = require('underscore');
+
 Tool = require('./tool.coffee');
 
-Road = require('../model/road.coffee'); //TODO decouple
+Car = require('../model/car.coffee');
+
+Road = require('../model/road.coffee');
+
+settings = require("../settings.coffee");
 
 ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   constructor() {
@@ -23353,12 +23415,27 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   }
 
   mousedown(e) {
-    var cell, hoveredIntersection;
+    var car, cell, hoveredIntersection, hoveredLane, intersection, lane, road;
     boundMethodCheck(this, ToolRoadBuilder);
     cell = this.getCell(e);
     hoveredIntersection = this.getHoveredIntersection(cell);
     if (e.shiftKey && (hoveredIntersection != null)) {
       this.sourceIntersection = hoveredIntersection;
+      e.stopImmediatePropagation();
+    }
+    // Add car with specs in the middle of a lane
+    //        hoveredLane = @getHoveredLane cell
+    hoveredLane = this.getHoveredIntersection(cell);
+    if (e.ctrlKey && (hoveredLane != null)) {
+      intersection = this.getHoveredIntersection(cell);
+      road = _.sample(intersection.roads);
+      lane = _.sample(road.lanes);
+      car = new Car(lane);
+      car.speed = 0.0;
+      car.id = "MACCHINA";
+      // color black #000000
+      car.color = "#111111";
+      this.visualizer.world.addCar(car);
       return e.stopImmediatePropagation();
     }
   }
@@ -23412,60 +23489,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
 module.exports = ToolRoadBuilder;
 
 
-},{"../helpers.coffee":13,"../model/road.coffee":20,"./tool.coffee":30}],30:[function(require,module,exports){
-//'use strict'
-
-//require '../helpers.coffee'
-//$ = require 'jquery'
-//_ = require 'underscore'
-//Point = require '../geom/point.coffee'
-//Rect = require '../geom/rect.coffee'
-//require('jquery-mousewheel') $
-
-//METHODS = [
-//  'click'
-//  'mousedown'
-//  'mouseup'
-//  'mousemove'
-//  'mouseout'
-//  'mousewheel'
-//  'contextmenu'
-//]
-
-//class Tool
-//  constructor: (@visualizer, autobind) ->
-//    @ctx = @visualizer.ctx
-//    @canvas = @ctx.canvas
-//    @isBound = false
-//    @bind() if autobind
-
-//  bind: ->
-//    @isBound = true
-//    for method in METHODS when @[method]?
-//      $(@canvas).on method, @[method]
-
-//  unbind: ->
-//    @isBound = false
-//    for method in METHODS when @[method]?
-//      $(@canvas).off method, @[method]
-
-//  toggleState: ->
-//    if @isBound then @unbind() else @bind()
-
-//  draw: ->
-
-//  getPoint: (e) ->
-//    new Point e.pageX - @canvas.offsetLeft, e.pageY - @canvas.offsetTop
-
-//  getCell: (e) ->
-//    @visualizer.zoomer.toCellCoords @getPoint e
-
-//  getHoveredIntersection: (cell) ->
-//    intersections = @visualizer.world.intersections.all()
-//    for id, intersection of intersections
-//      return intersection if intersection.rect.containsRect cell
-
-//module.exports = Tool
+},{"../helpers.coffee":13,"../model/car.coffee":14,"../model/road.coffee":20,"../settings.coffee":23,"./tool.coffee":30,"underscore":7}],30:[function(require,module,exports){
 'use strict';
 var $, METHODS, Point, Rect, Tool, _;
 
@@ -23489,6 +23513,7 @@ Tool = class Tool {
     this.getPoint = this.getPoint.bind(this);
     this.getCell = this.getCell.bind(this);
     this.getHoveredIntersection = this.getHoveredIntersection.bind(this);
+    this.getHoveredLane = this.getHoveredLane.bind(this);
     this.visualizer = visualizer;
     this.ctx = this.visualizer.ctx;
     this.canvas = this.ctx.canvas;
@@ -23562,6 +23587,34 @@ Tool = class Tool {
     }
   }
 
+  getHoveredLane(cell) {
+    var goodLanes, i, id, len, ref, road, roadLane, roads;
+    goodLanes = [];
+    roads = this.visualizer.world.roads.all();
+    for (id in roads) {
+      road = roads[id];
+      ref = road.lanes;
+      for (i = 0, len = ref.length; i < len; i++) {
+        roadLane = ref[i];
+        if (roadLane.middleLine.center) { //TODO
+          ({});
+        }
+      }
+    }
+    if (goodLanes.length > 0) {
+      return goodLanes[0];
+    }
+  }
+
+  ___addRandomCar___() { //TODO remove
+    var lane, road;
+    road = _.sample(this.visualizer.world.roads.all());
+    if (road != null) {
+      lane = _.sample(road.lanes);
+      return lane;
+    }
+  }
+
   click(e) {}
 
   // Method code here
@@ -23590,7 +23643,7 @@ module.exports = Tool;
 
 },{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"jquery":6,"jquery-mousewheel":5,"underscore":7}],31:[function(require,module,exports){
 'use strict';
-var $, Graphics, PI, Point, Rect, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, chroma, settings;
+var $, Graphics, PI, Point, Rect, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, abs, chroma, settings;
 
 ({PI} = Math);
 
@@ -23622,6 +23675,8 @@ Zoomer = require('./zoomer');
 
 settings = require('../settings');
 
+({abs} = Math);
+
 Visualizer = (function() {
   class Visualizer {
     constructor(world) {
@@ -23647,18 +23702,140 @@ Visualizer = (function() {
     }
 
     drawIntersection(intersection, alpha) {
-      var color;
+      var center, color;
       color = intersection.color || settings.colors.intersection;
       this.graphics.drawRect(intersection.rect);
       this.ctx.lineWidth = 0.4;
       this.graphics.stroke(settings.colors.roadMarking);
-      return this.graphics.fillRect(intersection.rect, color, alpha);
+      this.graphics.fillRect(intersection.rect, color, alpha);
+      if (this.debug) {
+        this.ctx.save();
+        this.ctx.fillStyle = 'black';
+        this.ctx.font = '0.5px Arial';
+        center = intersection.rect.center();
+        this.ctx.fillText(intersection.id, center.x, center.y - 1.0);
+        return this.ctx.restore();
+      }
+    }
+
+    fixSignal(road) {
+      var k, len, len1, len10, len11, len2, len3, len4, len5, len6, len7, len8, len9, lights, m, n, o, p, q, r, ref, ref1, ref10, ref11, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, s, sideId, t, u, v, w, x;
+      sideId = road.targetSideId;
+      lights = [true, true, true];
+      // lights index: 2 (left) <- 0 (up) -> 1 (right)
+      switch (sideId) {
+        case 0: // South
+          lights[1] = false; // block south-center signal
+          ref = road.target.inRoads;
+          for (k = 0, len = ref.length; k < len; k++) {
+            r = ref[k];
+            if (r.sourceSideId === 0) {
+              lights[1] = true;
+            }
+          }
+          lights[0] = false; // block south-right signal
+          ref1 = road.target.inRoads;
+          for (m = 0, len1 = ref1.length; m < len1; m++) {
+            r = ref1[m];
+            if (r.sourceSideId === 3) { // and settings.triangles
+              lights[0] = true;
+            }
+          }
+          lights[2] = false; // block south-left signal
+          ref2 = road.target.inRoads;
+          for (n = 0, len2 = ref2.length; n < len2; n++) {
+            r = ref2[n];
+            if (r.sourceSideId === 1) { // and settings.triangles
+              lights[2] = true;
+            }
+          }
+          break;
+        case 1: // East
+          lights[0] = false; // block east-left signal
+          ref3 = road.target.inRoads;
+          for (o = 0, len3 = ref3.length; o < len3; o++) {
+            r = ref3[o];
+            if (r.sourceSideId === 0) { // and settings.triangles
+              lights[0] = true;
+            }
+          }
+          lights[2] = false; // block east-right signal
+          ref4 = road.target.inRoads;
+          for (p = 0, len4 = ref4.length; p < len4; p++) {
+            r = ref4[p];
+            if (r.sourceSideId === 2) { // and settings.triangles
+              lights[2] = true;
+            }
+          }
+          lights[1] = false; // block east-center signal
+          ref5 = road.target.inRoads;
+          for (q = 0, len5 = ref5.length; q < len5; q++) {
+            r = ref5[q];
+            if (r.sourceSideId === 1) {
+              lights[1] = true;
+            }
+          }
+          break;
+        case 2: // North      OK
+          lights[1] = false; // block north-center signal
+          ref6 = road.target.inRoads;
+          for (s = 0, len6 = ref6.length; s < len6; s++) {
+            r = ref6[s];
+            if (r.sourceSideId === 2) {
+              lights[1] = true;
+            }
+          }
+          lights[0] = false; // block north-left signal
+          ref7 = road.target.inRoads;
+          for (t = 0, len7 = ref7.length; t < len7; t++) {
+            r = ref7[t];
+            if (r.sourceSideId === 1) { // and settings.triangles
+              lights[0] = true;
+            }
+          }
+          lights[2] = false; // block north-right signal
+          ref8 = road.target.inRoads;
+          for (u = 0, len8 = ref8.length; u < len8; u++) {
+            r = ref8[u];
+            if (r.sourceSideId === 3) { // and settings.triangles
+              lights[2] = true;
+            }
+          }
+          break;
+        case 3: // West
+          lights[2] = false; // block west-right signal
+          ref9 = road.target.inRoads;
+          for (v = 0, len9 = ref9.length; v < len9; v++) {
+            r = ref9[v];
+            if (r.sourceSideId === 0) { // and settings.triangles
+              lights[2] = true;
+            }
+          }
+          lights[0] = false; // block west-left
+          ref10 = road.target.inRoads;
+          for (w = 0, len10 = ref10.length; w < len10; w++) {
+            r = ref10[w];
+            if (r.sourceSideId === 2) { // and settings.triangles
+              lights[0] = true;
+            }
+          }
+          lights[1] = false; // block west-center
+          ref11 = road.target.inRoads;
+          for (x = 0, len11 = ref11.length; x < len11; x++) {
+            r = ref11[x];
+            if (r.sourceSideId === 3) {
+              lights[1] = true;
+            }
+          }
+      }
+      return lights;
     }
 
     drawSignals(road) {
-      var center, flipInterval, intersection, lights, lightsColors, phaseOffset, segment, sideId;
+      var c, center, flipInterval, intersection, k, l, len, lights, lightsColors, newLight, phaseOffset, segment, sideId;
       lightsColors = [settings.colors.redLight, settings.colors.greenLight];
       intersection = road.target;
+      // sideId = 1 if East, 2 if North, 3 if West, 4 if South
       segment = road.targetSide;
       sideId = road.targetSideId;
       lights = intersection.controlSignals.state[sideId];
@@ -23667,17 +23844,73 @@ Visualizer = (function() {
       this.ctx.rotate((sideId + 1) * PI / 2);
       this.ctx.scale(1 * segment.length, 1 * segment.length);
       // map lane ending to [(0, -0.5), (0, 0.5)]
-      if (lights[0]) {
-        this.graphics.drawTriangle(new Point(0.1, -0.2), new Point(0.2, -0.4), new Point(0.3, -0.2));
-        this.graphics.fill(settings.colors.greenLight);
+
+      // Remove signals for dead ends or 2-way intersections
+      if (intersection.inRoads.length === 1 || intersection.inRoads.length === 2) {
+        this.ctx.restore();
+        return;
+      } else if (intersection.inRoads.length === 3) { // T-intersection
+        newLight = this.fixSignal(road); // This function check if the signal is not necessary and could be hidden
+        c = 0;
+        for (k = 0, len = newLight.length; k < len; k++) {
+          l = newLight[k];
+          if (l === false) {
+            lights[c] = -1;
+          }
+          c += 1;
+        }
       }
-      if (lights[1]) {
-        this.graphics.drawTriangle(new Point(0.3, -0.1), new Point(0.5, 0), new Point(0.3, 0.1));
+      // Draw signals 1 is Green, 0 is Red, -1 is Hidden
+      if (lights[0] === 1) {
+        if (settings.triangles) {
+          this.graphics.drawTriangle(new Point(0.1, -0.2), new Point(0.2, -0.4), new Point(0.3, -0.2));
+        } else {
+          this.graphics.drawCircle(new Point(0.2, -0.3), 0.1);
+        }
         this.graphics.fill(settings.colors.greenLight);
+      } else if (lights[0] === -1) {
+        ({});
+      } else if (lights[0] === 0 && settings.showRedLights) {
+        if (settings.triangles) {
+          this.graphics.drawTriangle(new Point(0.1, -0.2), new Point(0.2, -0.4), new Point(0.3, -0.2));
+        } else {
+          this.graphics.drawCircle(new Point(0.2, -0.3), 0.1);
+        }
+        this.graphics.fill(settings.colors.redLight);
       }
-      if (lights[2]) {
-        this.graphics.drawTriangle(new Point(0.1, 0.2), new Point(0.2, 0.4), new Point(0.3, 0.2));
+      if (lights[1] === 1) {
+        if (settings.triangles) {
+          this.graphics.drawTriangle(new Point(0.3, -0.1), new Point(0.5, 0), new Point(0.3, 0.1));
+        } else {
+          this.graphics.drawCircle(new Point(0.4, 0), 0.1);
+        }
         this.graphics.fill(settings.colors.greenLight);
+      } else if (lights[1] === -1) {
+        ({});
+      } else if (lights[1] === 0 && settings.showRedLights) {
+        if (settings.triangles) {
+          this.graphics.drawTriangle(new Point(0.3, -0.1), new Point(0.5, 0), new Point(0.3, 0.1));
+        } else {
+          this.graphics.drawCircle(new Point(0.4, 0), 0.1);
+        }
+        this.graphics.fill(settings.colors.redLight);
+      }
+      if (lights[2] === 1) {
+        if (settings.triangles) {
+          this.graphics.drawTriangle(new Point(0.1, 0.2), new Point(0.2, 0.4), new Point(0.3, 0.2));
+        } else {
+          this.graphics.drawCircle(new Point(0.2, 0.3), 0.1);
+        }
+        this.graphics.fill(settings.colors.greenLight);
+      } else if (lights[2] === -1) {
+        ({});
+      } else if (lights[2] === 0 && settings.showRedLights) {
+        if (settings.triangles) {
+          this.graphics.drawTriangle(new Point(0.1, 0.2), new Point(0.2, 0.4), new Point(0.3, 0.2));
+        } else {
+          this.graphics.drawCircle(new Point(0.2, 0.3), 0.1);
+        }
+        this.graphics.fill(settings.colors.redLight);
       }
       this.ctx.restore();
       if (this.debug) {
@@ -23687,13 +23920,13 @@ Visualizer = (function() {
         center = intersection.rect.center();
         flipInterval = Math.round(intersection.controlSignals.flipInterval * 100) / 100;
         phaseOffset = Math.round(intersection.controlSignals.phaseOffset * 100) / 100;
-        this.ctx.fillText(flipInterval + ' ' + phaseOffset, center.x, center.y);
+        this.ctx.fillText(flipInterval + ' - ' + phaseOffset, center.x, center.y);
         return this.ctx.restore();
       }
     }
 
     drawRoad(road, alpha) {
-      var dashSize, k, lane, leftLine, len, line, ref, rightLine, sourceSide, targetSide;
+      var center, center1, center2, dashSize, k, lane, leftLine, len, line, ref, rightLine, sourceSide, targetSide;
       if ((road.source == null) || (road.target == null)) {
         throw Error('invalid road');
       }
@@ -23722,7 +23955,17 @@ Visualizer = (function() {
         this.ctx.setLineDash([dashSize]);
         this.graphics.stroke(settings.colors.roadMarking);
       }
-      return this.ctx.restore();
+      this.ctx.restore();
+      if (this.debug) {
+        this.ctx.save();
+        this.ctx.fillStyle = "black";
+        this.ctx.font = "1px Arial";
+        center1 = road.lanes[0].middleLine.center;
+        center2 = road.lanes[1].middleLine.center;
+        center = new Point((center1.x + center2.x) / 2, (center1.y + center2.y) / 2);
+        this.ctx.fillText(road.id, center.x, center.y);
+        return this.ctx.restore();
+      }
     }
 
     drawCar(car) {
@@ -23736,8 +23979,12 @@ Visualizer = (function() {
       this.graphics.save();
       this.ctx.translate(center.x, center.y);
       this.ctx.rotate(angle);
-      l = 0.90 - 0.30 * car.speed / car.maxSpeed;
-      style = chroma(car.color, 0.8, l, 'hsl').hex();
+      if (car.id === settings.myCar.id) {
+        style = settings.myCar.color;
+      } else {
+        l = 0.90 - 0.30 * car.speed / car.maxSpeed;
+        style = chroma(car.color, 0.8, l, 'hsl').hex();
+      }
       // @graphics.drawImage @carImage, rect
       this.graphics.fillRect(boundRect, style);
       this.graphics.restore();

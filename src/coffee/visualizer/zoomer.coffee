@@ -76,7 +76,7 @@ class Zoomer extends Tool
         @center = @center.add offset
 
     mousewheel: (e) ->
-        # Original code: e.deltaY * - e.deltaFactor. These values are not available anymore.
+# Original code: e.deltaY * - e.deltaFactor. These values are not available anymore.
         offset = e.originalEvent.deltaY * -e.originalEvent.eventPhase
         zoomFactor = 2 ** (0.001 * offset)
         @zoom @scale * zoomFactor, @getPoint e

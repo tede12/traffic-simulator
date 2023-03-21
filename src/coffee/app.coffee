@@ -34,11 +34,12 @@ waitForElements ['canvas', 'gui'], ->
 
 # App code
     console.log 'App started'
+    window.settings = settings
     window.world = new World()
     world.load()
     if world.intersections.length is 0
         world.generateMap()
-        world.carsNumber = 100
+        world.carsNumber = settings.carsNumber
     window.visualizer = new Visualizer world
     visualizer.start()
 
@@ -65,6 +66,8 @@ waitForElements ['canvas', 'gui'], ->
     guiVisualizer.open()
     guiVisualizer.add(visualizer, 'running').listen()
     guiVisualizer.add(visualizer, 'debug').listen()
+    gui.add(settings, 'showRedLights').listen()
+    gui.add(settings, 'triangles').listen()
     guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen()
     guiVisualizer.add(visualizer, 'timeFactor', 0.1, 10).listen()
     guiWorld.add(world, 'carsNumber').min(0).max(200).step(1).listen()

@@ -89,7 +89,7 @@ gulp.task('coverage', coverage);
 function watch() {
     // First time build
     build();
-    gulp.watch(['./src/coffee/*.coffee'], build);
+    gulp.watch(['./src/coffee/*.coffee'], gulp.series('build'));
 }
 
 gulp.task('watch', watch);

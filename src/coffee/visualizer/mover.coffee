@@ -4,27 +4,27 @@ require '../helpers.coffee'
 Tool = require './tool.coffee'
 
 class Mover extends Tool
-  constructor: ->
-    super arguments...
-    @startPosition = null
+    constructor: ->
+        super arguments...
+        @startPosition = null
 
-  contextmenu: ->
-    false
+    contextmenu: ->
+        false
 
-  mousedown: (e) =>
-    @startPosition = @getPoint e
-    e.stopImmediatePropagation()
+    mousedown: (e) =>
+        @startPosition = @getPoint e
+        e.stopImmediatePropagation()
 
-  mouseup: =>
-    @startPosition = null
+    mouseup: =>
+        @startPosition = null
 
-  mousemove: (e) =>
-    if @startPosition
-      offset = @getPoint(e).subtract(@startPosition)
-      @visualizer.zoomer.moveCenter offset
-      @startPosition = @getPoint e
+    mousemove: (e) =>
+        if @startPosition
+            offset = @getPoint(e).subtract(@startPosition)
+            @visualizer.zoomer.moveCenter offset
+            @startPosition = @getPoint e
 
-  mouseout: =>
-    @startPosition = null
+    mouseout: =>
+        @startPosition = null
 
 module.exports = Mover

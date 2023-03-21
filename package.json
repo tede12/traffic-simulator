@@ -23,6 +23,7 @@
     "jquery-mousewheel": "^3.1.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "three": "^0.150.1",
     "underscore": "^1.13.6",
     "web-vitals": "^2.1.4"
   },
@@ -35,6 +36,7 @@
     "coffee-script": "^1.12.7",
     "coffeeify": "^3.0.1",
     "coffeescript": "^2.7.0",
+    "express": "^4.18.2",
     "gulp": "^4.0.2",
     "gulp-coffee": "^3.0.3",
     "gulp-coffeelint": "^0.6.0",
