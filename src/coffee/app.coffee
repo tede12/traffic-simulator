@@ -65,7 +65,7 @@ waitForElements ['canvas', 'gui'], ->
     guiVisualizer = gui.addFolder 'visualizer'
     guiVisualizer.open()
     guiVisualizer.add(visualizer, 'running').listen()
-    guiVisualizer.add(visualizer, 'debug').listen()
+    gui.add(settings, 'debug').listen()
     gui.add(settings, 'showRedLights').listen()
     gui.add(settings, 'triangles').listen()
     guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen()

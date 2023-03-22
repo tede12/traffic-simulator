@@ -21239,6 +21239,7 @@ return jQuery;
 
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{}],8:[function(require,module,exports){
 'use strict';
 var $, DAT, Visualizer, World, _, settings, waitForElements;
@@ -21323,7 +21324,7 @@ waitForElements(['canvas', 'gui'], function() {
   guiVisualizer = gui.addFolder('visualizer');
   guiVisualizer.open();
   guiVisualizer.add(visualizer, 'running').listen();
-  guiVisualizer.add(visualizer, 'debug').listen();
+  gui.add(settings, 'debug').listen();
   gui.add(settings, 'showRedLights').listen();
   gui.add(settings, 'triangles').listen();
   guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen();
@@ -22984,7 +22985,7 @@ settings = {
   gridSize: 14,
   defaultTimeFactor: 5,
   defaultZoomLevel: 6, // Change this value to change the default zoom level (default is 3)
-  
+  debug: true,
   // See updateCanvasSize() in visualizer.coffee
   canvasWidth: 1400, // fullscreen == true -> $(window).width
   canvasHeight: 1100, // fullscreen == true -> $(window).height
@@ -23513,7 +23514,6 @@ Tool = class Tool {
     this.getPoint = this.getPoint.bind(this);
     this.getCell = this.getCell.bind(this);
     this.getHoveredIntersection = this.getHoveredIntersection.bind(this);
-    this.getHoveredLane = this.getHoveredLane.bind(this);
     this.visualizer = visualizer;
     this.ctx = this.visualizer.ctx;
     this.canvas = this.ctx.canvas;
@@ -23587,34 +23587,16 @@ Tool = class Tool {
     }
   }
 
-  getHoveredLane(cell) {
-    var goodLanes, i, id, len, ref, road, roadLane, roads;
-    goodLanes = [];
-    roads = this.visualizer.world.roads.all();
-    for (id in roads) {
-      road = roads[id];
-      ref = road.lanes;
-      for (i = 0, len = ref.length; i < len; i++) {
-        roadLane = ref[i];
-        if (roadLane.middleLine.center) { //TODO
-          ({});
-        }
-      }
-    }
-    if (goodLanes.length > 0) {
-      return goodLanes[0];
-    }
-  }
+  // TODO could be needed for adding car in road-builder in the right lane and not in intersection
+  //    getHoveredLane: (cell) =>
+  //        goodLanes = []
+  //        roads = @visualizer.world.roads.all()
+  //        for id, road of roads
+  //            for roadLane in road.lanes
+  //                if roadLane.middleLine.center
+  //                    {}
 
-  ___addRandomCar___() { //TODO remove
-    var lane, road;
-    road = _.sample(this.visualizer.world.roads.all());
-    if (road != null) {
-      lane = _.sample(road.lanes);
-      return lane;
-    }
-  }
-
+  //        return goodLanes[0] if goodLanes.length > 0
   click(e) {}
 
   // Method code here
@@ -23698,7 +23680,7 @@ Visualizer = (function() {
       this._running = false;
       this.previousTime = 0;
       this.timeFactor = settings.defaultTimeFactor;
-      this.debug = false;
+      this.debug = settings.debug;
     }
 
     drawIntersection(intersection, alpha) {
@@ -24240,4 +24222,6 @@ Zoomer = (function() {
 module.exports = Zoomer;
 
 
-},{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"../settings.coffee":23,"./tool.coffee":30}]},{},[8]);
+},{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"../settings.coffee":23,"./tool.coffee":30}]},{},[8])
+
+//# sourceMappingURL=coffee-main.js.map

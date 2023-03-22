@@ -37,7 +37,7 @@ class Visualizer
         @_running = false
         @previousTime = 0
         @timeFactor = settings.defaultTimeFactor
-        @debug = false
+        @debug = settings.debug
 
     drawIntersection: (intersection, alpha) ->
         color = intersection.color or settings.colors.intersection
