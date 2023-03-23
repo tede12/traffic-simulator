@@ -9,16 +9,26 @@ Road = require './road'
 Pool = require './pool'
 Rect = require '../geom/rect'
 settings = require '../settings'
+savedMaps = require '../maps'
 
 class World
     constructor: ->
         @set {}
+        @createDynamicMapMethods()
 
     @property 'instantSpeed',
         get: ->
             speeds = _.map @cars.all(), (car) -> car.speed
             return 0 if speeds.length is 0
             return (_.reduce speeds, (a, b) -> a + b) / speeds.length
+
+    createDynamicMapMethods: ->
+#       create method with name mapName as function name and call @load
+        constructor = @constructor
+        for mapName, mapData of savedMaps
+#           do prevents mapName and mapData from being overwritten in the loop with the last values
+            do (mapName, mapData) ->
+                constructor::[mapName] = (-> @load mapData, false)
 
     set: (obj) ->
         obj ?= {}
@@ -33,9 +43,10 @@ class World
         delete data.cars
         localStorage.world = JSON.stringify data
 
-    load: (data) ->
+    load: (data, parse = true) ->
         data = data or localStorage.world
-        data = data and JSON.parse data
+        if data and parse
+            data = JSON.parse data
         return unless data?
         @clear()
         @carsNumber = data.carsNumber or 0

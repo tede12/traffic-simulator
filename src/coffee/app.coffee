@@ -7,6 +7,7 @@ Visualizer = require './visualizer/visualizer'
 DAT = require 'dat-gui'
 World = require './model/world'
 settings = require './settings'
+savedMaps = require './maps'
 
 
 waitForElements = (ids, callback) ->
@@ -73,3 +74,10 @@ waitForElements ['canvas', 'gui'], ->
     guiWorld.add(world, 'carsNumber').min(0).max(200).step(1).listen()
     guiWorld.add(world, 'instantSpeed').step(0.00001).listen()
     gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen()
+    guiSavedMaps = gui.addFolder('saved maps')
+    for mapName, mapData of savedMaps
+        console.log 'adding map', mapName
+        guiSavedMaps.add(world, mapName)
+    guiSavedMaps.open()
+
+

@@ -21242,7 +21242,7 @@ return jQuery;
 
 },{}],8:[function(require,module,exports){
 'use strict';
-var $, DAT, Visualizer, World, _, settings, waitForElements;
+var $, DAT, Visualizer, World, _, savedMaps, settings, waitForElements;
 
 require('./helpers');
 
@@ -21257,6 +21257,8 @@ DAT = require('dat-gui');
 World = require('./model/world');
 
 settings = require('./settings');
+
+savedMaps = require('./maps');
 
 waitForElements = function(ids, callback) {
   var observer, remaining;
@@ -21286,7 +21288,7 @@ waitForElements = function(ids, callback) {
 };
 
 waitForElements(['canvas', 'gui'], function() {
-  var gui, guiVisualizer, guiWorld, targetElement;
+  var gui, guiSavedMaps, guiVisualizer, guiWorld, mapData, mapName, targetElement;
   // Created in the React component
   //  canvas = $('<canvas />', {id: 'canvas'})
   //  $(document.body).append(canvas)
@@ -21331,11 +21333,18 @@ waitForElements(['canvas', 'gui'], function() {
   guiVisualizer.add(visualizer, 'timeFactor', 0.1, 10).listen();
   guiWorld.add(world, 'carsNumber').min(0).max(200).step(1).listen();
   guiWorld.add(world, 'instantSpeed').step(0.00001).listen();
-  return gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen();
+  gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen();
+  guiSavedMaps = gui.addFolder('saved maps');
+  for (mapName in savedMaps) {
+    mapData = savedMaps[mapName];
+    console.log('adding map', mapName);
+    guiSavedMaps.add(world, mapName);
+  }
+  return guiSavedMaps.open();
 });
 
 
-},{"./helpers":13,"./model/world":22,"./settings":23,"./visualizer/visualizer":31,"dat-gui":2,"jquery":6,"underscore":7}],9:[function(require,module,exports){
+},{"./helpers":13,"./maps":14,"./model/world":23,"./settings":24,"./visualizer/visualizer":32,"dat-gui":2,"jquery":6,"underscore":7}],9:[function(require,module,exports){
 'use strict';
 var Curve, Segment;
 
@@ -21699,6 +21708,732 @@ module.exports = uniqueId;
 
 },{}],14:[function(require,module,exports){
 'use strict';
+var savedMaps;
+
+// Name (key) should be better if it doesn't contain spaces or special characters for correct mapping
+savedMaps = {
+  "map_media": {
+    "intersections": {
+      "intersection1": {
+        "id": "intersection1",
+        "rect": {
+          "x": -56,
+          "y": -70,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.49333182358600114,
+          "phaseOffset": 36.003182098761854
+        }
+      },
+      "intersection2": {
+        "id": "intersection2",
+        "rect": {
+          "x": -56,
+          "y": -28,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.9931487871201317,
+          "phaseOffset": 94.45425662419179
+        }
+      },
+      "intersection3": {
+        "id": "intersection3",
+        "rect": {
+          "x": -56,
+          "y": 14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.5111694993383065,
+          "phaseOffset": 98.9535040345068
+        }
+      },
+      "intersection4": {
+        "id": "intersection4",
+        "rect": {
+          "x": -14,
+          "y": 14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.5204929088669135,
+          "phaseOffset": 11.398725456699443
+        }
+      },
+      "intersection5": {
+        "id": "intersection5",
+        "rect": {
+          "x": 28,
+          "y": 14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.3368730313018393,
+          "phaseOffset": 76.21517814974356
+        }
+      },
+      "intersection6": {
+        "id": "intersection6",
+        "rect": {
+          "x": 28,
+          "y": -28,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.6838292154389645,
+          "phaseOffset": 16.695407344145806
+        }
+      },
+      "intersection7": {
+        "id": "intersection7",
+        "rect": {
+          "x": 28,
+          "y": -70,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.05686790274246234,
+          "phaseOffset": 91.24943975662923
+        }
+      },
+      "intersection8": {
+        "id": "intersection8",
+        "rect": {
+          "x": -14,
+          "y": -70,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.7500457945655898,
+          "phaseOffset": 0.17302231486515662
+        }
+      },
+      "intersection9": {
+        "id": "intersection9",
+        "rect": {
+          "x": -14,
+          "y": -28,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.060722805547838155,
+          "phaseOffset": 35.01749440910415
+        }
+      }
+    },
+    "roads": {
+      "road1": {
+        "id": "road1",
+        "source": "intersection8",
+        "target": "intersection9"
+      },
+      "road2": {
+        "id": "road2",
+        "source": "intersection9",
+        "target": "intersection8"
+      },
+      "road3": {
+        "id": "road3",
+        "source": "intersection9",
+        "target": "intersection6"
+      },
+      "road4": {
+        "id": "road4",
+        "source": "intersection6",
+        "target": "intersection9"
+      },
+      "road5": {
+        "id": "road5",
+        "source": "intersection6",
+        "target": "intersection5"
+      },
+      "road6": {
+        "id": "road6",
+        "source": "intersection5",
+        "target": "intersection6"
+      },
+      "road7": {
+        "id": "road7",
+        "source": "intersection5",
+        "target": "intersection4"
+      },
+      "road8": {
+        "id": "road8",
+        "source": "intersection4",
+        "target": "intersection5"
+      },
+      "road9": {
+        "id": "road9",
+        "source": "intersection4",
+        "target": "intersection3"
+      },
+      "road10": {
+        "id": "road10",
+        "source": "intersection3",
+        "target": "intersection4"
+      },
+      "road11": {
+        "id": "road11",
+        "source": "intersection3",
+        "target": "intersection2"
+      },
+      "road12": {
+        "id": "road12",
+        "source": "intersection2",
+        "target": "intersection3"
+      },
+      "road13": {
+        "id": "road13",
+        "source": "intersection2",
+        "target": "intersection1"
+      },
+      "road14": {
+        "id": "road14",
+        "source": "intersection1",
+        "target": "intersection2"
+      },
+      "road15": {
+        "id": "road15",
+        "source": "intersection1",
+        "target": "intersection8"
+      },
+      "road16": {
+        "id": "road16",
+        "source": "intersection8",
+        "target": "intersection1"
+      },
+      "road17": {
+        "id": "road17",
+        "source": "intersection8",
+        "target": "intersection7"
+      },
+      "road18": {
+        "id": "road18",
+        "source": "intersection7",
+        "target": "intersection8"
+      },
+      "road19": {
+        "id": "road19",
+        "source": "intersection7",
+        "target": "intersection6"
+      },
+      "road20": {
+        "id": "road20",
+        "source": "intersection6",
+        "target": "intersection7"
+      },
+      "road21": {
+        "id": "road21",
+        "source": "intersection9",
+        "target": "intersection4"
+      },
+      "road22": {
+        "id": "road22",
+        "source": "intersection4",
+        "target": "intersection9"
+      },
+      "road23": {
+        "id": "road23",
+        "source": "intersection9",
+        "target": "intersection2"
+      },
+      "road24": {
+        "id": "road24",
+        "source": "intersection2",
+        "target": "intersection9"
+      }
+    },
+    "carsNumber": 2,
+    "time": 173.50094999999797
+  },
+  "map_semplice": {
+    "intersections": {
+      "intersection21": {
+        "id": "intersection21",
+        "rect": {
+          "x": -42,
+          "y": 0,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.9479743836461125,
+          "phaseOffset": 94.66763575323544
+        }
+      },
+      "intersection22": {
+        "id": "intersection22",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.9741343229976489,
+          "phaseOffset": 3.8664580723590136
+        }
+      },
+      "intersection23": {
+        "id": "intersection23",
+        "rect": {
+          "x": 42,
+          "y": 0,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.6763116557404703,
+          "phaseOffset": 27.113770026741115
+        }
+      },
+      "intersection24": {
+        "id": "intersection24",
+        "rect": {
+          "x": 42,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.7196118014172435,
+          "phaseOffset": 42.09140048192721
+        }
+      },
+      "intersection25": {
+        "id": "intersection25",
+        "rect": {
+          "x": 0,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.31777769449575577,
+          "phaseOffset": 28.50633200161039
+        }
+      },
+      "intersection26": {
+        "id": "intersection26",
+        "rect": {
+          "x": -42,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.050492654229082,
+          "phaseOffset": 91.51886321434517
+        }
+      }
+    },
+    "roads": {
+      "road57": {
+        "id": "road57",
+        "source": "intersection26",
+        "target": "intersection21"
+      },
+      "road58": {
+        "id": "road58",
+        "source": "intersection21",
+        "target": "intersection26"
+      },
+      "road59": {
+        "id": "road59",
+        "source": "intersection21",
+        "target": "intersection22"
+      },
+      "road60": {
+        "id": "road60",
+        "source": "intersection22",
+        "target": "intersection21"
+      },
+      "road61": {
+        "id": "road61",
+        "source": "intersection22",
+        "target": "intersection23"
+      },
+      "road62": {
+        "id": "road62",
+        "source": "intersection23",
+        "target": "intersection22"
+      },
+      "road63": {
+        "id": "road63",
+        "source": "intersection23",
+        "target": "intersection24"
+      },
+      "road64": {
+        "id": "road64",
+        "source": "intersection24",
+        "target": "intersection23"
+      },
+      "road65": {
+        "id": "road65",
+        "source": "intersection24",
+        "target": "intersection25"
+      },
+      "road66": {
+        "id": "road66",
+        "source": "intersection25",
+        "target": "intersection24"
+      },
+      "road67": {
+        "id": "road67",
+        "source": "intersection25",
+        "target": "intersection26"
+      },
+      "road68": {
+        "id": "road68",
+        "source": "intersection26",
+        "target": "intersection25"
+      },
+      "road69": {
+        "id": "road69",
+        "source": "intersection25",
+        "target": "intersection22"
+      },
+      "road70": {
+        "id": "road70",
+        "source": "intersection22",
+        "target": "intersection25"
+      }
+    },
+    "carsNumber": 2,
+    "time": 138.33831499999914
+  },
+  "mappa_complicata": {
+    "intersections": {
+      "intersection87": {
+        "id": "intersection87",
+        "rect": {
+          "x": -112,
+          "y": -70,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.5217022137739413,
+          "phaseOffset": 1.5642095884635498
+        }
+      },
+      "intersection88": {
+        "id": "intersection88",
+        "rect": {
+          "x": -112,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.9398669531001806,
+          "phaseOffset": 35.77074627552086
+        }
+      },
+      "intersection89": {
+        "id": "intersection89",
+        "rect": {
+          "x": -112,
+          "y": -14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.642267830383092,
+          "phaseOffset": 17.473850551103844
+        }
+      },
+      "intersection90": {
+        "id": "intersection90",
+        "rect": {
+          "x": -112,
+          "y": 14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.09020765115496143,
+          "phaseOffset": 22.21522877435507
+        }
+      },
+      "intersection91": {
+        "id": "intersection91",
+        "rect": {
+          "x": -28,
+          "y": 14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.7514962471148281,
+          "phaseOffset": 48.78687282771161
+        }
+      },
+      "intersection92": {
+        "id": "intersection92",
+        "rect": {
+          "x": -28,
+          "y": -14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.3602489087495704,
+          "phaseOffset": 66.47258451973501
+        }
+      },
+      "intersection93": {
+        "id": "intersection93",
+        "rect": {
+          "x": -28,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.5532482246415711,
+          "phaseOffset": 15.743268270901535
+        }
+      },
+      "intersection94": {
+        "id": "intersection94",
+        "rect": {
+          "x": -28,
+          "y": -70,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.606836705799384,
+          "phaseOffset": 79.34935652703616
+        }
+      },
+      "intersection95": {
+        "id": "intersection95",
+        "rect": {
+          "x": 42,
+          "y": -70,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.6984370810517877,
+          "phaseOffset": 19.39702370556622
+        }
+      },
+      "intersection96": {
+        "id": "intersection96",
+        "rect": {
+          "x": 42,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.10535891056544133,
+          "phaseOffset": 0.7379432534991848
+        }
+      },
+      "intersection97": {
+        "id": "intersection97",
+        "rect": {
+          "x": 42,
+          "y": -14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.22950889256440132,
+          "phaseOffset": 14.990724495653529
+        }
+      },
+      "intersection98": {
+        "id": "intersection98",
+        "rect": {
+          "x": 42,
+          "y": 14,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.6392255718911695,
+          "phaseOffset": 41.65034216633665
+        }
+      }
+    },
+    "roads": {
+      "road201": {
+        "id": "road201",
+        "source": "intersection91",
+        "target": "intersection98"
+      },
+      "road202": {
+        "id": "road202",
+        "source": "intersection98",
+        "target": "intersection91"
+      },
+      "road203": {
+        "id": "road203",
+        "source": "intersection98",
+        "target": "intersection97"
+      },
+      "road204": {
+        "id": "road204",
+        "source": "intersection97",
+        "target": "intersection98"
+      },
+      "road205": {
+        "id": "road205",
+        "source": "intersection97",
+        "target": "intersection96"
+      },
+      "road206": {
+        "id": "road206",
+        "source": "intersection96",
+        "target": "intersection97"
+      },
+      "road207": {
+        "id": "road207",
+        "source": "intersection96",
+        "target": "intersection95"
+      },
+      "road208": {
+        "id": "road208",
+        "source": "intersection95",
+        "target": "intersection96"
+      },
+      "road209": {
+        "id": "road209",
+        "source": "intersection95",
+        "target": "intersection94"
+      },
+      "road210": {
+        "id": "road210",
+        "source": "intersection94",
+        "target": "intersection95"
+      },
+      "road211": {
+        "id": "road211",
+        "source": "intersection94",
+        "target": "intersection93"
+      },
+      "road212": {
+        "id": "road212",
+        "source": "intersection93",
+        "target": "intersection94"
+      },
+      "road213": {
+        "id": "road213",
+        "source": "intersection93",
+        "target": "intersection88"
+      },
+      "road214": {
+        "id": "road214",
+        "source": "intersection88",
+        "target": "intersection93"
+      },
+      "road215": {
+        "id": "road215",
+        "source": "intersection87",
+        "target": "intersection88"
+      },
+      "road216": {
+        "id": "road216",
+        "source": "intersection88",
+        "target": "intersection87"
+      },
+      "road217": {
+        "id": "road217",
+        "source": "intersection87",
+        "target": "intersection94"
+      },
+      "road218": {
+        "id": "road218",
+        "source": "intersection94",
+        "target": "intersection87"
+      },
+      "road219": {
+        "id": "road219",
+        "source": "intersection92",
+        "target": "intersection93"
+      },
+      "road220": {
+        "id": "road220",
+        "source": "intersection93",
+        "target": "intersection92"
+      },
+      "road221": {
+        "id": "road221",
+        "source": "intersection92",
+        "target": "intersection89"
+      },
+      "road222": {
+        "id": "road222",
+        "source": "intersection89",
+        "target": "intersection92"
+      },
+      "road223": {
+        "id": "road223",
+        "source": "intersection89",
+        "target": "intersection90"
+      },
+      "road224": {
+        "id": "road224",
+        "source": "intersection90",
+        "target": "intersection89"
+      },
+      "road225": {
+        "id": "road225",
+        "source": "intersection90",
+        "target": "intersection91"
+      },
+      "road226": {
+        "id": "road226",
+        "source": "intersection91",
+        "target": "intersection90"
+      },
+      "road227": {
+        "id": "road227",
+        "source": "intersection88",
+        "target": "intersection89"
+      },
+      "road228": {
+        "id": "road228",
+        "source": "intersection89",
+        "target": "intersection88"
+      },
+      "road231": {
+        "id": "road231",
+        "source": "intersection91",
+        "target": "intersection92"
+      },
+      "road232": {
+        "id": "road232",
+        "source": "intersection92",
+        "target": "intersection91"
+      }
+    },
+    "carsNumber": 4,
+    "time": 353.8403300000037
+  }
+};
+
+module.exports = savedMaps;
+
+
+},{}],15:[function(require,module,exports){
+'use strict';
 var Car, Trajectory, _, max, min, random, settings, sqrt, uniqueId;
 
 ({max, min, random, sqrt} = Math);
@@ -21894,7 +22629,7 @@ Car = (function() {
 module.exports = Car;
 
 
-},{"../helpers":13,"../settings":23,"./trajectory":21,"underscore":7}],15:[function(require,module,exports){
+},{"../helpers":13,"../settings":24,"./trajectory":22,"underscore":7}],16:[function(require,module,exports){
 'use strict';
 var ControlSignals, random, settings,
   indexOf = [].indexOf;
@@ -22004,7 +22739,7 @@ ControlSignals = (function() {
 module.exports = ControlSignals;
 
 
-},{"../helpers":13,"../settings":23}],16:[function(require,module,exports){
+},{"../helpers":13,"../settings":24}],17:[function(require,module,exports){
 'use strict';
 var ControlSignals, Intersection, Rect, _, uniqueId;
 
@@ -22068,7 +22803,7 @@ Intersection = class Intersection {
 module.exports = Intersection;
 
 
-},{"../geom/rect":11,"../helpers":13,"./control-signals":15,"underscore":7}],17:[function(require,module,exports){
+},{"../geom/rect":11,"../helpers":13,"./control-signals":16,"underscore":7}],18:[function(require,module,exports){
 'use strict';
 var LanePosition, _, uniqueId;
 
@@ -22155,7 +22890,7 @@ LanePosition = (function() {
 module.exports = LanePosition;
 
 
-},{"../helpers":13,"underscore":7}],18:[function(require,module,exports){
+},{"../helpers":13,"underscore":7}],19:[function(require,module,exports){
 'use strict';
 var Lane, Segment, _;
 
@@ -22282,7 +23017,7 @@ Lane = (function() {
 module.exports = Lane;
 
 
-},{"../geom/segment":12,"../helpers":13,"underscore":7}],19:[function(require,module,exports){
+},{"../geom/segment":12,"../helpers":13,"underscore":7}],20:[function(require,module,exports){
 'use strict';
 var Pool;
 
@@ -22349,7 +23084,7 @@ Pool = (function() {
 module.exports = Pool;
 
 
-},{"../helpers":13}],20:[function(require,module,exports){
+},{"../helpers":13}],21:[function(require,module,exports){
 'use strict';
 var Lane, Road, _, max, min, settings, uniqueId;
 
@@ -22469,7 +23204,7 @@ Road = (function() {
 module.exports = Road;
 
 
-},{"../helpers":13,"../settings":23,"./lane":18,"underscore":7}],21:[function(require,module,exports){
+},{"../helpers":13,"../settings":24,"./lane":19,"underscore":7}],22:[function(require,module,exports){
 'use strict';
 var Curve, LanePosition, Trajectory, _, max, min;
 
@@ -22732,9 +23467,9 @@ Trajectory = (function() {
 module.exports = Trajectory;
 
 
-},{"../geom/curve":9,"../helpers":13,"./lane-position":17,"underscore":7}],22:[function(require,module,exports){
+},{"../geom/curve":9,"../helpers":13,"./lane-position":18,"underscore":7}],23:[function(require,module,exports){
 'use strict';
-var Car, Intersection, Pool, Rect, Road, World, _, random, settings;
+var Car, Intersection, Pool, Rect, Road, World, _, random, savedMaps, settings;
 
 ({random} = Math);
 
@@ -22754,11 +23489,31 @@ Rect = require('../geom/rect');
 
 settings = require('../settings');
 
+savedMaps = require('../maps');
+
 World = (function() {
   class World {
     constructor() {
       this.onTick = this.onTick.bind(this);
       this.set({});
+      this.createDynamicMapMethods();
+    }
+
+    createDynamicMapMethods() {
+      var constructor, mapData, mapName, results;
+      //       create method with name mapName as function name and call @load
+      constructor = this.constructor;
+      results = [];
+      for (mapName in savedMaps) {
+        mapData = savedMaps[mapName];
+        //           do prevents mapName and mapData from being overwritten in the loop with the last values
+        results.push((function(mapName, mapData) {
+          return constructor.prototype[mapName] = (function() {
+            return this.load(mapData, false);
+          });
+        })(mapName, mapData));
+      }
+      return results;
     }
 
     set(obj) {
@@ -22779,10 +23534,12 @@ World = (function() {
       return localStorage.world = JSON.stringify(data);
     }
 
-    load(data) {
+    load(data, parse = true) {
       var id, intersection, ref, ref1, results, road;
       data = data || localStorage.world;
-      data = data && JSON.parse(data);
+      if (data && parse) {
+        data = JSON.parse(data);
+      }
       if (data == null) {
         return;
       }
@@ -22973,7 +23730,7 @@ World = (function() {
 module.exports = World;
 
 
-},{"../geom/rect":11,"../helpers":13,"../settings":23,"./car":14,"./intersection":16,"./pool":19,"./road":20,"underscore":7}],23:[function(require,module,exports){
+},{"../geom/rect":11,"../helpers":13,"../maps":14,"../settings":24,"./car":15,"./intersection":17,"./pool":20,"./road":21,"underscore":7}],24:[function(require,module,exports){
 'use strict';
 var settings;
 
@@ -23017,7 +23774,7 @@ settings = {
 module.exports = settings;
 
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 var Graphics, PI;
 
@@ -23172,7 +23929,7 @@ Graphics = class Graphics {
 module.exports = Graphics;
 
 
-},{"../helpers.coffee":13}],25:[function(require,module,exports){
+},{"../helpers.coffee":13}],26:[function(require,module,exports){
 'use strict';
 var Tool, ToolHighlighter, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -23227,7 +23984,7 @@ ToolHighlighter = class ToolHighlighter extends Tool {
 module.exports = ToolHighlighter;
 
 
-},{"../helpers.coffee":13,"../settings.coffee":23,"./tool.coffee":30}],26:[function(require,module,exports){
+},{"../helpers.coffee":13,"../settings.coffee":24,"./tool.coffee":31}],27:[function(require,module,exports){
 'use strict';
 var Intersection, Tool, ToolIntersectionBuilder,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -23295,7 +24052,7 @@ ToolIntersectionBuilder = class ToolIntersectionBuilder extends Tool {
 module.exports = ToolIntersectionBuilder;
 
 
-},{"../helpers.coffee":13,"../model/intersection.coffee":16,"./tool.coffee":30}],27:[function(require,module,exports){
+},{"../helpers.coffee":13,"../model/intersection.coffee":17,"./tool.coffee":31}],28:[function(require,module,exports){
 'use strict';
 var Tool, ToolIntersectionMover,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -23350,7 +24107,7 @@ ToolIntersectionMover = class ToolIntersectionMover extends Tool {
 module.exports = ToolIntersectionMover;
 
 
-},{"../helpers.coffee":13,"./tool.coffee":30}],28:[function(require,module,exports){
+},{"../helpers.coffee":13,"./tool.coffee":31}],29:[function(require,module,exports){
 'use strict';
 var Mover, Tool,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -23404,7 +24161,7 @@ Mover = class Mover extends Tool {
 module.exports = Mover;
 
 
-},{"../helpers.coffee":13,"./tool.coffee":30}],29:[function(require,module,exports){
+},{"../helpers.coffee":13,"./tool.coffee":31}],30:[function(require,module,exports){
 'use strict';
 var Car, Road, Tool, ToolRoadBuilder, _, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -23508,7 +24265,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
 module.exports = ToolRoadBuilder;
 
 
-},{"../helpers.coffee":13,"../model/car.coffee":14,"../model/road.coffee":20,"../settings.coffee":23,"./tool.coffee":30,"underscore":7}],30:[function(require,module,exports){
+},{"../helpers.coffee":13,"../model/car.coffee":15,"../model/road.coffee":21,"../settings.coffee":24,"./tool.coffee":31,"underscore":7}],31:[function(require,module,exports){
 'use strict';
 var $, METHODS, Point, Rect, Tool, _;
 
@@ -23641,7 +24398,7 @@ Tool = class Tool {
 module.exports = Tool;
 
 
-},{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"jquery":6,"jquery-mousewheel":5,"underscore":7}],31:[function(require,module,exports){
+},{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"jquery":6,"jquery-mousewheel":5,"underscore":7}],32:[function(require,module,exports){
 'use strict';
 var $, Graphics, PI, Point, Rect, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, abs, chroma, settings;
 
@@ -24150,7 +24907,7 @@ Visualizer = (function() {
 module.exports = Visualizer;
 
 
-},{"../geom/point":10,"../geom/rect":11,"../helpers":13,"../settings":23,"./graphics":24,"./highlighter":25,"./intersection-builder":26,"./intersection-mover":27,"./mover":28,"./road-builder":29,"./zoomer":32,"chroma-js":1,"jquery":6,"underscore":7}],32:[function(require,module,exports){
+},{"../geom/point":10,"../geom/rect":11,"../helpers":13,"../settings":24,"./graphics":25,"./highlighter":26,"./intersection-builder":27,"./intersection-mover":28,"./mover":29,"./road-builder":30,"./zoomer":33,"chroma-js":1,"jquery":6,"underscore":7}],33:[function(require,module,exports){
 'use strict';
 var Point, Rect, Tool, Zoomer, max, min, settings;
 
@@ -24272,6 +25029,6 @@ Zoomer = (function() {
 module.exports = Zoomer;
 
 
-},{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"../settings.coffee":23,"./tool.coffee":30}]},{},[8])
+},{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"../settings.coffee":24,"./tool.coffee":31}]},{},[8])
 
 //# sourceMappingURL=coffee-main.js.map
