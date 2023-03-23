@@ -232,7 +232,6 @@ class Visualizer
                 @graphics.drawCircle(new Point(0.2, 0.3), 0.1)
             @graphics.fill settings.colors.redLight
 
-
         @ctx.restore()
         if @debug
             @ctx.save()
@@ -311,6 +310,13 @@ class Visualizer
             @ctx.font = "1px Arial"
             @ctx.fillText car.id, center.x, center.y
 
+            if car.id == settings.myCar.id
+#                draw trajectory curve
+                if (curve = car.trajectory.temp?.lane)?
+                    @graphics.drawCurve curve, 0.1, 'blue'
+                @ctx.restore()
+                return
+
             if (curve = car.trajectory.temp?.lane)?
                 @graphics.drawCurve curve, 0.1, 'red'
             @ctx.restore()
@@ -326,8 +332,23 @@ class Visualizer
                 rect = new Rect i - sz / 2, j - sz / 2, sz, sz
                 @graphics.fillRect rect, settings.colors.gridPoint
 
+
+    drawCarLines: (car) ->
+        if car.id != settings.myCar.id
+            return
+
+        @ctx.beginPath()
+        @ctx.moveTo car.trackPoints[0].x, car.trackPoints[0].y  # move to first point
+
+        for p in car.trackPoints
+            @graphics.drawCircle p, 0.2
+            @graphics.fill 'black'
+
+        @ctx.stroke()
+        @ctx.restore()
+
     updateCanvasSize: ->
-# Check settings.fullScreen
+#       Check settings.fullScreen
         if settings.fullScreen is true
             canvasWidth = $(window).width()
             canvasHeight = $(window).height()
@@ -359,6 +380,10 @@ class Visualizer
             @toolIntersectionBuilder.draw() # TODO: all tools
             @toolRoadbuilder.draw()
             @toolHighlighter.draw()
+            # ------------------------------------------------------------------------
+            # ADDING LINES THAT FOLLOW THE CARS
+            @drawCarLines car for id, car of @world.cars.all()
+            # ------------------------------------------------------------------------
             @graphics.restore()
         window.requestAnimationFrame @draw if @running
 

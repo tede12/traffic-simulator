@@ -29,11 +29,12 @@ settings =
 # signals settings
     showRedLights: true
     triangles: true     # false -> circles
-    carsNumber: 10
+    carsNumber: 5
 
 # car settings
     myCar:
         id: "MACCHINA"
         color: "#000000"
+        maxFollowPoints: 1000    # 3000 is the default value, 0 to disable
 
 module.exports = settings

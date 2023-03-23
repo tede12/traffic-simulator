@@ -31,9 +31,8 @@ class ToolRoadBuilder extends Tool
 
             car = new Car lane
             car.speed = 0.0
-            car.id = "MACCHINA"
-            # color black #000000
-            car.color = "#111111"
+            car.id = settings.myCar.id
+            car.color = settings.myCar.color
 
             @visualizer.world.addCar car
             e.stopImmediatePropagation()

@@ -39,7 +39,11 @@ class Graphics
         @moveTo source
         @lineTo target
 
-    drawSegment: (segment) ->
+    drawSegment: (segment, width = null, color = null) ->
+        if color                # Added by me
+            @stroke color
+        if width
+            @ctx.lineWidth = width
         @drawLine segment.source, segment.target
 
     drawCurve: (curve, width, color) ->

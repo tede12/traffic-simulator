@@ -21292,7 +21292,7 @@ waitForElements(['canvas', 'gui'], function() {
   //  $(document.body).append(canvas)
 
   // App code
-  console.log('App started');
+  console.log('App started --> ' + new Date().toLocaleTimeString());
   window.settings = settings;
   window.world = new World();
   world.load();
@@ -21699,7 +21699,7 @@ module.exports = uniqueId;
 
 },{}],14:[function(require,module,exports){
 'use strict';
-var Car, Trajectory, _, max, min, random, sqrt, uniqueId;
+var Car, Trajectory, _, max, min, random, settings, sqrt, uniqueId;
 
 ({max, min, random, sqrt} = Math);
 
@@ -21710,6 +21710,8 @@ _ = require('underscore');
 Trajectory = require('./trajectory');
 
 uniqueId = require('../helpers');
+
+settings = require('../settings');
 
 Car = (function() {
   class Car {
@@ -21728,6 +21730,7 @@ Car = (function() {
       this.alive = true;
       this.preferedLane = null;
       this.tooLongStop = 0;
+      this.trackPoints = [];
     }
 
     release() {
@@ -21782,8 +21785,8 @@ Car = (function() {
           this.alive = false;
         }
       }
+      // TODO: hacks, should have changed speed
       if (this.trajectory.nextCarDistance.distance < step) {
-        // TODO: hacks, should have changed speed
         console.log('bad IDM');
       }
       if (this.trajectory.timeToMakeTurn(step)) {
@@ -21848,6 +21851,17 @@ Car = (function() {
 
   Car.property('coords', {
     get: function() {
+      if (this.id === settings.myCar.id) {
+        if (this.alive && settings.myCar.maxFollowPoints > 0) {
+          this.trackPoints.push(this.trajectory.coords);
+          if (this.trackPoints.length > settings.myCar.maxFollowPoints) {
+            //                       keep only last n points
+            this.trackPoints = this.trackPoints.slice(this.trackPoints.length - settings.myCar.maxFollowPoints);
+          }
+        } else {
+          this.trackPoints = [];
+        }
+      }
       return this.trajectory.coords;
     }
   });
@@ -21880,7 +21894,7 @@ Car = (function() {
 module.exports = Car;
 
 
-},{"../helpers":13,"./trajectory":21,"underscore":7}],15:[function(require,module,exports){
+},{"../helpers":13,"../settings":23,"./trajectory":21,"underscore":7}],15:[function(require,module,exports){
 'use strict';
 var ControlSignals, random, settings,
   indexOf = [].indexOf;
@@ -22512,9 +22526,7 @@ Trajectory = (function() {
         return true;
       }
       intersection = this.nextIntersection;
-      if (!intersection) {
-        return false; // Added by me
-      }
+      //        if not intersection then return false # Added by me
       turnNumber = sourceLane.getTurnDirection(nextLane);
       sideId = sourceLane.road.targetSideId;
       return intersection.controlSignals.state[sideId][turnNumber];
@@ -22993,11 +23005,12 @@ settings = {
   // signals settings
   showRedLights: true,
   triangles: true, // false -> circles
-  carsNumber: 10,
+  carsNumber: 5,
   // car settings
   myCar: {
     id: "MACCHINA",
-    color: "#000000"
+    color: "#000000",
+    maxFollowPoints: 1000 // 3000 is the default value, 0 to disable
   }
 };
 
@@ -23067,7 +23080,13 @@ Graphics = class Graphics {
     return this.lineTo(target);
   }
 
-  drawSegment(segment) {
+  drawSegment(segment, width = null, color = null) {
+    if (color) { // Added by me
+      this.stroke(color);
+    }
+    if (width) {
+      this.ctx.lineWidth = width;
+    }
     return this.drawLine(segment.source, segment.target);
   }
 
@@ -23433,9 +23452,8 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
       lane = _.sample(road.lanes);
       car = new Car(lane);
       car.speed = 0.0;
-      car.id = "MACCHINA";
-      // color black #000000
-      car.color = "#111111";
+      car.id = settings.myCar.id;
+      car.color = settings.myCar.color;
       this.visualizer.world.addCar(car);
       return e.stopImmediatePropagation();
     }
@@ -23701,7 +23719,7 @@ Visualizer = (function() {
     }
 
     fixSignal(road) {
-      var k, len, len1, len10, len11, len2, len3, len4, len5, len6, len7, len8, len9, lights, m, n, o, p, q, r, ref, ref1, ref10, ref11, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, s, sideId, t, u, v, w, x;
+      var k, len, len1, len10, len11, len2, len3, len4, len5, len6, len7, len8, len9, lights, m, n, o, q, r, ref, ref1, ref10, ref11, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, s, sideId, t, u, v, w, x, y;
       sideId = road.targetSideId;
       lights = [true, true, true];
       // lights index: 2 (left) <- 0 (up) -> 1 (right)
@@ -23743,16 +23761,16 @@ Visualizer = (function() {
           }
           lights[2] = false; // block east-right signal
           ref4 = road.target.inRoads;
-          for (p = 0, len4 = ref4.length; p < len4; p++) {
-            r = ref4[p];
+          for (q = 0, len4 = ref4.length; q < len4; q++) {
+            r = ref4[q];
             if (r.sourceSideId === 2) { // and settings.triangles
               lights[2] = true;
             }
           }
           lights[1] = false; // block east-center signal
           ref5 = road.target.inRoads;
-          for (q = 0, len5 = ref5.length; q < len5; q++) {
-            r = ref5[q];
+          for (s = 0, len5 = ref5.length; s < len5; s++) {
+            r = ref5[s];
             if (r.sourceSideId === 1) {
               lights[1] = true;
             }
@@ -23761,24 +23779,24 @@ Visualizer = (function() {
         case 2: // North      OK
           lights[1] = false; // block north-center signal
           ref6 = road.target.inRoads;
-          for (s = 0, len6 = ref6.length; s < len6; s++) {
-            r = ref6[s];
+          for (t = 0, len6 = ref6.length; t < len6; t++) {
+            r = ref6[t];
             if (r.sourceSideId === 2) {
               lights[1] = true;
             }
           }
           lights[0] = false; // block north-left signal
           ref7 = road.target.inRoads;
-          for (t = 0, len7 = ref7.length; t < len7; t++) {
-            r = ref7[t];
+          for (u = 0, len7 = ref7.length; u < len7; u++) {
+            r = ref7[u];
             if (r.sourceSideId === 1) { // and settings.triangles
               lights[0] = true;
             }
           }
           lights[2] = false; // block north-right signal
           ref8 = road.target.inRoads;
-          for (u = 0, len8 = ref8.length; u < len8; u++) {
-            r = ref8[u];
+          for (v = 0, len8 = ref8.length; v < len8; v++) {
+            r = ref8[v];
             if (r.sourceSideId === 3) { // and settings.triangles
               lights[2] = true;
             }
@@ -23787,24 +23805,24 @@ Visualizer = (function() {
         case 3: // West
           lights[2] = false; // block west-right signal
           ref9 = road.target.inRoads;
-          for (v = 0, len9 = ref9.length; v < len9; v++) {
-            r = ref9[v];
+          for (w = 0, len9 = ref9.length; w < len9; w++) {
+            r = ref9[w];
             if (r.sourceSideId === 0) { // and settings.triangles
               lights[2] = true;
             }
           }
           lights[0] = false; // block west-left
           ref10 = road.target.inRoads;
-          for (w = 0, len10 = ref10.length; w < len10; w++) {
-            r = ref10[w];
+          for (x = 0, len10 = ref10.length; x < len10; x++) {
+            r = ref10[x];
             if (r.sourceSideId === 2) { // and settings.triangles
               lights[0] = true;
             }
           }
           lights[1] = false; // block west-center
           ref11 = road.target.inRoads;
-          for (x = 0, len11 = ref11.length; x < len11; x++) {
-            r = ref11[x];
+          for (y = 0, len11 = ref11.length; y < len11; y++) {
+            r = ref11[y];
             if (r.sourceSideId === 3) {
               lights[1] = true;
             }
@@ -23951,7 +23969,7 @@ Visualizer = (function() {
     }
 
     drawCar(car) {
-      var angle, boundRect, center, curve, l, rect, ref, style;
+      var angle, boundRect, center, curve, l, rect, ref, ref1, style;
       angle = car.direction;
       center = car.coords;
       rect = new Rect(0, 0, 1.1 * car.length, 1.7 * car.width);
@@ -23975,7 +23993,15 @@ Visualizer = (function() {
         this.ctx.fillStyle = "black";
         this.ctx.font = "1px Arial";
         this.ctx.fillText(car.id, center.x, center.y);
-        if ((curve = (ref = car.trajectory.temp) != null ? ref.lane : void 0) != null) {
+        if (car.id === settings.myCar.id) {
+          //                draw trajectory curve
+          if ((curve = (ref = car.trajectory.temp) != null ? ref.lane : void 0) != null) {
+            this.graphics.drawCurve(curve, 0.1, 'blue');
+          }
+          this.ctx.restore();
+          return;
+        }
+        if ((curve = (ref1 = car.trajectory.temp) != null ? ref1.lane : void 0) != null) {
           this.graphics.drawCurve(curve, 0.1, 'red');
         }
         return this.ctx.restore();
@@ -24005,9 +24031,26 @@ Visualizer = (function() {
       return results;
     }
 
+    drawCarLines(car) {
+      var k, len, p, ref;
+      if (car.id !== settings.myCar.id) {
+        return;
+      }
+      this.ctx.beginPath();
+      this.ctx.moveTo(car.trackPoints[0].x, car.trackPoints[0].y); // move to first point
+      ref = car.trackPoints;
+      for (k = 0, len = ref.length; k < len; k++) {
+        p = ref[k];
+        this.graphics.drawCircle(p, 0.2);
+        this.graphics.fill('black');
+      }
+      this.ctx.stroke();
+      return this.ctx.restore();
+    }
+
     updateCanvasSize() {
       var canvasHeight, canvasWidth;
-      // Check settings.fullScreen
+      //       Check settings.fullScreen
       if (settings.fullScreen === true) {
         canvasWidth = $(window).width();
         canvasHeight = $(window).height();
@@ -24024,7 +24067,7 @@ Visualizer = (function() {
     }
 
     draw(time) {
-      var car, delta, id, intersection, ref, ref1, ref2, ref3, road;
+      var car, delta, id, intersection, ref, ref1, ref2, ref3, ref4, road;
       delta = (time - this.previousTime) || 0;
       if (delta > 30) {
         if (delta > 100) {
@@ -24060,6 +24103,14 @@ Visualizer = (function() {
         this.toolIntersectionBuilder.draw(); // TODO: all tools
         this.toolRoadbuilder.draw();
         this.toolHighlighter.draw();
+        ref4 = this.world.cars.all();
+        for (id in ref4) {
+          car = ref4[id];
+          // ------------------------------------------------------------------------
+          // ADDING LINES THAT FOLLOW THE CARS
+          this.drawCarLines(car);
+        }
+        // ------------------------------------------------------------------------
         this.graphics.restore();
       }
       if (this.running) {

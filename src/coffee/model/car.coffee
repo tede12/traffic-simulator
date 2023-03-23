@@ -5,6 +5,7 @@ require '../helpers'
 _ = require 'underscore'
 Trajectory = require './trajectory'
 uniqueId = require '../helpers'
+settings = require '../settings'
 
 class Car
     constructor: (lane, position) ->
@@ -22,9 +23,21 @@ class Car
         @alive = true
         @preferedLane = null
         @tooLongStop = 0
+        @trackPoints = []
 
     @property 'coords',
-        get: -> @trajectory.coords
+        get: ->
+            if @id == settings.myCar.id
+                if @alive and settings.myCar.maxFollowPoints > 0
+                    @trackPoints.push @trajectory.coords
+                    if @trackPoints.length > settings.myCar.maxFollowPoints
+#                       keep only last n points
+                        @trackPoints = @trackPoints.slice(@trackPoints.length - settings.myCar.maxFollowPoints)
+                else
+                    @trackPoints = []
+
+            return @trajectory.coords
+
 
     @property 'speed',
         get: -> @_speed
@@ -79,7 +92,8 @@ class Car
             if @tooLongStop > 1000
                 @alive = false
         # TODO: hacks, should have changed speed
-        console.log 'bad IDM' if @trajectory.nextCarDistance.distance < step
+        if @trajectory.nextCarDistance.distance < step
+            console.log 'bad IDM'
 
         if @trajectory.timeToMakeTurn(step)
             return @alive = false if not @nextLane?

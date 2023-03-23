@@ -33,7 +33,7 @@ waitForElements ['canvas', 'gui'], ->
 #  $(document.body).append(canvas)
 
 # App code
-    console.log 'App started'
+    console.log 'App started --> ' + new Date().toLocaleTimeString()
     window.settings = settings
     window.world = new World()
     world.load()
