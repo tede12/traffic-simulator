@@ -22998,15 +22998,15 @@ settings = {
   defaultTimeFactor: 5,
   defaultZoomLevel: 6, // Change this value to change the default zoom level (default is 3)
   debug: true,
-  // See updateCanvasSize() in visualizer.coffee
+  //   See updateCanvasSize() in visualizer.coffee
   canvasWidth: 1400, // fullscreen == true -> $(window).width
   canvasHeight: 1100, // fullscreen == true -> $(window).height
   fullScreen: true,
-  // signals settings
+  //   signals settings
   showRedLights: true,
   triangles: true, // false -> circles
   carsNumber: 5,
-  // car settings
+  //   car settings
   myCar: {
     id: "MACCHINA",
     color: "#000000",
@@ -23698,7 +23698,6 @@ Visualizer = (function() {
       this._running = false;
       this.previousTime = 0;
       this.timeFactor = settings.defaultTimeFactor;
-      this.debug = settings.debug;
     }
 
     drawIntersection(intersection, alpha) {
@@ -23708,7 +23707,7 @@ Visualizer = (function() {
       this.ctx.lineWidth = 0.4;
       this.graphics.stroke(settings.colors.roadMarking);
       this.graphics.fillRect(intersection.rect, color, alpha);
-      if (this.debug) {
+      if (settings.debug) {
         this.ctx.save();
         this.ctx.fillStyle = 'black';
         this.ctx.font = '0.5px Arial';
@@ -23913,7 +23912,7 @@ Visualizer = (function() {
         this.graphics.fill(settings.colors.redLight);
       }
       this.ctx.restore();
-      if (this.debug) {
+      if (settings.debug) {
         this.ctx.save();
         this.ctx.fillStyle = "black";
         this.ctx.font = "1px Arial";
@@ -23956,7 +23955,7 @@ Visualizer = (function() {
         this.graphics.stroke(settings.colors.roadMarking);
       }
       this.ctx.restore();
-      if (this.debug) {
+      if (settings.debug) {
         this.ctx.save();
         this.ctx.fillStyle = "black";
         this.ctx.font = "1px Arial";
@@ -23988,7 +23987,7 @@ Visualizer = (function() {
       // @graphics.drawImage @carImage, rect
       this.graphics.fillRect(boundRect, style);
       this.graphics.restore();
-      if (this.debug) {
+      if (settings.debug) {
         this.ctx.save();
         this.ctx.fillStyle = "black";
         this.ctx.font = "1px Arial";

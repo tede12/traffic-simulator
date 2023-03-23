@@ -2,7 +2,7 @@
 
 settings =
     colors:
-        background: '#FFFFFF' # 97a1a1'
+        background: '#FFFFFF'  # 97a1a1'
         redLight: 'hsl(0, 100%, 50%)'
         greenLight: '#85ee00'
         intersection: '#586970'
@@ -18,23 +18,23 @@ settings =
     lightsFlipInterval: 160
     gridSize: 14
     defaultTimeFactor: 5
-    defaultZoomLevel: 6   # Change this value to change the default zoom level (default is 3)
-    debug : true
+    defaultZoomLevel: 6  # Change this value to change the default zoom level (default is 3)
+    debug: true
 
-    # See updateCanvasSize() in visualizer.coffee
+#   See updateCanvasSize() in visualizer.coffee
     canvasWidth: 1400    # fullscreen == true -> $(window).width
-    canvasHeight: 1100 # fullscreen == true -> $(window).height
+    canvasHeight: 1100   # fullscreen == true -> $(window).height
     fullScreen: true
 
-# signals settings
+#   signals settings
     showRedLights: true
-    triangles: true     # false -> circles
+    triangles: true  # false -> circles
     carsNumber: 5
 
-# car settings
+#   car settings
     myCar:
         id: "MACCHINA"
         color: "#000000"
-        maxFollowPoints: 1000    # 3000 is the default value, 0 to disable
+        maxFollowPoints: 1000  # 3000 is the default value, 0 to disable
 
 module.exports = settings

@@ -37,7 +37,6 @@ class Visualizer
         @_running = false
         @previousTime = 0
         @timeFactor = settings.defaultTimeFactor
-        @debug = settings.debug
 
     drawIntersection: (intersection, alpha) ->
         color = intersection.color or settings.colors.intersection
@@ -46,7 +45,7 @@ class Visualizer
         @graphics.stroke settings.colors.roadMarking
         @graphics.fillRect intersection.rect, color, alpha
 
-        if @debug
+        if settings.debug
             @ctx.save()
             @ctx.fillStyle = 'black'
             @ctx.font = '0.5px Arial'
@@ -233,7 +232,7 @@ class Visualizer
             @graphics.fill settings.colors.redLight
 
         @ctx.restore()
-        if @debug
+        if settings.debug
             @ctx.save()
             @ctx.fillStyle = "black"
             @ctx.font = "1px Arial"
@@ -274,7 +273,7 @@ class Visualizer
             @graphics.stroke settings.colors.roadMarking
         @ctx.restore()
 
-        if @debug
+        if settings.debug
             @ctx.save()
             @ctx.fillStyle = "black"
             @ctx.font = "1px Arial"
@@ -304,7 +303,7 @@ class Visualizer
         # @graphics.drawImage @carImage, rect
         @graphics.fillRect boundRect, style
         @graphics.restore()
-        if @debug
+        if settings.debug
             @ctx.save()
             @ctx.fillStyle = "black"
             @ctx.font = "1px Arial"
