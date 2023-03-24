@@ -9,8 +9,8 @@
    `npm install`
 
 2. Run 2 scripts in parallel  
-   `npm cstart`  
-   `npm start`
+   `npm run cstart`  
+   `npm run start`
 
 # Commands
 
