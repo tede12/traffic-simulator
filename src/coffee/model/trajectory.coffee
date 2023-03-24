@@ -85,7 +85,7 @@ class Trajectory
         if @timeToMakeTurn() and @canEnterIntersection() and @isValidTurn()
             @_startChangingLanes @car.popNextLane(), 0
         tempRelativePosition = @temp.position / @temp.lane?.length
-        gap = 2 * @car.length
+        gap = 3 * @car.length
         if @isChangingLanes and @temp.position > gap and not @current.free
             @current.release()
         if @isChangingLanes and @next.free and
