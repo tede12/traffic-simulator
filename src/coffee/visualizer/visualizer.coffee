@@ -48,7 +48,7 @@ class Visualizer
         if settings.debug
             @ctx.save()
             @ctx.fillStyle = 'black'
-            @ctx.font = '0.5px Arial'
+            @ctx.font = '1.0px Arial'
             center = intersection.rect.center()
             @ctx.fillText intersection.id, center.x, center.y - 1.0
             @ctx.restore()
