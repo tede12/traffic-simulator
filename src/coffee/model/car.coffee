@@ -7,7 +7,6 @@ Trajectory = require './trajectory'
 uniqueId = require '../helpers'
 settings = require '../settings'
 
-myCarID = "MACCHINA"
 class Car
     constructor: (lane, position) ->
         @id = uniqueId 'car' # @id = _.uniqueId 'car'
@@ -72,7 +71,7 @@ class Car
         return @maxAcceleration * coeff
 
     move: (delta) ->
-        if (@id == myCarID)
+        if (@id == settings.myCar.id)
             @moveMACCHINA(delta)
         else
             acceleration = @getAcceleration()

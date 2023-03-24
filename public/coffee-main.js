@@ -22435,7 +22435,7 @@ module.exports = savedMaps;
 
 },{}],15:[function(require,module,exports){
 'use strict';
-var Car, Trajectory, _, max, min, myCarID, random, settings, sqrt, uniqueId;
+var Car, Trajectory, _, max, min, random, settings, sqrt, uniqueId;
 
 ({max, min, random, sqrt} = Math);
 
@@ -22448,8 +22448,6 @@ Trajectory = require('./trajectory');
 uniqueId = require('../helpers');
 
 settings = require('../settings');
-
-myCarID = "MACCHINA";
 
 Car = (function() {
   class Car {
@@ -22496,7 +22494,7 @@ Car = (function() {
 
     move(delta) {
       var acceleration, currentLane, preferedLane, step, turnNumber;
-      if (this.id === myCarID) {
+      if (this.id === settings.myCar.id) {
         return this.moveMACCHINA(delta);
       } else {
         acceleration = this.getAcceleration();
@@ -23332,7 +23330,7 @@ Trajectory = (function() {
         this._startChangingLanes(this.car.popNextLane(), 0);
       }
       tempRelativePosition = this.temp.position / ((ref = this.temp.lane) != null ? ref.length : void 0);
-      gap = 3 * this.car.length;
+      gap = settings.carsGap * this.car.length;
       if (this.isChangingLanes && this.temp.position > gap && !this.current.free) {
         this.current.release();
       }
@@ -23830,6 +23828,7 @@ settings = {
   showRedLights: true,
   triangles: true, // false -> circles
   carsNumber: 5,
+  carsGap: 3,
   //   car settings
   myCar: {
     id: "MACCHINA",
@@ -24259,12 +24258,26 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   }
 
   mousedown(e) {
-    var cell, hoveredIntersection;
+    var car, cell, hoveredIntersection, hoveredLane, intersection, lane, road;
     boundMethodCheck(this, ToolRoadBuilder);
     cell = this.getCell(e);
     hoveredIntersection = this.getHoveredIntersection(cell);
     if (e.shiftKey && (hoveredIntersection != null)) {
       this.sourceIntersection = hoveredIntersection;
+      e.stopImmediatePropagation();
+    }
+    // Add car with specs in the middle of a lane
+    //        hoveredLane = @getHoveredLane cell
+    hoveredLane = this.getHoveredIntersection(cell);
+    if (e.ctrlKey && (hoveredLane != null)) {
+      intersection = this.getHoveredIntersection(cell);
+      road = _.sample(intersection.roads);
+      lane = _.sample(road.lanes);
+      car = new Car(lane);
+      car.speed = 0.0;
+      car.id = settings.myCar.id;
+      car.color = settings.myCar.color;
+      this.visualizer.world.addCar(car);
       return e.stopImmediatePropagation();
     }
   }
@@ -24415,13 +24428,16 @@ Tool = class Tool {
     }
   }
 
-  //    getHoveredLane: (cell, point) =>
+  // TODO could be needed for adding car in road-builder in the right lane and not in intersection
+  //    getHoveredLane: (cell) =>
   //        goodLanes = []
   //        roads = @visualizer.world.roads.all()
   //        for id, road of roads
   //            for roadLane in road.lanes
+  //                if roadLane.middleLine.center
+  //                    {}
 
-  //       return goodLanes[0] if goodLanes.length > 0
+  //        return goodLanes[0] if goodLanes.length > 0
   click(e) {}
 
   // Method code here
@@ -24517,7 +24533,7 @@ Visualizer = (function() {
       if (settings.debug) {
         this.ctx.save();
         this.ctx.fillStyle = 'black';
-        this.ctx.font = '1.5px Arial';
+        this.ctx.font = '1.0px Arial';
         center = intersection.rect.center();
         this.ctx.fillText(intersection.id, center.x, center.y - 1.0);
         return this.ctx.restore();

@@ -30,6 +30,7 @@ settings =
     showRedLights: true
     triangles: true  # false -> circles
     carsNumber: 5
+    carsGap: 3
 
 #   car settings
     myCar:
