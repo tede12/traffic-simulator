@@ -21323,6 +21323,7 @@ waitForElements(['canvas', 'gui'], function() {
   guiWorld.add(world, 'load');
   guiWorld.add(world, 'clear');
   guiWorld.add(world, 'generateMap');
+  guiWorld.add(world, 'addMyCar');
   guiVisualizer = gui.addFolder('visualizer');
   guiVisualizer.open();
   guiVisualizer.add(visualizer, 'running').listen();
@@ -22434,7 +22435,7 @@ module.exports = savedMaps;
 
 },{}],15:[function(require,module,exports){
 'use strict';
-var Car, Trajectory, _, max, min, random, settings, sqrt, uniqueId;
+var Car, Trajectory, _, max, min, myCarID, random, settings, sqrt, uniqueId;
 
 ({max, min, random, sqrt} = Math);
 
@@ -22447,6 +22448,8 @@ Trajectory = require('./trajectory');
 uniqueId = require('../helpers');
 
 settings = require('../settings');
+
+myCarID = "MACCHINA";
 
 Car = (function() {
   class Car {
@@ -22493,6 +22496,51 @@ Car = (function() {
 
     move(delta) {
       var acceleration, currentLane, preferedLane, step, turnNumber;
+      if (this.id === myCarID) {
+        return this.moveMACCHINA(delta);
+      } else {
+        acceleration = this.getAcceleration();
+        this.speed += acceleration * delta;
+        if (!this.trajectory.isChangingLanes && this.nextLane) {
+          currentLane = this.trajectory.current.lane;
+          turnNumber = currentLane.getTurnDirection(this.nextLane);
+          preferedLane = (function() {
+            switch (turnNumber) {
+              case 0:
+                return currentLane.leftmostAdjacent;
+              case 2:
+                return currentLane.rightmostAdjacent;
+              default:
+                return currentLane;
+            }
+          })();
+          if (preferedLane !== currentLane) {
+            this.trajectory.changeLane(preferedLane);
+          }
+        }
+        step = this.speed * delta + 0.5 * acceleration * delta ** 2;
+        // Added by me
+        if (step <= 0) {
+          this.tooLongStop += 1;
+          if (this.tooLongStop > 1000) {
+            this.alive = false;
+          }
+        }
+        // TODO: hacks, should have changed speed
+        if (this.trajectory.nextCarDistance.distance < step) {
+          console.log('bad IDM');
+        }
+        if (this.trajectory.timeToMakeTurn(step)) {
+          if (this.nextLane == null) {
+            return this.alive = false;
+          }
+        }
+        return this.trajectory.moveForward(step);
+      }
+    }
+
+    moveMACCHINA(delta) {
+      var acceleration, currentLane, preferedLane, step, turnNumber;
       acceleration = this.getAcceleration();
       this.speed += acceleration * delta;
       if (!this.trajectory.isChangingLanes && this.nextLane) {
@@ -22513,16 +22561,9 @@ Car = (function() {
         }
       }
       step = this.speed * delta + 0.5 * acceleration * delta ** 2;
-      // Added by me
-      if (step <= 0) {
-        this.tooLongStop += 1;
-        if (this.tooLongStop > 1000) {
-          this.alive = false;
-        }
-      }
-      // TODO: hacks, should have changed speed
       if (this.trajectory.nextCarDistance.distance < step) {
-        console.log('bad IDM');
+        this.speed === this.speed / 10;
+        step = this.speed * delta + 0.5 * acceleration * delta ** 2;
       }
       if (this.trajectory.timeToMakeTurn(step)) {
         if (this.nextLane == null) {
@@ -23291,7 +23332,7 @@ Trajectory = (function() {
         this._startChangingLanes(this.car.popNextLane(), 0);
       }
       tempRelativePosition = this.temp.position / ((ref = this.temp.lane) != null ? ref.length : void 0);
-      gap = 2 * this.car.length;
+      gap = 3 * this.car.length;
       if (this.isChangingLanes && this.temp.position > gap && !this.current.free) {
         this.current.release();
       }
@@ -23617,6 +23658,23 @@ World = (function() {
       return null;
     }
 
+    addMyCar(roadId) {
+      var car, lane, road;
+      roadId = "road1";
+      console.log(roadId);
+      road = this.getRoad(roadId);
+      if (road) {
+        lane = road.lanes[0];
+        this.removeCarById("MACCHINA");
+        this.carsNumber = this.carsNumber + 1;
+        car = new Car(lane);
+        car.speed = 1.0;
+        car.id = settings.myCar.id;
+        car.color = settings.myCar.color;
+        return this.addCar(car);
+      }
+    }
+
     clear() {
       return this.set({});
     }
@@ -23675,8 +23733,17 @@ World = (function() {
       return this.cars.get(id);
     }
 
+    removeCarById(id) {
+      var car;
+      car = this.getCar(id);
+      if (car) {
+        return this.removeCar(car);
+      }
+    }
+
     removeCar(car) {
-      return this.cars.pop(car);
+      this.cars.pop(car);
+      return car.release();
     }
 
     addIntersection(intersection) {
@@ -24192,26 +24259,12 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   }
 
   mousedown(e) {
-    var car, cell, hoveredIntersection, hoveredLane, intersection, lane, road;
+    var cell, hoveredIntersection;
     boundMethodCheck(this, ToolRoadBuilder);
     cell = this.getCell(e);
     hoveredIntersection = this.getHoveredIntersection(cell);
     if (e.shiftKey && (hoveredIntersection != null)) {
       this.sourceIntersection = hoveredIntersection;
-      e.stopImmediatePropagation();
-    }
-    // Add car with specs in the middle of a lane
-    //        hoveredLane = @getHoveredLane cell
-    hoveredLane = this.getHoveredIntersection(cell);
-    if (e.ctrlKey && (hoveredLane != null)) {
-      intersection = this.getHoveredIntersection(cell);
-      road = _.sample(intersection.roads);
-      lane = _.sample(road.lanes);
-      car = new Car(lane);
-      car.speed = 0.0;
-      car.id = settings.myCar.id;
-      car.color = settings.myCar.color;
-      this.visualizer.world.addCar(car);
       return e.stopImmediatePropagation();
     }
   }
@@ -24362,16 +24415,13 @@ Tool = class Tool {
     }
   }
 
-  // TODO could be needed for adding car in road-builder in the right lane and not in intersection
-  //    getHoveredLane: (cell) =>
+  //    getHoveredLane: (cell, point) =>
   //        goodLanes = []
   //        roads = @visualizer.world.roads.all()
   //        for id, road of roads
   //            for roadLane in road.lanes
-  //                if roadLane.middleLine.center
-  //                    {}
 
-  //        return goodLanes[0] if goodLanes.length > 0
+  //       return goodLanes[0] if goodLanes.length > 0
   click(e) {}
 
   // Method code here
@@ -24467,7 +24517,7 @@ Visualizer = (function() {
       if (settings.debug) {
         this.ctx.save();
         this.ctx.fillStyle = 'black';
-        this.ctx.font = '0.5px Arial';
+        this.ctx.font = '1.5px Arial';
         center = intersection.rect.center();
         this.ctx.fillText(intersection.id, center.x, center.y - 1.0);
         return this.ctx.restore();
