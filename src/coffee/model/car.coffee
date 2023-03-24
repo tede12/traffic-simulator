@@ -7,6 +7,7 @@ Trajectory = require './trajectory'
 uniqueId = require '../helpers'
 settings = require '../settings'
 
+myCarID = "MACCHINA"
 class Car
     constructor: (lane, position) ->
         @id = uniqueId 'car' # @id = _.uniqueId 'car'
@@ -71,6 +72,38 @@ class Car
         return @maxAcceleration * coeff
 
     move: (delta) ->
+        if (@id == myCarID)
+            @moveMACCHINA(delta)
+        else
+            acceleration = @getAcceleration()
+            @speed += acceleration * delta
+
+            if not @trajectory.isChangingLanes and @nextLane
+                currentLane = @trajectory.current.lane
+                turnNumber = currentLane.getTurnDirection @nextLane
+                preferedLane = switch turnNumber
+                    when 0 then currentLane.leftmostAdjacent
+                    when 2 then currentLane.rightmostAdjacent
+                    else
+                        currentLane
+                if preferedLane isnt currentLane
+                    @trajectory.changeLane preferedLane
+
+            step = @speed * delta + 0.5 * acceleration * delta ** 2
+            # Added by me
+            if step <= 0
+                @tooLongStop += 1
+                if @tooLongStop > 1000
+                    @alive = false
+            # TODO: hacks, should have changed speed
+            if @trajectory.nextCarDistance.distance < step
+                console.log 'bad IDM'
+
+            if @trajectory.timeToMakeTurn(step)
+                return @alive = false if not @nextLane?
+            @trajectory.moveForward step
+
+    moveMACCHINA: (delta) ->
         acceleration = @getAcceleration()
         @speed += acceleration * delta
 
@@ -86,14 +119,10 @@ class Car
                 @trajectory.changeLane preferedLane
 
         step = @speed * delta + 0.5 * acceleration * delta ** 2
-        # Added by me
-        if step <= 0
-            @tooLongStop += 1
-            if @tooLongStop > 1000
-                @alive = false
-        # TODO: hacks, should have changed speed
+
         if @trajectory.nextCarDistance.distance < step
-            console.log 'bad IDM'
+            @speed == @speed/10
+            step = @speed * delta + 0.5 * acceleration * delta ** 2
 
         if @trajectory.timeToMakeTurn(step)
             return @alive = false if not @nextLane?

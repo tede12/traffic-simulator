@@ -93,6 +93,20 @@ class World
                     previous = intersection
         null
 
+    addMyCar: (roadId) ->
+        roadId = "road1"
+        console.log(roadId)
+        road = @getRoad(roadId)
+        if road
+            lane = road.lanes[0]
+            @removeCarById("MACCHINA")
+            @carsNumber = @carsNumber + 1
+            car = new Car lane
+            car.speed = 1.0
+            car.id = settings.myCar.id
+            car.color = settings.myCar.color
+            @addCar(car)
+
     clear: ->
         @set {}
 
@@ -125,8 +139,14 @@ class World
     getCar: (id) ->
         @cars.get(id)
 
+    removeCarById: (id) ->
+        car = @getCar(id)
+        if car
+            @removeCar(car)
+
     removeCar: (car) ->
         @cars.pop car
+        car.release()
 
     addIntersection: (intersection) ->
         @intersections.put intersection

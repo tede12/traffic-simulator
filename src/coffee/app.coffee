@@ -63,6 +63,7 @@ waitForElements ['canvas', 'gui'], ->
     guiWorld.add world, 'load'
     guiWorld.add world, 'clear'
     guiWorld.add world, 'generateMap'
+    guiWorld.add(world, 'addMyCar')
     guiVisualizer = gui.addFolder 'visualizer'
     guiVisualizer.open()
     guiVisualizer.add(visualizer, 'running').listen()
