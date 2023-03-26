@@ -27,14 +27,8 @@ class ToolRoadBuilder extends Tool
         if e.ctrlKey and hoveredLane?
             intersection = @getHoveredIntersection cell
             road = _.sample intersection.roads
-            lane = _.sample road.lanes
-
-            car = new Car lane
-            car.speed = 0.0
-            car.id = settings.myCar.id
-            car.color = settings.myCar.color
-
-            @visualizer.world.addCar car
+            roadId = road.id
+            @visualizer.world.addMyCar roadId
             e.stopImmediatePropagation()
 
 

@@ -93,8 +93,8 @@ class World
                     previous = intersection
         null
 
-    addMyCar: (roadId) ->
-        roadId = "road1"
+    addMyCar: (roadId = "road1") ->
+
         console.log(roadId)
         road = @getRoad(roadId)
         if road

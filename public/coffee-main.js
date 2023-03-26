@@ -23655,9 +23655,8 @@ World = (function() {
       return null;
     }
 
-    addMyCar(roadId) {
+    addMyCar(roadId = "road1") {
       var car, lane, road;
-      roadId = "road1";
       console.log(roadId);
       road = this.getRoad(roadId);
       if (road) {
@@ -24305,7 +24304,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   }
 
   mousedown(e) {
-    var car, cell, hoveredIntersection, hoveredLane, intersection, lane, road;
+    var cell, hoveredIntersection, hoveredLane, intersection, road, roadId;
     boundMethodCheck(this, ToolRoadBuilder);
     cell = this.getCell(e);
     hoveredIntersection = this.getHoveredIntersection(cell);
@@ -24319,12 +24318,8 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
     if (e.ctrlKey && (hoveredLane != null)) {
       intersection = this.getHoveredIntersection(cell);
       road = _.sample(intersection.roads);
-      lane = _.sample(road.lanes);
-      car = new Car(lane);
-      car.speed = 0.0;
-      car.id = settings.myCar.id;
-      car.color = settings.myCar.color;
-      this.visualizer.world.addCar(car);
+      roadId = road.id;
+      this.visualizer.world.addMyCar(roadId);
       return e.stopImmediatePropagation();
     }
   }
