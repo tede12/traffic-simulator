@@ -72,7 +72,7 @@ class Car
 
     move: (delta) ->
         if (@id == settings.myCar.id)
-            @moveMACCHINA(delta)
+            @moveMyCar delta
         else
             acceleration = @getAcceleration()
             @speed += acceleration * delta
@@ -102,7 +102,7 @@ class Car
                 return @alive = false if not @nextLane?
             @trajectory.moveForward step
 
-    moveMACCHINA: (delta) ->
+    moveMyCar: (delta) ->
         acceleration = @getAcceleration()
         @speed += acceleration * delta
 
@@ -120,7 +120,7 @@ class Car
         step = @speed * delta + 0.5 * acceleration * delta ** 2
 
         if @trajectory.nextCarDistance.distance < step
-            @speed == @speed/10
+            @speed == @speed / 10
             step = @speed * delta + 0.5 * acceleration * delta ** 2
 
         if @trajectory.timeToMakeTurn(step)

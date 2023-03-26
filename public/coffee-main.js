@@ -21338,7 +21338,6 @@ waitForElements(['canvas', 'gui'], function() {
   guiSavedMaps = gui.addFolder('saved maps');
   for (mapName in savedMaps) {
     mapData = savedMaps[mapName];
-    console.log('adding map', mapName);
     guiSavedMaps.add(world, mapName);
   }
   return guiSavedMaps.open();
@@ -22495,7 +22494,7 @@ Car = (function() {
     move(delta) {
       var acceleration, currentLane, preferedLane, step, turnNumber;
       if (this.id === settings.myCar.id) {
-        return this.moveMACCHINA(delta);
+        return this.moveMyCar(delta);
       } else {
         acceleration = this.getAcceleration();
         this.speed += acceleration * delta;
@@ -22537,7 +22536,7 @@ Car = (function() {
       }
     }
 
-    moveMACCHINA(delta) {
+    moveMyCar(delta) {
       var acceleration, currentLane, preferedLane, step, turnNumber;
       acceleration = this.getAcceleration();
       this.speed += acceleration * delta;
@@ -23663,7 +23662,7 @@ World = (function() {
       road = this.getRoad(roadId);
       if (road) {
         lane = road.lanes[0];
-        this.removeCarById("MACCHINA");
+        this.removeCarById(settings.myCar.id);
         this.carsNumber = this.carsNumber + 1;
         car = new Car(lane);
         car.speed = 1.0;
@@ -23842,11 +23841,21 @@ module.exports = settings;
 
 },{}],25:[function(require,module,exports){
 'use strict';
-var Graphics, PI;
+var Curve, Graphics, PI, Point, Rect, Segment, settings;
 
 ({PI} = Math);
 
 require('../helpers.coffee');
+
+Point = require('../geom/point');
+
+Rect = require('../geom/rect');
+
+Curve = require('../geom/curve');
+
+Segment = require('../geom/segment');
+
+settings = require('../settings');
 
 Graphics = class Graphics {
   constructor(ctx) {
@@ -23897,7 +23906,7 @@ Graphics = class Graphics {
     return this.ctx.lineTo(point.x, point.y);
   }
 
-  drawLine(source, target) {
+  drawLine(source, target) { // when is called need to be called stroke or fill
     this.ctx.beginPath();
     this.moveTo(source);
     return this.lineTo(target);
@@ -23982,6 +23991,44 @@ Graphics = class Graphics {
     }
   }
 
+  drawPolylineFeatures(featureList, width, color) {
+    var featureName, featureType, middlePoint, text;
+    if (featureList[0] instanceof Point) { // Not necessary
+      this.ctx.moveTo(featureList[0].x, featureList[0].y);
+    }
+    text = '';
+    middlePoint = new Point(0, 0);
+    for (featureName in featureList) {
+      featureType = featureList[featureName];
+      if (featureName.startsWith('_')) {
+        text = featureName + ' ';
+      } else {
+        text = 'Coords: ';
+      }
+      if (featureType instanceof Point) {
+        this.drawCircle(featureType, width, color);
+        text += `at ${featureType.x}, ${featureType.y}`;
+        middlePoint = featureType;
+      } else if (featureType instanceof Segment) {
+        this.drawSegment(featureType, width, color);
+        middlePoint = new Point((featureType.source.x + featureType.target.x) / 2, (featureType.source.y + featureType.target.y) / 2);
+        text += `from ${featureType.source.x}, ${featureType.source.y} to ${featureType.target.x}, ${featureType.target.y}`;
+        this.stroke(color);
+      } else if (featureType instanceof Curve) {
+        this.drawCurve(featureType, width, color);
+      } else {
+        // TODO: add debug info
+        throw Error('Unknown feature type ->' + featureType);
+      }
+      if (settings.debug) {
+        this.ctx.fillStyle = "yellow";
+        this.ctx.font = "1px Arial";
+        this.ctx.fillText(text, middlePoint.x, middlePoint.y + 2.0);
+      }
+    }
+    return this.ctx.stroke();
+  }
+
   save() {
     return this.ctx.save();
   }
@@ -23995,7 +24042,7 @@ Graphics = class Graphics {
 module.exports = Graphics;
 
 
-},{"../helpers.coffee":13}],26:[function(require,module,exports){
+},{"../geom/curve":9,"../geom/point":10,"../geom/rect":11,"../geom/segment":12,"../helpers.coffee":13,"../settings":24}],26:[function(require,module,exports){
 'use strict';
 var Tool, ToolHighlighter, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -24466,7 +24513,7 @@ module.exports = Tool;
 
 },{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"jquery":6,"jquery-mousewheel":5,"underscore":7}],32:[function(require,module,exports){
 'use strict';
-var $, Graphics, PI, Point, Rect, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, abs, chroma, settings;
+var $, Graphics, PI, Point, Rect, Segment, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, abs, chroma, settings;
 
 ({PI} = Math);
 
@@ -24499,6 +24546,8 @@ Zoomer = require('./zoomer');
 settings = require('../settings');
 
 ({abs} = Math);
+
+Segment = require('../geom/segment');
 
 Visualizer = (function() {
   class Visualizer {
@@ -24535,7 +24584,7 @@ Visualizer = (function() {
         this.ctx.fillStyle = 'black';
         this.ctx.font = '1.0px Arial';
         center = intersection.rect.center();
-        this.ctx.fillText(intersection.id, center.x, center.y - 1.0);
+        this.ctx.fillText(intersection.id, center.x - 2.0, center.y - 1.0);
         return this.ctx.restore();
       }
     }
@@ -24742,7 +24791,7 @@ Visualizer = (function() {
         center = intersection.rect.center();
         flipInterval = Math.round(intersection.controlSignals.flipInterval * 100) / 100;
         phaseOffset = Math.round(intersection.controlSignals.phaseOffset * 100) / 100;
-        this.ctx.fillText(flipInterval + ' - ' + phaseOffset, center.x, center.y);
+        this.ctx.fillText(flipInterval + ' - ' + phaseOffset, center.x - 2.0, center.y);
         return this.ctx.restore();
       }
     }
@@ -24933,11 +24982,43 @@ Visualizer = (function() {
           this.drawCarLines(car);
         }
         // ------------------------------------------------------------------------
+        //            @drawTrackPath()
+        // ------------------------------------------------------------------------
         this.graphics.restore();
       }
       if (this.running) {
         return window.requestAnimationFrame(this.draw);
       }
+    }
+
+    drawTrackPath() {
+      var endPoint, i, k, lastPoint, newPoint, newTrackPath, ref, ref1, ref2, ref3, segment, startPoint, trackPath;
+      //       TODO: add curve when needed
+      startPoint = (ref = this.world.intersections.objects['intersection1']) != null ? ref.rect.center() : void 0;
+      endPoint = (ref1 = this.world.intersections.objects['intersection6']) != null ? ref1.rect.center() : void 0;
+      trackPath = [startPoint, 'intersection2', 'intersection3', 'intersection4', 'intersection5', endPoint];
+      newTrackPath = {
+        'startPoint': startPoint
+      };
+      lastPoint = startPoint;
+      for (i = k = 1, ref2 = trackPath.length - 2; (1 <= ref2 ? k <= ref2 : k >= ref2); i = 1 <= ref2 ? ++k : --k) {
+        newPoint = (ref3 = this.world.intersections.objects[trackPath[i]]) != null ? ref3.rect.center() : void 0;
+        if (newPoint === void 0) {
+          console.log('Intersection ' + trackPath[i] + ' not found');
+          return;
+        }
+        segment = new Segment(lastPoint, newPoint);
+        newTrackPath[trackPath[i]] = segment;
+        lastPoint = newPoint;
+        // if the last point add last segment and endPoint
+        if (i === trackPath.length - 2) {
+          segment = new Segment(lastPoint, endPoint);
+          newTrackPath['lastSegment'] = segment;
+          newTrackPath['endPoint'] = endPoint;
+        }
+      }
+      this.graphics.drawPolylineFeatures(newTrackPath, 0.3, 'blue');
+      return this.graphics.restore();
     }
 
     start() {
@@ -24973,7 +25054,7 @@ Visualizer = (function() {
 module.exports = Visualizer;
 
 
-},{"../geom/point":10,"../geom/rect":11,"../helpers":13,"../settings":24,"./graphics":25,"./highlighter":26,"./intersection-builder":27,"./intersection-mover":28,"./mover":29,"./road-builder":30,"./zoomer":33,"chroma-js":1,"jquery":6,"underscore":7}],33:[function(require,module,exports){
+},{"../geom/point":10,"../geom/rect":11,"../geom/segment":12,"../helpers":13,"../settings":24,"./graphics":25,"./highlighter":26,"./intersection-builder":27,"./intersection-mover":28,"./mover":29,"./road-builder":30,"./zoomer":33,"chroma-js":1,"jquery":6,"underscore":7}],33:[function(require,module,exports){
 'use strict';
 var Point, Rect, Tool, Zoomer, max, min, settings;
 

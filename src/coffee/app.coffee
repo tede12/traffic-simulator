@@ -77,7 +77,6 @@ waitForElements ['canvas', 'gui'], ->
     gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen()
     guiSavedMaps = gui.addFolder('saved maps')
     for mapName, mapData of savedMaps
-        console.log 'adding map', mapName
         guiSavedMaps.add(world, mapName)
     guiSavedMaps.open()
 

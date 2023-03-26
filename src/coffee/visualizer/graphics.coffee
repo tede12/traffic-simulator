@@ -2,6 +2,11 @@
 
 {PI} = Math
 require '../helpers.coffee'
+Point = require '../geom/point'
+Rect = require '../geom/rect'
+Curve = require '../geom/curve'
+Segment = require '../geom/segment'
+settings = require '../settings'
 
 class Graphics
     constructor: (@ctx) ->
@@ -34,7 +39,7 @@ class Graphics
     lineTo: (point) ->
         @ctx.lineTo point.x, point.y
 
-    drawLine: (source, target) ->
+    drawLine: (source, target) ->       # when is called need to be called stroke or fill
         @ctx.beginPath()
         @moveTo source
         @lineTo target
@@ -92,6 +97,40 @@ class Graphics
             for point in points[1..]
                 @lineTo point
             @ctx.closePath()
+
+    drawPolylineFeatures: (featureList, width, color) ->
+        @ctx.moveTo(featureList[0].x, featureList[0].y) if featureList[0] instanceof Point  # Not necessary
+
+        text = ''
+        middlePoint = new Point 0, 0
+
+        for featureName, featureType of featureList
+            if featureName.startsWith '_'
+                text = featureName + ' '
+            else
+                text = 'Coords: '
+
+            if featureType instanceof Point
+                @drawCircle featureType, width, color
+                text += "at #{featureType.x}, #{featureType.y}"
+                middlePoint = featureType
+            else if featureType instanceof Segment
+                @drawSegment featureType, width, color
+                middlePoint = new Point (featureType.source.x + featureType.target.x) / 2, (featureType.source.y + featureType.target.y) / 2
+                text += "from #{featureType.source.x}, #{featureType.source.y} to #{featureType.target.x}, #{featureType.target.y}"
+                @stroke color
+            else if featureType instanceof Curve
+                @drawCurve featureType, width, color
+                # TODO: add debug info
+            else
+                throw Error 'Unknown feature type ->' + featureType
+
+            if settings.debug
+                @ctx.fillStyle = "yellow"
+                @ctx.font = "1px Arial"
+                @ctx.fillText text, middlePoint.x, middlePoint.y + 2.0
+
+        @ctx.stroke()
 
     save: ->
         @ctx.save()

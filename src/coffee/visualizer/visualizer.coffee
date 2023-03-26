@@ -16,6 +16,7 @@ ToolHighlighter = require './highlighter'
 Zoomer = require './zoomer'
 settings = require '../settings'
 {abs} = Math
+Segment = require '../geom/segment'
 
 class Visualizer
     constructor: (@world) ->
@@ -50,7 +51,7 @@ class Visualizer
             @ctx.fillStyle = 'black'
             @ctx.font = '1.0px Arial'
             center = intersection.rect.center()
-            @ctx.fillText intersection.id, center.x, center.y - 1.0
+            @ctx.fillText intersection.id, center.x - 2.0, center.y - 1.0
             @ctx.restore()
 
     fixSignal: (road) ->
@@ -239,7 +240,7 @@ class Visualizer
             center = intersection.rect.center()
             flipInterval = Math.round(intersection.controlSignals.flipInterval * 100) / 100
             phaseOffset = Math.round(intersection.controlSignals.phaseOffset * 100) / 100
-            @ctx.fillText flipInterval + ' - ' + phaseOffset, center.x, center.y
+            @ctx.fillText flipInterval + ' - ' + phaseOffset, center.x - 2.0, center.y
             @ctx.restore()
 
     drawRoad: (road, alpha) ->
@@ -337,7 +338,7 @@ class Visualizer
             return
 
         @ctx.beginPath()
-        @ctx.moveTo car.trackPoints[0].x, car.trackPoints[0].y  # move to first point
+        @ctx.moveTo car.trackPoints[0].x, car.trackPoints[0].y # move to first point
 
         for p in car.trackPoints
             @graphics.drawCircle p, 0.2
@@ -383,8 +384,38 @@ class Visualizer
             # ADDING LINES THAT FOLLOW THE CARS
             @drawCarLines car for id, car of @world.cars.all()
             # ------------------------------------------------------------------------
+            #            @drawTrackPath()
+            # ------------------------------------------------------------------------
             @graphics.restore()
         window.requestAnimationFrame @draw if @running
+
+    drawTrackPath: ->
+#       TODO: add curve when needed
+        startPoint = @world.intersections.objects['intersection1']?.rect.center()
+        endPoint = @world.intersections.objects['intersection6']?.rect.center()
+
+        trackPath = [startPoint, 'intersection2', 'intersection3', 'intersection4', 'intersection5', endPoint]
+        newTrackPath = {'startPoint': startPoint}
+        lastPoint = startPoint
+
+        for i in [1..trackPath.length - 2]
+            newPoint = @world.intersections.objects[trackPath[i]]?.rect.center()
+            if newPoint is undefined
+                console.log 'Intersection ' + trackPath[i] + ' not found'
+                return
+
+            segment = new Segment lastPoint, newPoint
+            newTrackPath[trackPath[i]] = segment
+            lastPoint = newPoint
+
+            # if the last point add last segment and endPoint
+            if i == trackPath.length - 2
+                segment = new Segment lastPoint, endPoint
+                newTrackPath['lastSegment'] = segment
+                newTrackPath['endPoint'] = endPoint
+
+        @graphics.drawPolylineFeatures newTrackPath, 0.3, 'blue'
+        @graphics.restore()
 
     @property 'running',
         get: -> @_running

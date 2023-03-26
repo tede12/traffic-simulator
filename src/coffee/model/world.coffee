@@ -99,7 +99,7 @@ class World
         road = @getRoad(roadId)
         if road
             lane = road.lanes[0]
-            @removeCarById("MACCHINA")
+            @removeCarById(settings.myCar.id)
             @carsNumber = @carsNumber + 1
             car = new Car lane
             car.speed = 1.0
