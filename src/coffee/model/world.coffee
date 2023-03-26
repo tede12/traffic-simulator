@@ -93,12 +93,11 @@ class World
                     previous = intersection
         null
 
-    addMyCar: (roadId = "road1") ->
-
-        console.log(roadId)
+    addMyCar: (roadId, laneId=0) ->
         road = @getRoad(roadId)
+        console.log("world.addMyCar(roadId: #{roadId}, laneId: #{laneId})")
         if road
-            lane = road.lanes[0]
+            lane = road.lanes[laneId]
             @removeCarById(settings.myCar.id)
             @carsNumber = @carsNumber + 1
             car = new Car lane

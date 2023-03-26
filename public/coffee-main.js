@@ -21323,7 +21323,6 @@ waitForElements(['canvas', 'gui'], function() {
   guiWorld.add(world, 'load');
   guiWorld.add(world, 'clear');
   guiWorld.add(world, 'generateMap');
-  guiWorld.add(world, 'addMyCar');
   guiVisualizer = gui.addFolder('visualizer');
   guiVisualizer.open();
   guiVisualizer.add(visualizer, 'running').listen();
@@ -23655,12 +23654,12 @@ World = (function() {
       return null;
     }
 
-    addMyCar(roadId = "road1") {
+    addMyCar(roadId, laneId = 0) {
       var car, lane, road;
-      console.log(roadId);
       road = this.getRoad(roadId);
+      console.log(`world.addMyCar(roadId: ${roadId}, laneId: ${laneId})`);
       if (road) {
-        lane = road.lanes[0];
+        lane = road.lanes[laneId];
         this.removeCarById(settings.myCar.id);
         this.carsNumber = this.carsNumber + 1;
         car = new Car(lane);
