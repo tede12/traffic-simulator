@@ -6,6 +6,9 @@ _ = require 'underscore'
 Lane = require './lane'
 settings = require '../settings'
 uniqueId = require '../helpers'
+Rect = require '../geom/rect'
+Segment = require '../geom/segment'
+Point = require '../geom/point'
 
 
 class Road
@@ -35,6 +38,27 @@ class Road
 
     @property 'rightmostLane',
         get: -> @lanes[0]
+
+    @property 'stringDirection',
+        get: ->
+            if @lanes[0].stringDirection in ['up', 'down']
+                return 'vertical'
+            else
+                return 'horizontal'
+
+    @property 'middleLine',
+        get: ->
+            if @stringDirection is 'horizontal'
+                return new Segment(new Point(@rect.x, @rect.y + @rect.height() / 2), new Point(@rect.x + @rect.width(), @rect.y + @rect.height() / 2))
+            else
+                return new Segment(new Point(@rect.x + @rect.width() / 2, @rect.y), new Point(@rect.x + @rect.width() / 2, @rect.y + @rect.height()))
+
+    @property 'rect',
+        get: ->
+            if @stringDirection is 'horizontal'
+                return new Rect(@sourceSide.source.x, @sourceSide.source.y, @targetSide.target.x - @sourceSide.source.x, settings.gridSize / 2)
+            else
+                return new Rect(@sourceSide.source.x, @sourceSide.source.y, settings.gridSize / 2, @targetSide.target.y - @sourceSide.source.y)
 
     getTurnDirection: (other) ->
         throw Error 'invalid roads' if @target isnt other.source

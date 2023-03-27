@@ -34,4 +34,11 @@
 ### BUGS
 - [ ] Fix blocked cars (see on .move() method of Car class)
 - [ ] Check algorithm for car generation and trajectory
-- 
+
+
+# TIPS
+drawSegment must me called like this:
+```coffeescript
+@graphics.drawSegment(myRoad.middleLine)
+@graphics.stroke 'green'
+```

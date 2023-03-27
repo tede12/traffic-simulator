@@ -7,6 +7,9 @@ _ = require 'underscore'
 chroma = require 'chroma-js'
 Point = require '../geom/point'
 Rect = require '../geom/rect'
+Segment = require '../geom/segment'
+Intersection = require '../model/intersection'
+
 Graphics = require './graphics'
 ToolMover = require './mover'
 ToolIntersectionMover = require './intersection-mover'
@@ -15,8 +18,6 @@ ToolRoadBuilder = require './road-builder'
 ToolHighlighter = require './highlighter'
 Zoomer = require './zoomer'
 settings = require '../settings'
-{abs} = Math
-Segment = require '../geom/segment'
 
 class Visualizer
     constructor: (@world) ->
@@ -159,7 +160,6 @@ class Visualizer
                     lights[c] = -1
                 c += 1
 
-
         # Draw signals 1 is Green, 0 is Red, -1 is Hidden
         if lights[0] == 1
             if settings.triangles
@@ -259,8 +259,7 @@ class Visualizer
         @graphics.stroke settings.colors.roadMarking
         @ctx.restore()
 
-        @graphics.polyline sourceSide.source, sourceSide.target,
-                targetSide.source, targetSide.target
+        @graphics.polyline sourceSide.source, sourceSide.target, targetSide.source, targetSide.target
         @graphics.fill settings.colors.road, alpha
 
         @ctx.save()
@@ -272,16 +271,33 @@ class Visualizer
             @ctx.lineDashOffset = 1.5 * dashSize
             @ctx.setLineDash [dashSize]
             @graphics.stroke settings.colors.roadMarking
+
+        @ctx.restore()
+
+        @ctx.save()
+        if settings.debug
+#           Draw lane ids
+            for lane in road.lanes
+                @ctx.fillStyle = "black"
+                @ctx.font = "1px Arial"
+                center = lane.rightBorder.center
+                if lane.stringDirection in ['left', 'right']
+                    # todo fix with middle line position
+                    @ctx.fillText lane.id, center.x, center.y + 2.0
+                else
+                    @ctx.fillText lane.id, center.x, center.y - 2.0
+
         @ctx.restore()
 
         if settings.debug
+#           Draw road ids
             @ctx.save()
             @ctx.fillStyle = "black"
             @ctx.font = "1px Arial"
             center1 = road.lanes[0].middleLine.center
             center2 = road.lanes[1].middleLine.center
-            center = new Point (center1.x + center2.x) / 2, (center1.y + center2.y) / 2
-            @ctx.fillText road.id, center.x, center.y
+            newCenter = new Point (center1.x + center2.x) / 2, (center1.y + center2.y) / 2
+            @ctx.fillText road.id, newCenter.x, newCenter.y
             @ctx.restore()
 
     drawCar: (car) ->
@@ -341,8 +357,10 @@ class Visualizer
         @ctx.moveTo car.trackPoints[0].x, car.trackPoints[0].y # move to first point
 
         for p in car.trackPoints
-            @graphics.drawCircle p, 0.2
-            @graphics.fill 'black'
+# center, radius, width = 0.1, color, fill = false
+            @graphics.drawCircle p, 0.2, 0.1, settings.colors.carLine, true
+            @graphics.fill settings.colors.carLine
+        #            @graphics.stroke settings.colors.carLine
 
         @ctx.stroke()
         @ctx.restore()
@@ -382,28 +400,104 @@ class Visualizer
             @toolHighlighter.draw()
             # ------------------------------------------------------------------------
             # ADDING LINES THAT FOLLOW THE CARS
+            @graphics.save()
             @drawCarLines car for id, car of @world.cars.all()
             # ------------------------------------------------------------------------
-            #            @drawTrackPath()
+            @drawTrackPath()
             # ------------------------------------------------------------------------
             @graphics.restore()
         window.requestAnimationFrame @draw if @running
 
+    checkIfPointOrIntersection: (obj) ->
+        if obj instanceof Point
+# check in all intersections and find the one that contains the point
+            _rect = new Rect obj.x, obj.y, 0.1, 0.1
+            for id, intersection of @world.intersections.all()
+                if intersection.rect.containsRect _rect
+                    obj = intersection
+                    break
+        else if obj instanceof Intersection
+            {}
+        else
+            obj = @world.intersections.objects[obj]
+        return obj
+
+
+    getDirectionGivenIntersections: (intersection1, intersection2) ->
+        intersection1 = @checkIfPointOrIntersection(intersection1)
+        intersection2 = @checkIfPointOrIntersection(intersection2)
+        if intersection1 is undefined or intersection2 is undefined
+            console.log 'Intersection not found'
+            return
+
+        if intersection1.rect.center().x < intersection2.rect.center().x
+            return 'right'
+        else if intersection1.rect.center().x > intersection2.rect.center().x
+            return 'left'
+        else if intersection1.rect.center().y < intersection2.rect.center().y
+            return 'down'
+        else if intersection1.rect.center().y > intersection2.rect.center().y
+            return 'up'
+
+    checkBeforeAndNextPath: (trackPath, currIdx) ->
+#        beforePath = trackPath[currIdx - 1]
+        nextPath = trackPath[currIdx + 1]
+
+        #        if beforePath is undefined
+        #            beforePath = trackPath[currIdx]
+        if nextPath is undefined
+            nextPath = trackPath[currIdx]
+
+        currPath = @checkIfPointOrIntersection(trackPath[currIdx])
+        #        if beforePath
+        #            beforePath = @checkIfPointOrIntersection(beforePath)
+        if nextPath
+            nextPath = @checkIfPointOrIntersection(nextPath)
+
+        if currPath and nextPath
+#            console.log 'currPath and nextPath of trackPath: idx = ' + currIdx
+            return @getDirectionGivenIntersections(currPath, nextPath)
+        else
+            throw new Error 'Something went wrong in checkBeforeAndNextPath'
+
+    getIntersectionLaneByDirection: (intersection, direction) ->
+        roads = intersection.roads # roads are going out of the intersection
+        myLanes = []
+
+        for road in roads
+            for lane in road.lanes
+                if lane.stringDirection == direction
+                    myLanes.push(lane)
+        #                    return lane
+        return myLanes[0]
+#        throw new Error 'Cannot find lane for direction ' + direction + ' in intersection ' + intersection.id
+
     drawTrackPath: ->
 #       TODO: add curve when needed
         startPoint = @world.intersections.objects['intersection1']?.rect.center()
-        endPoint = @world.intersections.objects['intersection6']?.rect.center()
+        endPoint = @world.intersections.objects['intersection9']?.rect.center()
+        if startPoint is undefined or endPoint is undefined
+            return
 
-        trackPath = [startPoint, 'intersection2', 'intersection3', 'intersection4', 'intersection5', endPoint]
+        trackPath = [startPoint, 'intersection2', 'intersection3', 'intersection4', 'intersection5', 'intersection6',
+            endPoint]
         newTrackPath = {'startPoint': startPoint}
         lastPoint = startPoint
 
+        dir = @checkBeforeAndNextPath(trackPath, 0)
+        lane = @getIntersectionLaneByDirection(@world.intersections.objects['intersection1'], dir)
+
         for i in [1..trackPath.length - 2]
-            newPoint = @world.intersections.objects[trackPath[i]]?.rect.center()
+            intersect = @world.intersections.objects[trackPath[i]]
+            newPoint = intersect?.rect.center()
             if newPoint is undefined
                 console.log 'Intersection ' + trackPath[i] + ' not found'
                 return
 
+            dir = @checkBeforeAndNextPath(trackPath, i)
+            lane = @getIntersectionLaneByDirection(intersect, dir)
+
+            # good version
             segment = new Segment lastPoint, newPoint
             newTrackPath[trackPath[i]] = segment
             lastPoint = newPoint

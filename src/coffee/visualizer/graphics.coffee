@@ -45,11 +45,11 @@ class Graphics
         @lineTo target
 
     drawSegment: (segment, width = null, color = null) ->
-        if color                # Added by me
-            @stroke color
         if width
             @ctx.lineWidth = width
         @drawLine segment.source, segment.target
+        if color                # Added by me
+            @stroke color
 
     drawCurve: (curve, width, color) ->
         pointsNumber = 10
@@ -99,7 +99,7 @@ class Graphics
             @ctx.closePath()
 
     drawPolylineFeatures: (featureList, width, color) ->
-        @ctx.moveTo(featureList[0].x, featureList[0].y) if featureList[0] instanceof Point  # Not necessary
+        @ctx.moveTo(featureList[0].x, featureList[0].y) if featureList[0] instanceof Point # Not necessary
 
         text = ''
         middlePoint = new Point 0, 0
@@ -121,7 +121,7 @@ class Graphics
                 @stroke color
             else if featureType instanceof Curve
                 @drawCurve featureType, width, color
-                # TODO: add debug info
+#               TODO: add debug info
             else
                 throw Error 'Unknown feature type ->' + featureType
 
