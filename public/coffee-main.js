@@ -22465,6 +22465,8 @@ Car = (function() {
       this.preferedLane = null;
       this.tooLongStop = 0;
       this.trackPoints = [];
+      this.path = [];
+      this.path_index = 0;
     }
 
     release() {
@@ -22570,7 +22572,12 @@ Car = (function() {
     }
 
     pickNextRoad() {
-      var currentLane, intersection, nextRoad, possibleRoads;
+      var currentLane, i, intersection, len, nextRoad, possibleRoads, road;
+      if (this.id === settings.myCar.id) {
+        if (this.path.length > 0) {
+          this.updatePath();
+        }
+      }
       intersection = this.trajectory.nextIntersection;
       currentLane = this.trajectory.current.lane;
       possibleRoads = intersection.roads.filter(function(x) {
@@ -22579,7 +22586,20 @@ Car = (function() {
       if (possibleRoads.length === 0) {
         return null;
       }
-      return nextRoad = _.sample(possibleRoads);
+      if (this.path.length > 0) {
+        if (this.id === settings.myCar.id) {
+          for (i = 0, len = possibleRoads.length; i < len; i++) {
+            road = possibleRoads[i];
+            if (road.target.id === this.path[0].id) {
+              nextRoad = road;
+              return nextRoad;
+            }
+          }
+        }
+      } else {
+        nextRoad = _.sample(possibleRoads);
+      }
+      return nextRoad;
     }
 
     pickNextLane() {
@@ -22617,6 +22637,16 @@ Car = (function() {
       this.nextLane = null;
       this.preferedLane = null;
       return nextLane;
+    }
+
+    setPath(intersections) {
+      return this.path = intersections;
+    }
+
+    updatePath() {
+      var nextIntersection;
+      nextIntersection = this.path.shift();
+      this.trajectory.setNextIntersection(intersection);
     }
 
   };
@@ -23328,6 +23358,10 @@ Trajectory = (function() {
       this.isChangingLanes = false;
     }
 
+    setNextIntersection(intersection) {
+      return this.current.lane.road.target = intersection;
+    }
+
     isValidTurn() {
       var nextLane, sourceLane, turnNumber;
       //TODO right turn is only allowed from the right lane
@@ -23713,10 +23747,10 @@ World = (function() {
       return null;
     }
 
-    addMyCar(roadId, laneId = 0) {
-      var car, lane, road;
+    addMyCar(roadId, laneId = 0, myCarPath = []) {
+      var car, i, intersectionId, lane, len, road;
       road = this.getRoad(roadId);
-      console.log(`world.addMyCar(roadId: ${roadId}, laneId: ${laneId})`);
+      console.log(`world.addMyCar(roadId: ${roadId}, laneId: ${laneId}, myCarPath: ${myCarPath})`);
       if (road) {
         lane = road.lanes[laneId];
         this.removeCarById(settings.myCar.id);
@@ -23725,7 +23759,20 @@ World = (function() {
         car.speed = 1.0;
         car.id = settings.myCar.id;
         car.color = settings.myCar.color;
+        for (i = 0, len = myCarPath.length; i < len; i++) {
+          intersectionId = myCarPath[i];
+          this.addIntersectionToMyCarPath(intersectionId, car);
+        }
         return this.addCar(car);
+      }
+    }
+
+    addIntersectionToMyCarPath(intersectionId, car) {
+      var intersection;
+      intersection = this.getIntersection(intersectionId);
+      console.log(`world.addIntersectionToMyCarPath(intersectionId: ${intersectionId}, car: ${car.id})`);
+      if (intersection) {
+        car.path.push(intersection);
       }
     }
 
