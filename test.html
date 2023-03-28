@@ -9,23 +9,8 @@
 <body style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
 <h1 style="text-align: center">Smart Traffic Simulator</h1>
 <div>
-        <h2>AddMyCar menu:</h2>
-        <label for="roadId">Enter RoadId:</label>
-        <select id="roadId" name="roadId">
-            <option value="">Select a road</option>
-        </select>
-
-        <label for="laneId">Choose lane:</label>
-        <select id="laneId" name="laneId">
-            <option value=0>Left</option>
-            <option value=1>Right</option>
-        </select>
-
-        <button type="button" onclick="client_addMyCar()">Submit</button>
-</div>
-<div>
     <h2>Choose path for MyCar:</h2>
-    <label for="intersectionId">Enter RoadId:</label>
+    <label for="intersectionId">Select intersection:</label>
     <select id="intersectionId" name="intersectionId">
         <option value="">Select intersection</option>
     </select>
@@ -34,20 +19,29 @@
     <button type="button" onclick="client_addIntersectionToMyCarPath()">Add intersection to path</button>
 </div>
 
+<div>
+        <h2>AddMyCar menu:</h2>
+        <label for="roadId">Select RoadId:</label>
+        <select id="roadId" name="roadId">
+            <option value="">Select road</option>
+        </select>
+
+        <label for="laneId">Select lane:</label>
+        <select id="laneId" name="laneId">
+            <option value=0>Left</option>
+            <option value=1>Right</option>
+        </select>
+
+        <button type="button" onclick="client_addMyCar()">Submit</button>
+</div>
+
+
 <canvas id="canvas"
         style="position: absolute; padding-bottom: 0; margin-bottom: 0; width: 100%; height: 100%;"></canvas>
 <div id="gui" style="position: absolute; top: 0; right: 0;"></div>
 <script src="./public/coffee-main.js"></script>
 <script>
 
-    client_roads = world.roads.objects
-    let selectRoads = document.getElementById("roadId")
-    for(let key in client_roads){
-        let option = document.createElement("option");
-        option.value = key;
-        option.text = key;
-        selectRoads.add(option)
-    }
 
     client_intersections = world.intersections.objects
     myCarPath = []
@@ -57,6 +51,7 @@
         option.value = key;
         option.text = key;
         selectIntersection.add(option)
+
     }
 
     function client_addIntersectionToMyCarPath(){
@@ -66,6 +61,15 @@
         li.appendChild(document.createTextNode(intersectionId));
         ul.appendChild(li);
         myCarPath.push(intersectionId)
+    }
+
+    client_roads = world.roads.objects
+    let selectRoads = document.getElementById("roadId")
+    for(let key in client_roads){
+        let option = document.createElement("option");
+        option.value = key;
+        option.text = key;
+        selectRoads.add(option)
     }
 
     function client_addMyCar(){
