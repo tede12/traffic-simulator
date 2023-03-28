@@ -61,7 +61,7 @@ function build() {
         .pipe(sourcemaps.write('.'))       // write the source map file to the same directory as the bundle
         .pipe(gulp.dest('./public'))
         // Create the minified file
-        .pipe(_uglify());                // uglify could be removed for faster build
+        //.pipe(_uglify());                // uglify could be removed for faster build
     // .pipe(notify('build completed'));
 }
 

@@ -9,6 +9,7 @@
 <body style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
 <h1 style="text-align: center">Smart Traffic Simulator</h1>
 <div>
+        <h2>AddMyCar menu:</h2>
         <label for="roadId">Enter RoadId:</label>
         <select id="roadId" name="roadId">
             <option value="">Select a road</option>
@@ -22,25 +23,58 @@
 
         <button type="button" onclick="client_addMyCar()">Submit</button>
 </div>
+<div>
+    <h2>Choose path for MyCar:</h2>
+    <label for="intersectionId">Enter RoadId:</label>
+    <select id="intersectionId" name="intersectionId">
+        <option value="">Select intersection</option>
+    </select>
+    <ul id="intersectionsList"></ul>
+
+    <button type="button" onclick="client_addIntersectionToMyCarPath()">Add intersection to path</button>
+</div>
+
 <canvas id="canvas"
         style="position: absolute; padding-bottom: 0; margin-bottom: 0; width: 100%; height: 100%;"></canvas>
 <div id="gui" style="position: absolute; top: 0; right: 0;"></div>
 <script src="./public/coffee-main.js"></script>
 <script>
-    function client_addMyCar(){
-        let roadId = document.getElementById("roadId").value;
-        let laneId = document.getElementById("laneId").value;
-        world.addMyCar(roadId, laneId)
-    }
 
-    cliet_roads = world.roads.objects
+    client_roads = world.roads.objects
     let selectRoads = document.getElementById("roadId")
-    for(let key in cliet_roads){
+    for(let key in client_roads){
         let option = document.createElement("option");
         option.value = key;
         option.text = key;
         selectRoads.add(option)
     }
+
+    client_intersections = world.intersections.objects
+    myCarPath = []
+    let selectIntersection = document.getElementById("intersectionId")
+    for(let key in client_intersections){
+        let option = document.createElement("option");
+        option.value = key;
+        option.text = key;
+        selectIntersection.add(option)
+    }
+
+    function client_addIntersectionToMyCarPath(){
+        let intersectionId = document.getElementById("intersectionId").value;
+        let ul = document.getElementById("intersectionsList");
+        let li = document.createElement("li");
+        li.appendChild(document.createTextNode(intersectionId));
+        ul.appendChild(li);
+        myCarPath.push(intersectionId)
+    }
+
+    function client_addMyCar(){
+        let roadId = document.getElementById("roadId").value;
+        let laneId = document.getElementById("laneId").value;
+        world.addMyCar(roadId, laneId, myCarPath)
+    }
+
+
 
 </script>
 </body>
