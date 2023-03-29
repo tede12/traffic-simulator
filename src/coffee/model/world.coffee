@@ -93,9 +93,9 @@ class World
                     previous = intersection
         null
 
-    addMyCar: (roadId, laneId=0,myCarPath=[]) ->
+    addMyCar: (roadId, laneId=0) ->
         road = @getRoad(roadId)
-        console.log("world.addMyCar(roadId: #{roadId}, laneId: #{laneId}, myCarPath: #{myCarPath})")
+        console.log("world.addMyCar(roadId: #{roadId}, laneId: #{laneId})")
         if road
             lane = road.lanes[laneId]
             @removeCarById(settings.myCar.id)
@@ -104,16 +104,7 @@ class World
             car.speed = 1.0
             car.id = settings.myCar.id
             car.color = settings.myCar.color
-            for intersectionId in myCarPath
-                @addIntersectionToMyCarPath(intersectionId, car)
             @addCar(car)
-
-    addIntersectionToMyCarPath: (intersectionId,car) ->
-        intersection = @getIntersection(intersectionId)
-        console.log("world.addIntersectionToMyCarPath(intersectionId: #{intersectionId}, car: #{car.id})")
-        if intersection
-            car.path.push(intersection)
-        return
 
     clear: ->
         @set {}

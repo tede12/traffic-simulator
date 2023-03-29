@@ -7,8 +7,6 @@ Trajectory = require './trajectory'
 uniqueId = require '../helpers'
 settings = require '../settings'
 
-
-
 class Car
     constructor: (lane, position) ->
         @id = uniqueId 'car' # @id = _.uniqueId 'car'
@@ -26,8 +24,6 @@ class Car
         @preferedLane = null
         @tooLongStop = 0
         @trackPoints = []
-        @path = []
-        @path_index = 0
 
     @property 'coords',
         get: ->
@@ -132,23 +128,12 @@ class Car
         @trajectory.moveForward step
 
     pickNextRoad: ->
-        if @id == settings.myCar.id
-            if @path.length > 0
-                this.updatePath()
         intersection = @trajectory.nextIntersection
         currentLane = @trajectory.current.lane
         possibleRoads = intersection.roads.filter (x) ->
             x.target isnt currentLane.road.source
         return null if possibleRoads.length is 0
-        if @path.length > 0
-            if @id == settings.myCar.id
-                for road in possibleRoads
-                    if road.target.id == @path[0].id
-                        nextRoad = road
-                        return nextRoad
-        else
-            nextRoad = _.sample possibleRoads
-        return nextRoad
+        nextRoad = _.sample possibleRoads
 
     pickNextLane: ->
         throw Error 'next lane is already chosen' if @nextLane
@@ -170,13 +155,5 @@ class Car
         @nextLane = null
         @preferedLane = null
         return nextLane
-
-    setPath: (intersections) ->
-        @path = intersections
-
-    updatePath: () ->
-        nextIntersection = @path.shift()
-        @trajectory.setNextIntersection(intersection)
-        return
 
 module.exports = Car

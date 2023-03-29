@@ -47,9 +47,6 @@ class Trajectory
     @property 'previousIntersection',
         get: -> @current.lane.road.source
 
-    setNextIntersection: (intersection) ->
-        @current.lane.road.target = intersection
-
     isValidTurn: ->
 #TODO right turn is only allowed from the right lane
         nextLane = @car.nextLane
