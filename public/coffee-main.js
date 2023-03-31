@@ -21562,6 +21562,17 @@ Rect = class Rect {
     return (this.left() <= (ref = point.x) && ref <= this.right()) && (this.top() <= (ref1 = point.y) && ref1 <= this.bottom());
   }
 
+  //    containsPointDirectional: (point, direction) ->
+  //        if direction == 'left'
+  //            return @left() >= point.x >= @right() and @top() <= point.y <= @bottom()
+  //        else if direction == 'right'
+  //            return @left() <= point.x <= @right() and @top() <= point.y <= @bottom()
+  //        else if direction == 'up'
+  //            return @left() <= point.x <= @right() and @top() >= point.y >= @bottom()
+  //        else if direction == 'down'
+  //            return @left() <= point.x <= @right() and @top() <= point.y <= @bottom()
+  //        else
+  //            throw Error 'direction error'
   containsRect(rect) {
     return this.left() <= rect.left() && rect.right() <= this.right() && this.top() <= rect.top() && rect.bottom() <= this.bottom();
   }
@@ -22646,7 +22657,7 @@ Car = (function() {
     updatePath() {
       var nextIntersection;
       nextIntersection = this.path.shift();
-      this.trajectory.setNextIntersection(intersection);
+      this.trajectory.setNextIntersection(nextIntersection);
     }
 
   };
@@ -22959,7 +22970,7 @@ module.exports = LanePosition;
 
 },{"../helpers":13,"underscore":7}],19:[function(require,module,exports){
 'use strict';
-var Lane, Segment, _, uniqueId;
+var Lane, Rect, Segment, _, uniqueId;
 
 require('../helpers');
 
@@ -22968,6 +22979,8 @@ _ = require('underscore');
 Segment = require('../geom/segment');
 
 uniqueId = require('../helpers');
+
+Rect = require('../geom/rect');
 
 Lane = (function() {
   class Lane {
@@ -23099,6 +23112,22 @@ Lane = (function() {
     }
   });
 
+  Lane.property('rect', {
+    get: function() {
+      if (this.stringDirection === 'up') {
+        return new Rect(this.sourceSegment.source.x, this.targetSegment.target.y, settings.gridSize / 4, this.sourceSegment.source.y - this.targetSegment.target.y);
+      } else if (this.stringDirection === 'right') {
+        return new Rect(this.sourceSegment.source.x, this.sourceSegment.source.y, this.targetSegment.target.x - this.sourceSegment.source.x, settings.gridSize / 4);
+      } else if (this.stringDirection === 'left') {
+        return new Rect(this.targetSegment.target.x, this.targetSegment.target.y - settings.gridSize / 4, this.sourceSegment.source.x - this.targetSegment.target.x, settings.gridSize / 4);
+      } else if (this.stringDirection === 'down') {
+        return new Rect(this.targetSegment.target.x - settings.gridSize / 4, this.sourceSegment.source.y, settings.gridSize / 4, this.targetSegment.target.y - this.sourceSegment.source.y);
+      } else {
+        throw Error('invalid direction');
+      }
+    }
+  });
+
   return Lane;
 
 }).call(this);
@@ -23106,7 +23135,7 @@ Lane = (function() {
 module.exports = Lane;
 
 
-},{"../geom/segment":12,"../helpers":13,"underscore":7}],20:[function(require,module,exports){
+},{"../geom/rect":11,"../geom/segment":12,"../helpers":13,"underscore":7}],20:[function(require,module,exports){
 'use strict';
 var Pool;
 
@@ -23391,7 +23420,6 @@ Trajectory = (function() {
         return true;
       }
       intersection = this.nextIntersection;
-      //        if not intersection then return false # Added by me
       turnNumber = sourceLane.getTurnDirection(nextLane);
       sideId = sourceLane.road.targetSideId;
       return intersection.controlSignals.state[sideId][turnNumber];
@@ -23627,6 +23655,7 @@ World = (function() {
       this.onTick = this.onTick.bind(this);
       this.set({});
       this.createDynamicMapMethods();
+      this.trackPath = [];
     }
 
     createDynamicMapMethods() {
@@ -23747,11 +23776,16 @@ World = (function() {
       return null;
     }
 
-    addMyCar(roadId, laneId = 0, myCarPath = []) {
-      var car, i, intersectionId, lane, len, road;
-      road = this.getRoad(roadId);
-      console.log(`world.addMyCar(roadId: ${roadId}, laneId: ${laneId}, myCarPath: ${myCarPath})`);
+    addMyCar(road, laneId = 0) {
+      var car, i, intersection, lane, len, obj, ref, roadId;
+      if (road instanceof Road) {
+        roadId = road.id;
+      } else {
+        roadId = road;
+        road = this.getRoad(road);
+      }
       if (road) {
+        //            console.log("world.addMyCar(roadId: #{roadId}, laneId: #{laneId})")
         lane = road.lanes[laneId];
         this.removeCarById(settings.myCar.id);
         this.carsNumber = this.carsNumber + 1;
@@ -23759,9 +23793,11 @@ World = (function() {
         car.speed = 1.0;
         car.id = settings.myCar.id;
         car.color = settings.myCar.color;
-        for (i = 0, len = myCarPath.length; i < len; i++) {
-          intersectionId = myCarPath[i];
-          this.addIntersectionToMyCarPath(intersectionId, car);
+        ref = this.trackPath;
+        for (i = 0, len = ref.length; i < len; i++) {
+          obj = ref[i];
+          intersection = obj['intersection'];
+          this.addIntersectionToMyCarPath(intersection.id, car);
         }
         return this.addCar(car);
       }
@@ -23770,7 +23806,7 @@ World = (function() {
     addIntersectionToMyCarPath(intersectionId, car) {
       var intersection;
       intersection = this.getIntersection(intersectionId);
-      console.log(`world.addIntersectionToMyCarPath(intersectionId: ${intersectionId}, car: ${car.id})`);
+      //        console.log("world.addIntersectionToMyCarPath(intersectionId: #{intersectionId}, car: #{car.id})")
       if (intersection) {
         car.path.push(intersection);
       }
@@ -23915,7 +23951,8 @@ settings = {
     gridPoint: '#586970',
     grid1: 'rgba(255, 255, 255, 0.5)',
     grid2: 'rgba(220, 220, 220, 0.5)',
-    hoveredGrid: '#f4e8e1'
+    hoveredGrid: '#f4e8e1',
+    hoveredLane: '#dbd0ca'
   },
   fps: 30,
   lightsFlipInterval: 160,
@@ -24057,7 +24094,7 @@ Graphics = class Graphics {
     return this.lineTo(p3);
   }
 
-  drawCircle(center, radius, width, color) { // Added by me
+  drawCircle(center, radius, width, color) {
     this.ctx.beginPath();
     this.ctx.arc(center.x, center.y, radius, 0, 2 * PI);
     this.ctx.lineWidth = width;
@@ -24149,7 +24186,7 @@ module.exports = Graphics;
 
 },{"../geom/curve":9,"../geom/point":10,"../geom/rect":11,"../geom/segment":12,"../helpers.coffee":13,"../settings":24}],26:[function(require,module,exports){
 'use strict';
-var Tool, ToolHighlighter, settings,
+var Point, Tool, ToolHighlighter, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
 
 require('../helpers.coffee');
@@ -24158,6 +24195,8 @@ Tool = require('./tool.coffee');
 
 settings = require('../settings.coffee');
 
+Point = require('../geom/point.coffee');
+
 ToolHighlighter = class ToolHighlighter extends Tool {
   constructor() {
     super(...arguments);
@@ -24165,35 +24204,73 @@ ToolHighlighter = class ToolHighlighter extends Tool {
     this.mouseout = this.mouseout.bind(this);
     this.draw = this.draw.bind(this);
     this.hoveredCell = null;
+    this.hoveredLane = null;
+    this.isTracking = false;
   }
 
   mousemove(e) {
-    var cell, hoveredIntersection, id, intersection, ref;
+    var cell, hoveredLane, id, intersection, lane, ref, results, road;
     boundMethodCheck(this, ToolHighlighter);
     cell = this.getCell(e);
-    hoveredIntersection = this.getHoveredIntersection(cell);
-    this.hoveredCell = cell;
+    //        hoveredIntersection = @getHoveredIntersection cell
+    hoveredLane = this.getHoveredLane(this.getScaledPoint(e));
+    if (e.ctrlKey) {
+      this.hoveredLane = hoveredLane;
+      this.hoveredCell = null;
+      this.isTracking = false;
+    } else if (e.altKey) {
+      this.hoveredCell = cell;
+      this.hoveredLane = null;
+      this.isTracking = true;
+      return;
+    } else {
+      this.hoveredCell = cell;
+      this.hoveredLane = null;
+      this.isTracking = false;
+    }
     ref = this.visualizer.world.intersections.all();
+    results = [];
     for (id in ref) {
       intersection = ref[id];
       intersection.color = null;
+      results.push((function() {
+        var results1;
+        results1 = [];
+        for (road in intersection.roads) {
+          results1.push((function() {
+            var results2;
+            results2 = [];
+            for (lane in road.lanes) {
+              results2.push(lane.color = null);
+            }
+            return results2;
+          })());
+        }
+        return results1;
+      })());
     }
-    if (hoveredIntersection != null) {
-      return hoveredIntersection.color = settings.colors.hoveredIntersection;
-    }
+    return results;
   }
 
   mouseout() {
     boundMethodCheck(this, ToolHighlighter);
-    return this.hoveredCell = null;
+    this.hoveredCell = null;
+    return this.hoveredLane = null;
   }
 
   draw() {
     var color;
     boundMethodCheck(this, ToolHighlighter);
-    if (this.hoveredCell) {
+    if (this.hoveredCell && !this.isTracking) {
       color = settings.colors.hoveredGrid;
-      return this.visualizer.graphics.fillRect(this.hoveredCell, color, 0.5);
+      this.visualizer.graphics.fillRect(this.hoveredCell, color, 0.5);
+    } else if (this.hoveredCell && this.isTracking) {
+      color = settings.colors.hoveredLane;
+      this.visualizer.graphics.fillRect(this.hoveredCell, 'red', 0.5);
+    }
+    if (this.hoveredLane) {
+      color = settings.colors.hoveredLane;
+      return this.visualizer.graphics.fillRect(this.hoveredLane.rect, color, 0.5);
     }
   }
 
@@ -24202,7 +24279,7 @@ ToolHighlighter = class ToolHighlighter extends Tool {
 module.exports = ToolHighlighter;
 
 
-},{"../helpers.coffee":13,"../settings.coffee":24,"./tool.coffee":31}],27:[function(require,module,exports){
+},{"../geom/point.coffee":10,"../helpers.coffee":13,"../settings.coffee":24,"./tool.coffee":31}],27:[function(require,module,exports){
 'use strict';
 var Intersection, Tool, ToolIntersectionBuilder,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -24400,6 +24477,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   constructor() {
     super(...arguments);
     this.mousedown = this.mousedown.bind(this);
+    this.keydown = this.keydown.bind(this);
     this.mouseup = this.mouseup.bind(this);
     this.mousemove = this.mousemove.bind(this);
     this.mouseout = this.mouseout.bind(this);
@@ -24407,10 +24485,11 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
     this.sourceIntersection = null;
     this.road = null;
     this.dualRoad = null;
+    this.newTrackPath = [];
   }
 
   mousedown(e) {
-    var cell, hoveredIntersection, hoveredLane, intersection, road, roadId;
+    var cell, hoveredIntersection, hoveredLane;
     boundMethodCheck(this, ToolRoadBuilder);
     cell = this.getCell(e);
     hoveredIntersection = this.getHoveredIntersection(cell);
@@ -24418,15 +24497,35 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
       this.sourceIntersection = hoveredIntersection;
       e.stopImmediatePropagation();
     }
-    // Add car with specs in the middle of a lane
-    //        hoveredLane = @getHoveredLane cell
-    hoveredLane = this.getHoveredIntersection(cell);
-    if (e.ctrlKey && (hoveredLane != null)) {
-      intersection = this.getHoveredIntersection(cell);
-      road = _.sample(intersection.roads);
-      roadId = road.id;
-      this.visualizer.world.addMyCar(roadId);
+    // Add car with specs
+    hoveredLane = this.getHoveredLane(this.getScaledPoint(e));
+    if (e.ctrlKey) {
+      this.visualizer.world.addMyCar(hoveredLane.road);
+      e.stopImmediatePropagation();
+    }
+    // Set all intersections of track path
+    if (e.altKey && (hoveredIntersection != null)) {
+      this.newTrackPath.push({
+        'cell': cell,
+        'intersection': hoveredIntersection
+      });
       return e.stopImmediatePropagation();
+    } else {
+      if (this.newTrackPath.length > 0) {
+        return this.newTrackPath.pop();
+      }
+    }
+  }
+
+  keydown(e) {
+    boundMethodCheck(this, ToolRoadBuilder);
+    if (e.altKey && e.keyCode === 83) { // character 's'
+      console.log('Saving track path');
+      this.visualizer.world.trackPath = this.newTrackPath;
+      // clear track path drawing
+      this.newTrackPath = [];
+      // draw track path lines
+      return this.visualizer.drawTrackPath();
     }
   }
 
@@ -24465,12 +24564,28 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   }
 
   draw() {
+    var count, i, len, obj, ref, results;
     boundMethodCheck(this, ToolRoadBuilder);
     if (this.road != null) {
       this.visualizer.drawRoad(this.road, 0.4);
     }
     if (this.dualRoad != null) {
-      return this.visualizer.drawRoad(this.dualRoad, 0.4);
+      this.visualizer.drawRoad(this.dualRoad, 0.4);
+    }
+    // Draw selection path
+    if (this.newTrackPath) {
+      count = 1;
+      ref = this.newTrackPath;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        obj = ref[i];
+        this.visualizer.graphics.fillRect(obj['cell'], 'red', 0.5);
+        this.ctx.font = '5px Arial';
+        this.ctx.fillStyle = '#c19020';
+        this.ctx.fillText(count, obj['cell'].x, obj['cell'].y - 0.5);
+        results.push(count += 1);
+      }
+      return results;
     }
   }
 
@@ -24481,28 +24596,32 @@ module.exports = ToolRoadBuilder;
 
 },{"../helpers.coffee":13,"../model/car.coffee":15,"../model/road.coffee":21,"../settings.coffee":24,"./tool.coffee":31,"underscore":7}],31:[function(require,module,exports){
 'use strict';
-var $, METHODS, Point, Rect, Tool, _;
+var $, DOCUMENT_METHODS, METHODS, Point, Rect, Tool, _;
 
-require('../helpers.coffee');
+require('../helpers');
 
 $ = require('jquery');
 
 _ = require('underscore');
 
-Point = require('../geom/point.coffee');
+Point = require('../geom/point');
 
-Rect = require('../geom/rect.coffee');
+Rect = require('../geom/rect');
 
 require('jquery-mousewheel');
 
 METHODS = ['click', 'mousedown', 'mouseup', 'mousemove', 'mouseout', 'mousewheel', 'contextmenu'];
+
+DOCUMENT_METHODS = ['keydown']; // keydown is not a method of canvas element but of document
 
 Tool = class Tool {
   constructor(visualizer, autobind) {
     this.draw = this.draw.bind(this);
     this.getPoint = this.getPoint.bind(this);
     this.getCell = this.getCell.bind(this);
+    this.getScaledPoint = this.getScaledPoint.bind(this);
     this.getHoveredIntersection = this.getHoveredIntersection.bind(this);
+    this.getHoveredLane = this.getHoveredLane.bind(this);
     this.visualizer = visualizer;
     this.ctx = this.visualizer.ctx;
     this.canvas = this.ctx.canvas;
@@ -24516,32 +24635,45 @@ Tool = class Tool {
     this.mouseout = this.mouseout.bind(this);
     this.mousewheel = this.mousewheel.bind(this);
     this.contextmenu = this.contextmenu.bind(this);
+    this.keydown = this.keydown.bind(this);
     if (autobind) {
       this.bind();
     }
   }
 
   bind() {
-    var i, len, method, results;
+    var i, j, len, len1, method, results;
     this.isBound = true;
-    results = [];
     for (i = 0, len = METHODS.length; i < len; i++) {
       method = METHODS[i];
       if (this[method] != null) {
-        results.push($(this.canvas).on(method, this[method]));
+        $(this.canvas).on(method, this[method]);
+      }
+    }
+    results = [];
+    for (j = 0, len1 = DOCUMENT_METHODS.length; j < len1; j++) {
+      method = DOCUMENT_METHODS[j];
+      if (this[method] != null) {
+        results.push($(document).on(method, this[method]));
       }
     }
     return results;
   }
 
   unbind() {
-    var i, len, method, results;
+    var i, j, len, len1, method, results;
     this.isBound = false;
-    results = [];
     for (i = 0, len = METHODS.length; i < len; i++) {
       method = METHODS[i];
       if (this[method] != null) {
-        results.push($(this.canvas).off(method, this[method]));
+        $(this.canvas).off(method, this[method]);
+      }
+    }
+    results = [];
+    for (j = 0, len1 = DOCUMENT_METHODS.length; j < len1; j++) {
+      method = DOCUMENT_METHODS[j];
+      if (this[method] != null) {
+        results.push($(document).off(method, this[method]));
       }
     }
     return results;
@@ -24565,6 +24697,10 @@ Tool = class Tool {
     return this.visualizer.zoomer.toCellCoords(this.getPoint(e));
   }
 
+  getScaledPoint(e) {
+    return this.visualizer.zoomer.toPointCoords(this.getPoint(e));
+  }
+
   getHoveredIntersection(cell) {
     var id, intersection, intersections;
     intersections = this.visualizer.world.intersections.all();
@@ -24576,16 +24712,25 @@ Tool = class Tool {
     }
   }
 
-  // TODO could be needed for adding car in road-builder in the right lane and not in intersection
-  //    getHoveredLane: (cell) =>
-  //        goodLanes = []
-  //        roads = @visualizer.world.roads.all()
-  //        for id, road of roads
-  //            for roadLane in road.lanes
-  //                if roadLane.middleLine.center
-  //                    {}
+  getHoveredLane(currentPoint) {
+    var i, id, intersection, intersections, j, lane, len, len1, ref, ref1, road;
+    intersections = this.visualizer.world.intersections.all();
+    for (id in intersections) {
+      intersection = intersections[id];
+      ref = intersection.roads;
+      for (i = 0, len = ref.length; i < len; i++) {
+        road = ref[i];
+        ref1 = road.lanes;
+        for (j = 0, len1 = ref1.length; j < len1; j++) {
+          lane = ref1[j];
+          if (lane.rect.containsPoint(currentPoint)) {
+            return lane;
+          }
+        }
+      }
+    }
+  }
 
-  //        return goodLanes[0] if goodLanes.length > 0
   click(e) {}
 
   // Method code here
@@ -24606,13 +24751,16 @@ Tool = class Tool {
   // Method code here
   contextmenu(e) {}
 
+  // Method code here
+  keydown(e) {}
+
 };
 
 // Method code here
 module.exports = Tool;
 
 
-},{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"jquery":6,"jquery-mousewheel":5,"underscore":7}],32:[function(require,module,exports){
+},{"../geom/point":10,"../geom/rect":11,"../helpers":13,"jquery":6,"jquery-mousewheel":5,"underscore":7}],32:[function(require,module,exports){
 'use strict';
 var $, Graphics, Intersection, PI, Point, Rect, Segment, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, chroma, settings;
 
@@ -24652,9 +24800,9 @@ settings = require('../settings');
 
 Visualizer = (function() {
   class Visualizer {
-    constructor(world) {
+    constructor(world1) {
       this.draw = this.draw.bind(this);
-      this.world = world;
+      this.world = world1;
       this.$canvas = $('#canvas');
       this.canvas = this.$canvas[0];
       this.ctx = this.canvas.getContext('2d');
@@ -24671,6 +24819,7 @@ Visualizer = (function() {
       this._running = false;
       this.previousTime = 0;
       this.timeFactor = settings.defaultTimeFactor;
+      this.trackPath = world.trackPath;
     }
 
     drawIntersection(intersection, alpha) {
@@ -24898,12 +25047,12 @@ Visualizer = (function() {
     }
 
     drawRoad(road, alpha) {
-      var center, center1, center2, dashSize, k, lane, leftLine, len, len1, line, m, newCenter, ref, ref1, ref2, rightLine, sourceSide, targetSide;
+      var center, center1, center2, color, dashSize, k, lane, leftLine, len, len1, len2, line, m, n, newCenter, ref, ref1, ref2, ref3, rightLine;
       if ((road.source == null) || (road.target == null)) {
         throw Error('invalid road');
       }
-      sourceSide = road.sourceSide;
-      targetSide = road.targetSide;
+      //        sourceSide = road.sourceSide
+      //        targetSide = road.targetSide
       this.ctx.save();
       this.ctx.lineWidth = 0.4;
       leftLine = road.leftmostLane.leftBorder;
@@ -24913,12 +25062,22 @@ Visualizer = (function() {
       this.graphics.drawSegment(rightLine);
       this.graphics.stroke(settings.colors.roadMarking);
       this.ctx.restore();
-      this.graphics.polyline(sourceSide.source, sourceSide.target, targetSide.source, targetSide.target);
-      this.graphics.fill(settings.colors.road, alpha);
-      this.ctx.save();
-      ref = road.lanes.slice(1);
+      ref = road.lanes;
+      // Draw entire road (works perfectly)
+      // @graphics.polyline sourceSide.source, sourceSide.target, targetSide.source, targetSide.target
+      // @graphics.fill settings.colors.road, alpha
+
+      // Draw single road lanes (this permits to draw the lanes with different colors)
       for (k = 0, len = ref.length; k < len; k++) {
         lane = ref[k];
+        this.graphics.drawRect(lane.rect);
+        color = lane.color || settings.colors.road;
+        this.graphics.fill(color, alpha);
+      }
+      this.ctx.save();
+      ref1 = road.lanes.slice(1);
+      for (m = 0, len1 = ref1.length; m < len1; m++) {
+        lane = ref1[m];
         line = lane.rightBorder;
         dashSize = 1;
         this.graphics.drawSegment(line);
@@ -24930,15 +25089,15 @@ Visualizer = (function() {
       this.ctx.restore();
       this.ctx.save();
       if (settings.debug) {
-        ref1 = road.lanes;
+        ref2 = road.lanes;
         //           Draw lane ids
-        for (m = 0, len1 = ref1.length; m < len1; m++) {
-          lane = ref1[m];
+        for (n = 0, len2 = ref2.length; n < len2; n++) {
+          lane = ref2[n];
           this.ctx.fillStyle = "black";
           this.ctx.font = "1px Arial";
           center = lane.rightBorder.center;
-          if ((ref2 = lane.stringDirection) === 'left' || ref2 === 'right') {
-            // todo fix with middle line position
+          if ((ref3 = lane.stringDirection) === 'left' || ref3 === 'right') {
+            //                   todo fix with middle line position
             this.ctx.fillText(lane.id, center.x, center.y + 2.0);
           } else {
             this.ctx.fillText(lane.id, center.x, center.y - 2.0);
@@ -25117,7 +25276,7 @@ Visualizer = (function() {
     checkIfPointOrIntersection(obj) {
       var _rect, id, intersection, ref;
       if (obj instanceof Point) {
-        // check in all intersections and find the one that contains the point
+        //           check in all intersections and find the one that contains the point
         _rect = new Rect(obj.x, obj.y, 0.1, 0.1);
         ref = this.world.intersections.all();
         for (id in ref) {
@@ -25155,21 +25314,15 @@ Visualizer = (function() {
 
     checkBeforeAndNextPath(trackPath, currIdx) {
       var currPath, nextPath;
-      //        beforePath = trackPath[currIdx - 1]
       nextPath = trackPath[currIdx + 1];
-      //        if beforePath is undefined
-      //            beforePath = trackPath[currIdx]
       if (nextPath === void 0) {
         nextPath = trackPath[currIdx];
       }
       currPath = this.checkIfPointOrIntersection(trackPath[currIdx]);
-      //        if beforePath
-      //            beforePath = @checkIfPointOrIntersection(beforePath)
       if (nextPath) {
         nextPath = this.checkIfPointOrIntersection(nextPath);
       }
       if (currPath && nextPath) {
-        //            console.log 'currPath and nextPath of trackPath: idx = ' + currIdx
         return this.getDirectionGivenIntersections(currPath, nextPath);
       } else {
         throw new Error('Something went wrong in checkBeforeAndNextPath');
@@ -25177,25 +25330,66 @@ Visualizer = (function() {
     }
 
     getIntersectionLaneByDirection(intersection, direction) {
-      var k, lane, len, len1, m, myLanes, ref, road, roads;
+      var k, lane, len, len1, m, ref, road, roads;
       roads = intersection.roads; // roads are going out of the intersection
-      myLanes = [];
       for (k = 0, len = roads.length; k < len; k++) {
         road = roads[k];
         ref = road.lanes;
         for (m = 0, len1 = ref.length; m < len1; m++) {
           lane = ref[m];
           if (lane.stringDirection === direction) {
-            myLanes.push(lane);
+            return lane;
           }
         }
       }
-      //                    return lane
-      return myLanes[0];
     }
 
-    //        throw new Error 'Cannot find lane for direction ' + direction + ' in intersection ' + intersection.id
     drawTrackPath() {
+      var dir, endPoint, firstIntersection, getIntersections, i, intersect, k, lane, lastPoint, len, m, newPoint, newTrackPath, ref, ref1, segment, startPoint;
+      //       TODO: add curve when needed
+      if (this.world.trackPath.length < 2) {
+        return;
+      }
+      getIntersections = [];
+      ref = this.world.trackPath;
+      for (k = 0, len = ref.length; k < len; k++) {
+        i = ref[k];
+        getIntersections.push(i['intersection']);
+      }
+      firstIntersection = this.checkIfPointOrIntersection(getIntersections[0]);
+      startPoint = firstIntersection.rect.center(); // first intersection
+      endPoint = getIntersections[getIntersections.length - 1].rect.center(); // last last intersection
+      newTrackPath = {
+        'startPoint': startPoint
+      };
+      lastPoint = startPoint;
+      dir = this.checkBeforeAndNextPath(getIntersections, 0);
+      lane = this.getIntersectionLaneByDirection(firstIntersection, dir);
+      for (i = m = 1, ref1 = getIntersections.length - 2; (1 <= ref1 ? m <= ref1 : m >= ref1); i = 1 <= ref1 ? ++m : --m) {
+        intersect = this.checkIfPointOrIntersection(getIntersections[i]);
+        newPoint = intersect != null ? intersect.rect.center() : void 0;
+        if (newPoint === void 0) {
+          console.log('Intersection ' + intersect.id + ' not found');
+          return;
+        }
+        dir = this.checkBeforeAndNextPath(getIntersections, i);
+        lane = this.getIntersectionLaneByDirection(intersect, dir);
+        // good version
+        segment = new Segment(lastPoint, newPoint);
+        newTrackPath[intersect.id] = segment;
+        lastPoint = newPoint;
+        // if the last point add last segment and endPoint
+        if (i === getIntersections.length - 2) {
+          segment = new Segment(lastPoint, endPoint);
+          newTrackPath['lastSegment'] = segment;
+          newTrackPath['endPoint'] = endPoint;
+        }
+      }
+      this.graphics.drawPolylineFeatures(newTrackPath, 0.3, 'blue');
+      return this.graphics.restore();
+    }
+
+    _testDrawTrackPath() {
       var dir, endPoint, i, intersect, k, lane, lastPoint, newPoint, newTrackPath, ref, ref1, ref2, segment, startPoint, trackPath;
       //       TODO: add curve when needed
       startPoint = (ref = this.world.intersections.objects['intersection1']) != null ? ref.rect.center() : void 0;
@@ -25283,6 +25477,8 @@ Tool = require('./tool.coffee');
 
 settings = require('../settings.coffee');
 
+Point = require('../geom/point.coffee');
+
 Zoomer = (function() {
   // VERSION MODIFIED FOR BUILDING JAVASCRIPT
   //   constructor: (@defaultZoom, visualizer, args) ->
@@ -25320,6 +25516,15 @@ Zoomer = (function() {
       x = Math.floor(centerOffset.x / (this.defaultZoom * gridSize)) * gridSize;
       y = Math.floor(centerOffset.y / (this.defaultZoom * gridSize)) * gridSize;
       return new Rect(x, y, gridSize, gridSize);
+    }
+
+    toPointCoords(point) {
+      `Real coordinates of a point on the canvas.`;
+      var centerOffset, x, y;
+      centerOffset = point.subtract(this.center).divide(this.scale);
+      x = Math.floor(centerOffset.x / (this.defaultZoom));
+      y = Math.floor(centerOffset.y / (this.defaultZoom));
+      return new Point(x, y);
     }
 
     getBoundingBox(cell1, cell2) {

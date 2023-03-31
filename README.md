@@ -16,7 +16,10 @@
 
 - shift + click - add new intersection
 - shift + drag - add new road
-- ctrl + click - add my car (only on intersections with signal lights)
+- ctrl + click (on lanes) - add new car (if track path exists the car will follow it)
+- alt (or option) + click (on intersections) - add new point to track path
+- alt (or option) + click (everywhere except intersections) - remove last point from track path
+- alt (or option) + 's' - save and draw track path (if it exists, else remove it)
 
 ## TODO
 
@@ -26,7 +29,7 @@
 
 ### ROADMAP
 - [x] Draw car path
-- [ ] Draw a priori track path
+- [x] Draw a priori track path
 - [ ] Choose destination for my car
 - [ ] Add algorithm for pathfinding
 - [ ] Control my car with arrow keys

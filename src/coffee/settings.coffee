@@ -14,6 +14,7 @@ settings =
         grid1: 'rgba(255, 255, 255, 0.5)'
         grid2: 'rgba(220, 220, 220, 0.5)'
         hoveredGrid: '#f4e8e1'
+        hoveredLane: '#dbd0ca'
     fps: 30
     lightsFlipInterval: 160
     gridSize: 14
