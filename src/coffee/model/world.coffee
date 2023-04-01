@@ -15,6 +15,7 @@ class World
     constructor: ->
         @set {}
         @createDynamicMapMethods()
+        @trackPath = []
 
     @property 'instantSpeed',
         get: ->
@@ -93,10 +94,15 @@ class World
                     previous = intersection
         null
 
-    addMyCar: (roadId, laneId=0,myCarPath=[]) ->
-        road = @getRoad(roadId)
-        console.log("world.addMyCar(roadId: #{roadId}, laneId: #{laneId}, myCarPath: #{myCarPath})")
+    addMyCar: (road, laneId = 0) ->
+        if road instanceof Road
+            roadId = road.id
+        else
+            roadId = road
+            road = @getRoad(road)
+
         if road
+    #            console.log("world.addMyCar(roadId: #{roadId}, laneId: #{laneId})")
             lane = road.lanes[laneId]
             @removeCarById(settings.myCar.id)
             @carsNumber = @carsNumber + 1
@@ -104,13 +110,14 @@ class World
             car.speed = 1.0
             car.id = settings.myCar.id
             car.color = settings.myCar.color
-            for intersectionId in myCarPath
-                @addIntersectionToMyCarPath(intersectionId, car)
+            for obj in @trackPath
+                intersection = obj['intersection']
+                @addIntersectionToMyCarPath(intersection.id, car)
             @addCar(car)
 
-    addIntersectionToMyCarPath: (intersectionId,car) ->
+    addIntersectionToMyCarPath: (intersectionId, car) ->
         intersection = @getIntersection(intersectionId)
-        console.log("world.addIntersectionToMyCarPath(intersectionId: #{intersectionId}, car: #{car.id})")
+        #        console.log("world.addIntersectionToMyCarPath(intersectionId: #{intersectionId}, car: #{car.id})")
         if intersection
             car.path.push(intersection)
         return

@@ -6,6 +6,7 @@ Point = require '../geom/point.coffee'
 Rect = require '../geom/rect.coffee'
 Tool = require './tool.coffee'
 settings = require '../settings.coffee'
+Point = require '../geom/point.coffee'
 
 # VERSION MODIFIED FOR BUILDING JAVASCRIPT
 #   constructor: (@defaultZoom, visualizer, args) ->
@@ -47,6 +48,13 @@ class Zoomer extends Tool
         x = centerOffset.x // (@defaultZoom * gridSize) * gridSize
         y = centerOffset.y // (@defaultZoom * gridSize) * gridSize
         new Rect x, y, gridSize, gridSize
+
+    toPointCoords: (point) ->
+        """Real coordinates of a point on the canvas."""
+        centerOffset = point.subtract(@center).divide(@scale)
+        x = centerOffset.x // (@defaultZoom)
+        y = centerOffset.y // (@defaultZoom)
+        new Point x, y
 
     getBoundingBox: (cell1, cell2) ->
         cell1 ?= @toCellCoords new Point 0, 0

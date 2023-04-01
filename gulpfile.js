@@ -105,7 +105,7 @@ gulp.task('coverage', coverage);
 function watch() {
     // First time build
     build();
-    gulp.watch(['./src/**/*.coffee'], gulp.series('build'));
+    gulp.watch(['./src/coffee/*.coffee'], {events: 'all'}, gulp.series('build'));
 }
 
 gulp.task('watch', watch);

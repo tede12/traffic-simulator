@@ -68,7 +68,6 @@ class Trajectory
         sourceLane = @current.lane
         return true unless nextLane
         intersection = @nextIntersection
-#        if not intersection then return false # Added by me
         turnNumber = sourceLane.getTurnDirection nextLane
         sideId = sourceLane.road.targetSideId
         intersection.controlSignals.state[sideId][turnNumber]

@@ -40,6 +40,8 @@ class Visualizer
         @previousTime = 0
         @timeFactor = settings.defaultTimeFactor
 
+        @trackPath = world.trackPath
+
     drawIntersection: (intersection, alpha) ->
         color = intersection.color or settings.colors.intersection
         @graphics.drawRect intersection.rect
@@ -245,8 +247,8 @@ class Visualizer
 
     drawRoad: (road, alpha) ->
         throw Error 'invalid road' if not road.source? or not road.target?
-        sourceSide = road.sourceSide
-        targetSide = road.targetSide
+#        sourceSide = road.sourceSide
+#        targetSide = road.targetSide
 
         @ctx.save()
         @ctx.lineWidth = 0.4
@@ -259,8 +261,16 @@ class Visualizer
         @graphics.stroke settings.colors.roadMarking
         @ctx.restore()
 
-        @graphics.polyline sourceSide.source, sourceSide.target, targetSide.source, targetSide.target
-        @graphics.fill settings.colors.road, alpha
+        # Draw entire road (works perfectly)
+        # @graphics.polyline sourceSide.source, sourceSide.target, targetSide.source, targetSide.target
+        # @graphics.fill settings.colors.road, alpha
+
+        # Draw single road lanes (this permits to draw the lanes with different colors)
+        for lane in road.lanes
+            @graphics.drawRect lane.rect
+            color = lane.color or settings.colors.road
+            @graphics.fill color, alpha
+
 
         @ctx.save()
         for lane in road.lanes[1..]
@@ -282,7 +292,7 @@ class Visualizer
                 @ctx.font = "1px Arial"
                 center = lane.rightBorder.center
                 if lane.stringDirection in ['left', 'right']
-                    # todo fix with middle line position
+#                   todo fix with middle line position
                     @ctx.fillText lane.id, center.x, center.y + 2.0
                 else
                     @ctx.fillText lane.id, center.x, center.y - 2.0
@@ -410,7 +420,7 @@ class Visualizer
 
     checkIfPointOrIntersection: (obj) ->
         if obj instanceof Point
-# check in all intersections and find the one that contains the point
+#           check in all intersections and find the one that contains the point
             _rect = new Rect obj.x, obj.y, 0.1, 0.1
             for id, intersection of @world.intersections.all()
                 if intersection.rect.containsRect _rect
@@ -440,39 +450,70 @@ class Visualizer
             return 'up'
 
     checkBeforeAndNextPath: (trackPath, currIdx) ->
-#        beforePath = trackPath[currIdx - 1]
         nextPath = trackPath[currIdx + 1]
-
-        #        if beforePath is undefined
-        #            beforePath = trackPath[currIdx]
         if nextPath is undefined
             nextPath = trackPath[currIdx]
-
         currPath = @checkIfPointOrIntersection(trackPath[currIdx])
-        #        if beforePath
-        #            beforePath = @checkIfPointOrIntersection(beforePath)
         if nextPath
             nextPath = @checkIfPointOrIntersection(nextPath)
 
         if currPath and nextPath
-#            console.log 'currPath and nextPath of trackPath: idx = ' + currIdx
             return @getDirectionGivenIntersections(currPath, nextPath)
         else
             throw new Error 'Something went wrong in checkBeforeAndNextPath'
 
     getIntersectionLaneByDirection: (intersection, direction) ->
         roads = intersection.roads # roads are going out of the intersection
-        myLanes = []
-
         for road in roads
             for lane in road.lanes
                 if lane.stringDirection == direction
-                    myLanes.push(lane)
-        #                    return lane
-        return myLanes[0]
-#        throw new Error 'Cannot find lane for direction ' + direction + ' in intersection ' + intersection.id
+                    return lane
 
     drawTrackPath: ->
+#       TODO: add curve when needed
+        if @world.trackPath.length < 2
+            return
+
+        getIntersections = []
+        for i in @world.trackPath
+            getIntersections.push(i['intersection'])
+
+        firstIntersection = @checkIfPointOrIntersection(getIntersections[0])
+        startPoint = firstIntersection.rect.center() # first intersection
+        endPoint = getIntersections[getIntersections.length - 1].rect.center() # last last intersection
+
+        newTrackPath = {'startPoint': startPoint}
+        lastPoint = startPoint
+
+        dir = @checkBeforeAndNextPath(getIntersections, 0)
+        lane = @getIntersectionLaneByDirection(firstIntersection, dir)
+
+        for i in [1..getIntersections.length - 2]
+            intersect = @checkIfPointOrIntersection(getIntersections[i])
+            newPoint = intersect?.rect.center()
+            if newPoint is undefined
+                console.log 'Intersection ' + intersect.id + ' not found'
+                return
+
+            dir = @checkBeforeAndNextPath(getIntersections, i)
+            lane = @getIntersectionLaneByDirection(intersect, dir)
+
+            # good version
+            segment = new Segment lastPoint, newPoint
+            newTrackPath[intersect.id] = segment
+            lastPoint = newPoint
+
+            # if the last point add last segment and endPoint
+            if i == getIntersections.length - 2
+                segment = new Segment lastPoint, endPoint
+                newTrackPath['lastSegment'] = segment
+                newTrackPath['endPoint'] = endPoint
+
+        @graphics.drawPolylineFeatures newTrackPath, 0.3, 'blue'
+        @graphics.restore()
+
+
+    _testDrawTrackPath: ->
 #       TODO: add curve when needed
         startPoint = @world.intersections.objects['intersection1']?.rect.center()
         endPoint = @world.intersections.objects['intersection9']?.rect.center()

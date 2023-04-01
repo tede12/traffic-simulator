@@ -4,6 +4,7 @@ require '../helpers'
 _ = require 'underscore'
 Segment = require '../geom/segment'
 uniqueId = require '../helpers'
+Rect = require '../geom/rect'
 
 class Lane
     constructor: (@sourceSegment, @targetSegment, @road) ->
@@ -54,6 +55,18 @@ class Lane
                 return 'up'
             else
                 throw Error 'invalid direction'
+
+    @property 'rect',
+        get: ->
+            if @stringDirection is 'up'
+                return new Rect(@sourceSegment.source.x, @targetSegment.target.y, settings.gridSize / 4, @sourceSegment.source.y - @targetSegment.target.y)
+            else if @stringDirection is 'right'
+                return new Rect(@sourceSegment.source.x, @sourceSegment.source.y, @targetSegment.target.x - @sourceSegment.source.x, settings.gridSize / 4)
+            else if @stringDirection is 'left'
+                return new Rect(@targetSegment.target.x, @targetSegment.target.y - settings.gridSize / 4, @sourceSegment.source.x - @targetSegment.target.x, settings.gridSize / 4)
+            else if @stringDirection is 'down'
+                return new Rect(@targetSegment.target.x - settings.gridSize / 4, @sourceSegment.source.y, settings.gridSize / 4, @targetSegment.target.y - @sourceSegment.source.y)
+            else throw Error 'invalid direction'
 
     update: ->
         @middleLine = new Segment @sourceSegment.center, @targetSegment.center

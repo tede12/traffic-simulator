@@ -73,7 +73,7 @@ class Graphics
         @lineTo p2
         @lineTo p3
 
-    drawCircle: (center, radius, width, color) ->   # Added by me
+    drawCircle: (center, radius, width, color) ->
         @ctx.beginPath()
         @ctx.arc center.x, center.y, radius, 0, 2 * PI
         @ctx.lineWidth = width

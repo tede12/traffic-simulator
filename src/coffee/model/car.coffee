@@ -176,7 +176,7 @@ class Car
 
     updatePath: () ->
         nextIntersection = @path.shift()
-        @trajectory.setNextIntersection(intersection)
+        @trajectory.setNextIntersection(nextIntersection)
         return
 
 module.exports = Car
