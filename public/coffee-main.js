@@ -21562,6 +21562,17 @@ Rect = class Rect {
     return (this.left() <= (ref = point.x) && ref <= this.right()) && (this.top() <= (ref1 = point.y) && ref1 <= this.bottom());
   }
 
+  //    containsPointDirectional: (point, direction) ->
+  //        if direction == 'left'
+  //            return @left() >= point.x >= @right() and @top() <= point.y <= @bottom()
+  //        else if direction == 'right'
+  //            return @left() <= point.x <= @right() and @top() <= point.y <= @bottom()
+  //        else if direction == 'up'
+  //            return @left() <= point.x <= @right() and @top() >= point.y >= @bottom()
+  //        else if direction == 'down'
+  //            return @left() <= point.x <= @right() and @top() <= point.y <= @bottom()
+  //        else
+  //            throw Error 'direction error'
   containsRect(rect) {
     return this.left() <= rect.left() && rect.right() <= this.right() && this.top() <= rect.top() && rect.bottom() <= this.bottom();
   }

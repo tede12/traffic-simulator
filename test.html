@@ -8,39 +8,26 @@
 </head>
 <body style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
 <h1 style="text-align: center">Smart Traffic Simulator</h1>
-<div>
-        <label for="roadId">Enter RoadId:</label>
-        <select id="roadId" name="roadId">
-            <option value="">Select a road</option>
-        </select>
-
-        <label for="laneId">Choose lane:</label>
-        <select id="laneId" name="laneId">
-            <option value=0>Left</option>
-            <option value=1>Right</option>
-        </select>
-
-        <button type="button" onclick="client_addMyCar()">Submit</button>
-</div>
+<div id="trackPath" style="padding-left: 20px; font: 10px Arial, sans-serif;"></div>
 <canvas id="canvas"
         style="position: absolute; padding-bottom: 0; margin-bottom: 0; width: 100%; height: 100%;"></canvas>
 <div id="gui" style="position: absolute; top: 0; right: 0;"></div>
 <script src="./public/coffee-main.js"></script>
 <script>
-    function client_addMyCar(){
-        let roadId = document.getElementById("roadId").value;
-        let laneId = document.getElementById("laneId").value;
-        world.addMyCar(roadId, laneId)
-    }
+    let trackPathElement = document.getElementById('trackPath');
+    let trackPath = window.world.trackPath;
 
-    cliet_roads = world.roads.objects
-    let selectRoads = document.getElementById("roadId")
-    for(let key in cliet_roads){
-        let option = document.createElement("option");
-        option.value = key;
-        option.text = key;
-        selectRoads.add(option)
-    }
+    setInterval(function () {
+        trackPath = window.world.trackPath;
+        if (trackPath.length > 0) {
+            let text = 'Track Path:  ';
+            for (let i = 0; i < trackPath.length; i++) {
+                text += trackPath[i]['intersection']['id'] + ', ';
+            }
+            trackPathElement.innerHTML = text;
+        }
+    }, 1500);
+
 
 </script>
 </body>
