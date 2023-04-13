@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: ITAS API
+  version: 1.0.0
+  description: ITAS API Documentation
+paths:
+  /pathFinder/:
+    get:
+      operationId: pathFinder_retrieve
+      parameters:
+      - in: query
+        name: fromIntersection
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: mapId
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: toIntersection
+        schema:
+          type: integer
+        required: true
+      tags:
+      - pathFinder
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          readOnly: true
+      required:
+      - error
+    PathResponse:
+      type: object
+      properties:
+        pathId:
+          type: integer
+        path:
+          type: array
+          items:
+            type: string
+            readOnly: true
+      required:
+      - path
+      - pathId
