@@ -41,11 +41,15 @@ class ToolRoadBuilder extends Tool
     keydown: (e) =>
         if e.altKey and e.keyCode is 83  # character 's'
             console.log 'Saving track path'
+            # here you set the path for myCar from handpicked intersections
             @visualizer.world.trackPath = @newTrackPath
             # clear track path drawing
             @newTrackPath = []
             # draw track path lines
             @visualizer.drawTrackPath()
+        if e.altKey and e.keyCode is 67
+            console.log 'Add MyCar with API'
+            @visualizer.world.addMyCarAPI()
 
     mouseup: (e) =>
         @visualizer.world.addRoad @road if @road?

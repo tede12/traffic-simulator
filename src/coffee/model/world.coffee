@@ -10,12 +10,13 @@ Pool = require './pool'
 Rect = require '../geom/rect'
 settings = require '../settings'
 savedMaps = require '../maps'
-
+ItasApi = require 'itas_api'
 class World
     constructor: ->
         @set {}
         @createDynamicMapMethods()
         @trackPath = []
+        @bestPath = []
 
     @property 'instantSpeed',
         get: ->
@@ -102,7 +103,6 @@ class World
             road = @getRoad(road)
 
         if road
-    #            console.log("world.addMyCar(roadId: #{roadId}, laneId: #{laneId})")
             lane = road.lanes[laneId]
             @removeCarById(settings.myCar.id)
             @carsNumber = @carsNumber + 1
@@ -117,10 +117,48 @@ class World
 
     addIntersectionToMyCarPath: (intersectionId, car) ->
         intersection = @getIntersection(intersectionId)
-        #        console.log("world.addIntersectionToMyCarPath(intersectionId: #{intersectionId}, car: #{car.id})")
         if intersection
             car.path.push(intersection)
         return
+
+    addMyCarAPI: () ->
+        # add track path to MyCar Object with only source and target intersection and make an api request to retrieve the best path
+        sourceId_prefix = @trackPath[0]['intersection'].id
+        targetId_prefix = @trackPath[1]['intersection'].id
+        sourceId = sourceId_prefix.slice 'intersection'.length
+        targetId = targetId_prefix.slice 'intersection'.length
+
+        api = new ItasApi.PathFinderApi(new ItasApi.ApiClient('http://localhost:8000'))
+        cb = (err, data, res) ->
+            if err
+                console.log err
+                return
+            else
+                path = data['path']
+                console.log "Best Path: #{path}"
+                source_int = @getIntersection(path[0])
+                source_lane = null
+                source_road = null
+
+                for road in source_int.roads
+                    if road.target.id == path[1]
+                        source_road = road
+                        break
+
+                source_lane = source_road.lanes[0]
+
+                car = new Car source_lane
+                car.speed = 1.0
+                car.id = settings.myCar.id
+                car.color = settings.myCar.color
+
+                for intersection in path
+                    @addIntersectionToMyCarPath(intersection, car)
+
+                @addCar car
+                return data
+
+        api.pathFinderRetrieve sourceId, 0, targetId, cb.bind(this)
 
     clear: ->
         @set {}
