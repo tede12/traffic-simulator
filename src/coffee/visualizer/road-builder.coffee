@@ -17,18 +17,20 @@ class ToolRoadBuilder extends Tool
 
     mousedown: (e) =>
         cell = @getCell e
+
+        # Click on intersection (build intersection)
         hoveredIntersection = @getHoveredIntersection cell
         if e.shiftKey and hoveredIntersection?
             @sourceIntersection = hoveredIntersection
             e.stopImmediatePropagation()
 
-        # Add car with specs
+        # Click on lane (add my car)
         hoveredLane = @getHoveredLane @getScaledPoint e
         if e.ctrlKey
             @visualizer.world.addMyCar hoveredLane.road
             e.stopImmediatePropagation()
 
-        # Set all intersections of track path
+        # Click on intersection (add intersection to track path)
         if e.altKey and hoveredIntersection?
             @newTrackPath.push {
                 'cell': cell,
@@ -41,15 +43,17 @@ class ToolRoadBuilder extends Tool
     keydown: (e) =>
         if e.altKey and e.keyCode is 83  # character 's'
             console.log 'Saving track path'
-            # here you set the path for myCar from handpicked intersections
             @visualizer.world.trackPath = @newTrackPath
             # clear track path drawing
             @newTrackPath = []
             # draw track path lines
             @visualizer.drawTrackPath()
-        if e.altKey and e.keyCode is 67
+            e.stopImmediatePropagation()
+
+        if e.altKey and e.keyCode is 67  # character 'c'
             console.log 'Add MyCar with API'
             @visualizer.world.addMyCarAPI()
+            e.stopImmediatePropagation()
 
     mouseup: (e) =>
         @visualizer.world.addRoad @road if @road?
@@ -59,8 +63,7 @@ class ToolRoadBuilder extends Tool
     mousemove: (e) =>
         cell = @getCell e
         hoveredIntersection = @getHoveredIntersection cell
-        if (@sourceIntersection and hoveredIntersection and
-                @sourceIntersection.id isnt hoveredIntersection.id)
+        if (@sourceIntersection and hoveredIntersection and @sourceIntersection.id isnt hoveredIntersection.id)
             if @road?
                 @road.target = hoveredIntersection
                 @dualRoad.source = hoveredIntersection

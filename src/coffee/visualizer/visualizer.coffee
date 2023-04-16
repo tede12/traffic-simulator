@@ -166,9 +166,9 @@ class Visualizer
         if lights[0] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.1, -0.2),
-                        new Point(0.2, -0.4),
-                        new Point(0.3, -0.2)
+                    new Point(0.1, -0.2),
+                    new Point(0.2, -0.4),
+                    new Point(0.3, -0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, -0.3), 0.1)
@@ -179,9 +179,9 @@ class Visualizer
         else if lights[0] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.1, -0.2),
-                        new Point(0.2, -0.4),
-                        new Point(0.3, -0.2)
+                    new Point(0.1, -0.2),
+                    new Point(0.2, -0.4),
+                    new Point(0.3, -0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, -0.3), 0.1)
@@ -190,9 +190,9 @@ class Visualizer
         if lights[1] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.3, -0.1),
-                        new Point(0.5, 0),
-                        new Point(0.3, 0.1)
+                    new Point(0.3, -0.1),
+                    new Point(0.5, 0),
+                    new Point(0.3, 0.1)
                 )
             else
                 @graphics.drawCircle(new Point(0.4, 0), 0.1)
@@ -203,9 +203,9 @@ class Visualizer
         else if lights[1] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.3, -0.1),
-                        new Point(0.5, 0),
-                        new Point(0.3, 0.1)
+                    new Point(0.3, -0.1),
+                    new Point(0.5, 0),
+                    new Point(0.3, 0.1)
                 )
             else
                 @graphics.drawCircle(new Point(0.4, 0), 0.1)
@@ -214,9 +214,9 @@ class Visualizer
         if lights[2] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.1, 0.2),
-                        new Point(0.2, 0.4),
-                        new Point(0.3, 0.2)
+                    new Point(0.1, 0.2),
+                    new Point(0.2, 0.4),
+                    new Point(0.3, 0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, 0.3), 0.1)
@@ -226,9 +226,9 @@ class Visualizer
         else if lights[2] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.1, 0.2),
-                        new Point(0.2, 0.4),
-                        new Point(0.3, 0.2)
+                    new Point(0.1, 0.2),
+                    new Point(0.2, 0.4),
+                    new Point(0.3, 0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, 0.3), 0.1)
@@ -247,8 +247,8 @@ class Visualizer
 
     drawRoad: (road, alpha) ->
         throw Error 'invalid road' if not road.source? or not road.target?
-#        sourceSide = road.sourceSide
-#        targetSide = road.targetSide
+        #        sourceSide = road.sourceSide
+        #        targetSide = road.targetSide
 
         @ctx.save()
         @ctx.lineWidth = 0.4
@@ -419,6 +419,7 @@ class Visualizer
         window.requestAnimationFrame @draw if @running
 
     checkIfPointOrIntersection: (obj) ->
+        """ Check if obj is a point or an intersection and return the intersection object """
         if obj instanceof Point
 #           check in all intersections and find the one that contains the point
             _rect = new Rect obj.x, obj.y, 0.1, 0.1
@@ -469,8 +470,15 @@ class Visualizer
                 if lane.stringDirection == direction
                     return lane
 
-    drawTrackPath: ->
+    drawTrackPath: (newPath = [], color = 'blue') ->
 #       TODO: add curve when needed
+#       TODO: set colors for more paths (now is only blue, because it's overwritten each time)
+        
+        if newPath instanceof Array and newPath.length >= 2     # reset trackPath
+            @world.trackPath = []
+            for i in newPath
+                @world.trackPath.push({'intersection': @checkIfPointOrIntersection(i)})
+
         if @world.trackPath.length < 2
             return
 
@@ -480,7 +488,9 @@ class Visualizer
 
         firstIntersection = @checkIfPointOrIntersection(getIntersections[0])
         startPoint = firstIntersection.rect.center() # first intersection
-        endPoint = getIntersections[getIntersections.length - 1].rect.center() # last last intersection
+
+        lastIntersection = @checkIfPointOrIntersection(getIntersections[getIntersections.length - 1])
+        endPoint = lastIntersection.rect.center() # last last intersection
 
         newTrackPath = {'startPoint': startPoint}
         lastPoint = startPoint
@@ -509,7 +519,7 @@ class Visualizer
                 newTrackPath['lastSegment'] = segment
                 newTrackPath['endPoint'] = endPoint
 
-        @graphics.drawPolylineFeatures newTrackPath, 0.3, 'blue'
+        @graphics.drawPolylineFeatures newTrackPath, 0.3, color
         @graphics.restore()
 
 

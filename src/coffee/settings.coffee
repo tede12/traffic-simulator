@@ -18,6 +18,7 @@ settings =
     fps: 30
     lightsFlipInterval: 160
     gridSize: 14
+    mapSize: 4  # default is 2
     defaultTimeFactor: 5
     defaultZoomLevel: 6  # Change this value to change the default zoom level (default is 3)
     debug: true
@@ -39,5 +40,8 @@ settings =
         color: "#000000"
         maxFollowPoints: 1000  # 3000 is the default value, 0 to disable
         carLine: 'black'
+
+#   API
+    pathFinderUrl: 'http://localhost:8000/pathFinder'
 
 module.exports = settings

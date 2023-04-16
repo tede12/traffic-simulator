@@ -51,6 +51,18 @@ class Rect
     containsPoint: (point) ->
         @left() <= point.x <= @right() and @top() <= point.y <= @bottom()
 
+#    containsPointDirectional: (point, direction) ->
+#        if direction == 'left'
+#            return @left() >= point.x >= @right() and @top() <= point.y <= @bottom()
+#        else if direction == 'right'
+#            return @left() <= point.x <= @right() and @top() <= point.y <= @bottom()
+#        else if direction == 'up'
+#            return @left() <= point.x <= @right() and @top() >= point.y >= @bottom()
+#        else if direction == 'down'
+#            return @left() <= point.x <= @right() and @top() <= point.y <= @bottom()
+#        else
+#            throw Error 'direction error'
+
     containsRect: (rect) ->
         @left() <= rect.left() and rect.right() <= @right() and
                 @top() <= rect.top() and rect.bottom() <= @bottom()

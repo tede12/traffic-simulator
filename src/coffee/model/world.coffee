@@ -10,7 +10,7 @@ Pool = require './pool'
 Rect = require '../geom/rect'
 settings = require '../settings'
 savedMaps = require '../maps'
-ItasApi = require 'itas_api'
+
 class World
     constructor: ->
         @set {}
@@ -121,44 +121,66 @@ class World
             car.path.push(intersection)
         return
 
+    setNewPath: (data) ->
+        path = data['path']
+        console.log "Best Path: #{path}"
+
+        visualizer.drawTrackPath path, 'yellow'  # draw the best path on the map
+        source_int = @getIntersection(path[0])
+        source_lane = null
+        source_road = null
+
+        for road in source_int.roads
+            if road.target.id == path[1]
+                source_road = road
+                break
+
+        source_lane = source_road.lanes[0]
+
+        car = new Car source_lane
+        car.speed = 1.0
+        car.id = settings.myCar.id
+        car.color = settings.myCar.color
+
+        for intersection in path
+            @addIntersectionToMyCarPath(intersection, car)
+
+        @addCar car
+        return data
+
+    newRequest: (url, params) ->
+        """xmlHttpRequest with CORS prevention"""
+        # add params to url as query string parameters
+        if params
+            url = url + '?' + new URLSearchParams(params).toString()
+
+        xhr = new XMLHttpRequest()
+        xhr.open 'GET', url, true
+        xhr.cors = true
+
+        xhr.onreadystatechange = (e) =>
+            if xhr.readyState == XMLHttpRequest.DONE
+                if xhr.status == 200
+#                   Parse response to json
+                    @setNewPath JSON.parse xhr.responseText
+                else
+                    console.log 'Error: ' + xhr.status
+        xhr.send()
+
+
     addMyCarAPI: () ->
-        # add track path to MyCar Object with only source and target intersection and make an api request to retrieve the best path
+#       add track path to MyCar Object with only source and target intersection and make an api request to retrieve the best path
         sourceId_prefix = @trackPath[0]['intersection'].id
-        targetId_prefix = @trackPath[1]['intersection'].id
+        targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id  # get the last intersection in the track path (allow to repeat the command more than once)
         sourceId = sourceId_prefix.slice 'intersection'.length
         targetId = targetId_prefix.slice 'intersection'.length
 
-        api = new ItasApi.PathFinderApi(new ItasApi.ApiClient('http://localhost:8000'))
-        cb = (err, data, res) ->
-            if err
-                console.log err
-                return
-            else
-                path = data['path']
-                console.log "Best Path: #{path}"
-                source_int = @getIntersection(path[0])
-                source_lane = null
-                source_road = null
-
-                for road in source_int.roads
-                    if road.target.id == path[1]
-                        source_road = road
-                        break
-
-                source_lane = source_road.lanes[0]
-
-                car = new Car source_lane
-                car.speed = 1.0
-                car.id = settings.myCar.id
-                car.color = settings.myCar.color
-
-                for intersection in path
-                    @addIntersectionToMyCarPath(intersection, car)
-
-                @addCar car
-                return data
-
-        api.pathFinderRetrieve sourceId, 0, targetId, cb.bind(this)
+        params = {
+            'fromIntersection': sourceId,
+            'mapId': 0,
+            'toIntersection': targetId
+        }
+        return @newRequest settings.pathFinderUrl, params
 
     clear: ->
         @set {}

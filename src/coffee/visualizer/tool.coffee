@@ -7,7 +7,7 @@ Point = require '../geom/point'
 Rect = require '../geom/rect'
 require('jquery-mousewheel')
 
-METHODS = ['click', 'mousedown', 'mouseup', 'mousemove', 'mouseout', 'mousewheel', 'contextmenu']
+METHODS = ['click', 'mouseup', 'mousedown', 'mousemove', 'mouseout', 'mousewheel', 'contextmenu']
 DOCUMENT_METHODS = ['keydown'] # keydown is not a method of canvas element but of document
 
 class Tool

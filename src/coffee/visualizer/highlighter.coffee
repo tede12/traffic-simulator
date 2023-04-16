@@ -17,15 +17,21 @@ class ToolHighlighter extends Tool
         #        hoveredIntersection = @getHoveredIntersection cell
         hoveredLane = @getHoveredLane @getScaledPoint e
 
+        # Hovering Lane
         if e.ctrlKey
             @hoveredLane = hoveredLane
             @hoveredCell = null
             @isTracking = false
+            @trackDestination = false
+        # Selecting Intersections
         else if e.altKey
             @hoveredCell = cell
             @hoveredLane = null
             @isTracking = true
+            @trackDestination = false
             return
+
+        # Hovering Intersections (default)
         else
             @hoveredCell = cell
             @hoveredLane = null
@@ -42,14 +48,16 @@ class ToolHighlighter extends Tool
         @hoveredLane = null
 
     draw: =>
+        # Draw hovered cell (default)
         if @hoveredCell and not @isTracking
             color = settings.colors.hoveredGrid
             @visualizer.graphics.fillRect @hoveredCell, color, 0.5
+        # Draw selected cells (alt)
         else if @hoveredCell and @isTracking
             color = settings.colors.hoveredLane
             @visualizer.graphics.fillRect @hoveredCell, 'red', 0.5
-
-        if @hoveredLane
+        # Draw hovered lane (ctrl)
+        else if @hoveredLane
             color = settings.colors.hoveredLane
             @visualizer.graphics.fillRect @hoveredLane.rect, color, 0.5
 
