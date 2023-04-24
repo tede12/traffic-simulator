@@ -24927,14 +24927,15 @@ Road = (function() {
       return obj = {
         id: this.id,
         source: this.source.id,
-        target: this.target.id
+        target: this.target.id,
+        length: this.length
       };
     }
 
     getTurnDirection(other) {
       var side1, side2, turnNumber;
       if (this.target !== other.source) {
-        throw Error('invalid roads');
+        throw Error('invalid roads'); // Todo FIX this
       }
       side1 = this.targetSideId;
       side2 = other.sourceSideId;
@@ -25399,7 +25400,7 @@ World = (function() {
       return results;
     }
 
-    generateMap(minX = -2, maxX = 2, minY = -2, maxY = 2) {
+    generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
       var gridSize, i, intersection, intersectionsNumber, j, k, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, step, x, y;
       this.clear();
       intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0;

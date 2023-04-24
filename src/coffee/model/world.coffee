@@ -60,7 +60,7 @@ class World
             road.target = @getIntersection road.target
             @addRoad road
 
-    generateMap: (minX = -2, maxX = 2, minY = -2, maxY = 2) ->
+    generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
         @clear()
         intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0
         map = {}

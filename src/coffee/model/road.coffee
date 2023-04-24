@@ -29,6 +29,7 @@ class Road
             id: @id
             source: @source.id
             target: @target.id
+            length: @length
 
     @property 'length',
         get: -> @targetSide.target.subtract(@sourceSide.source).length
@@ -61,7 +62,8 @@ class Road
                 return new Rect(@sourceSide.source.x, @sourceSide.source.y, settings.gridSize / 2, @targetSide.target.y - @sourceSide.source.y)
 
     getTurnDirection: (other) ->
-        throw Error 'invalid roads' if @target isnt other.source
+        if @target isnt other.source
+            throw Error 'invalid roads'     # Todo FIX this
         side1 = @targetSideId
         side2 = other.sourceSideId
         # 0 - left, 1 - forward, 2 - right

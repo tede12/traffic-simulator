@@ -34,6 +34,10 @@
 - [x] Draw a priori track path
 - [x] Choose destination for my car
 - [x] Add algorithm for pathfinding
+- [ ] Enable resize of map when Running checkbox is off
+- [ ] Send map first time to pathFinder, add Unique ID for each map
+- [ ] NO spawn cars when my car is placed on the road for 5 seconds
+- [ ] Add little screen with my car info on the simulator
 - [ ] Set new weights and get the current best path when car is moving
 - [ ] Socket for checking if pathFinder server is running
 - [ ] Control my car with arrow keys
