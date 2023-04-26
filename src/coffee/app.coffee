@@ -37,10 +37,16 @@ waitForElements ['canvas', 'gui'], ->
     console.log 'App started --> ' + new Date().toLocaleTimeString()
     window.settings = settings
     window.world = new World()
-    world.load()
-    if world.intersections.length is 0
+
+    # load default map if it exists
+    if settings.defaultMap and savedMaps[settings.defaultMap]
+        mapData = savedMaps[settings.defaultMap]
+        mapData.carsNumber = settings.carsNumber
+        world.load mapData, false
+    else
         world.generateMap()
         world.carsNumber = settings.carsNumber
+
     window.visualizer = new Visualizer world
     visualizer.start()
 

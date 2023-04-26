@@ -27,7 +27,8 @@ class ToolRoadBuilder extends Tool
         # Click on lane (add my car)
         hoveredLane = @getHoveredLane @getScaledPoint e
         if e.ctrlKey
-            @visualizer.world.addMyCar hoveredLane.road
+            if hoveredLane?.road
+                @visualizer.world.addMyCar hoveredLane.road
             e.stopImmediatePropagation()
 
         # Click on intersection (add intersection to track path)

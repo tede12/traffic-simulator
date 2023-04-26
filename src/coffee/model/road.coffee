@@ -67,7 +67,7 @@ class Road
         side1 = @targetSideId
         side2 = other.sourceSideId
         # 0 - left, 1 - forward, 2 - right
-        turnNumber = (side2 - side1 - 1 + 8) % 4
+        return (side2 - side1 - 1 + 8) % 4
 
     update: ->
         throw Error 'incomplete road' unless @source and @target

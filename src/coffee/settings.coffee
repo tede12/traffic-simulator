@@ -21,6 +21,8 @@ settings =
     mapSize: 4  # default is 2
     defaultTimeFactor: 5
     defaultZoomLevel: 6  # Change this value to change the default zoom level (default is 3)
+    defaultMap: 'mappa_1'   # null to disable or 'mappa_1' to enable
+    connectedMap: true  # enable to generate only connected maps (all intersections are connected)
     debug: true
 
 #   See updateCanvasSize() in visualizer.coffee
@@ -31,8 +33,10 @@ settings =
 #   signals settings
     showRedLights: true
     triangles: true  # false -> circles
-    carsNumber: 5
-    carsGap: 3
+    carsNumber: 150
+    carsGap: 5
+    waitCarSpawn: 40  # time dependent to the canvas time factor, it's not seconds
+    tooLongStop: 1000
 
 #   car settings
     myCar:
