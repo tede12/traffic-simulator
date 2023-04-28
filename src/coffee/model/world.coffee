@@ -113,7 +113,10 @@ class World
             for obj in @trackPath
                 intersection = obj['intersection']
                 @addIntersectionToMyCarPath(intersection.id, car)
-            @addCar(car)
+            @addCar car
+            car.path.shift()
+            car.path.shift()
+
 
     addIntersectionToMyCarPath: (intersectionId, car) ->
         intersection = @getIntersection(intersectionId)
@@ -127,25 +130,13 @@ class World
 
         visualizer.drawTrackPath path, 'yellow'  # draw the best path on the map
         source_int = @getIntersection(path[0])
-        source_lane = null
         source_road = null
 
         for road in source_int.roads
             if road.target.id == path[1]
                 source_road = road
                 break
-
-        source_lane = source_road.lanes[0]
-
-        car = new Car source_lane
-        car.speed = 1.0
-        car.id = settings.myCar.id
-        car.color = settings.myCar.color
-
-        for intersection in path
-            @addIntersectionToMyCarPath(intersection, car)
-
-        @addCar car
+        @addMyCar(source_road, 0)
         return data
 
     newRequest: (url, params) ->

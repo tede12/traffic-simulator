@@ -132,30 +132,33 @@ class Car
         @trajectory.moveForward step
 
     pickNextRoad: ->
+        if @id != settings.myCar.id || @path.length == 0
+            intersection = @trajectory.nextIntersection
+            currentLane = @trajectory.current.lane
+            possibleRoads = intersection.roads.filter (x) ->
+                x.target isnt currentLane.road.source
+            if possibleRoads.length is 0
+                return null
+            else
+                return _.sample possibleRoads
+
         if @id == settings.myCar.id
-            if @path.length > 0
-                this.updatePath()
-        intersection = @trajectory.nextIntersection
-        currentLane = @trajectory.current.lane
-        possibleRoads = intersection.roads.filter (x) ->
-            x.target isnt currentLane.road.source
-        return null if possibleRoads.length is 0
-        if @path.length > 0
-            if @id == settings.myCar.id
-                for road in possibleRoads
-                    if road.target.id == @path[0].id
-                        nextRoad = road
-                        return nextRoad
-        else
-            nextRoad = _.sample possibleRoads
-        return nextRoad
+            nextintersection = @path[0]
+            currentLane = @trajectory.current.lane
+            arrivingIntersection = currentLane.road.target
+            nextRoad = null
+            for road in arrivingIntersection.roads
+                if road.target == nextintersection
+                    nextRoad = road
+                    @updatePath()
+                    return nextRoad
 
     pickNextLane: ->
         throw Error 'next lane is already chosen' if @nextLane
         @nextLane = null
         nextRoad = @pickNextRoad()
-        return null if not nextRoad
-        # throw Error 'can not pick next road' if not nextRoad
+        if not nextRoad
+            throw Error 'can not pick next road'
         turnNumber = @trajectory.current.lane.road.getTurnDirection nextRoad
         laneNumber = switch turnNumber
             when 0 then nextRoad.lanesNumber - 1
@@ -164,6 +167,7 @@ class Car
         @nextLane = nextRoad.lanes[laneNumber]
         throw Error 'can not pick next lane' if not @nextLane
         return @nextLane
+
 
     popNextLane: ->
         nextLane = @nextLane
@@ -175,8 +179,9 @@ class Car
         @path = intersections
 
     updatePath: () ->
-        nextIntersection = @path.shift()
-        @trajectory.setNextIntersection(nextIntersection)
+        if @path.length > 0
+            @path.shift()
+           # @trajectory.setNextIntersection(@path[0])
         return
 
 module.exports = Car

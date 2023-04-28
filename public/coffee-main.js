@@ -24260,34 +24260,34 @@ Car = (function() {
     }
 
     pickNextRoad() {
-      var currentLane, i, intersection, len, nextRoad, possibleRoads, road;
-      if (this.id === settings.myCar.id) {
-        if (this.path.length > 0) {
-          this.updatePath();
+      var arrivingIntersection, currentLane, i, intersection, len, nextRoad, nextintersection, possibleRoads, ref, road;
+      if (this.id !== settings.myCar.id || this.path.length === 0) {
+        intersection = this.trajectory.nextIntersection;
+        currentLane = this.trajectory.current.lane;
+        possibleRoads = intersection.roads.filter(function(x) {
+          return x.target !== currentLane.road.source;
+        });
+        if (possibleRoads.length === 0) {
+          return null;
+        } else {
+          return _.sample(possibleRoads);
         }
       }
-      intersection = this.trajectory.nextIntersection;
-      currentLane = this.trajectory.current.lane;
-      possibleRoads = intersection.roads.filter(function(x) {
-        return x.target !== currentLane.road.source;
-      });
-      if (possibleRoads.length === 0) {
-        return null;
-      }
-      if (this.path.length > 0) {
-        if (this.id === settings.myCar.id) {
-          for (i = 0, len = possibleRoads.length; i < len; i++) {
-            road = possibleRoads[i];
-            if (road.target.id === this.path[0].id) {
-              nextRoad = road;
-              return nextRoad;
-            }
+      if (this.id === settings.myCar.id) {
+        nextintersection = this.path[0];
+        currentLane = this.trajectory.current.lane;
+        arrivingIntersection = currentLane.road.target;
+        nextRoad = null;
+        ref = arrivingIntersection.roads;
+        for (i = 0, len = ref.length; i < len; i++) {
+          road = ref[i];
+          if (road.target === nextintersection) {
+            nextRoad = road;
+            this.updatePath();
+            return nextRoad;
           }
         }
-      } else {
-        nextRoad = _.sample(possibleRoads);
       }
-      return nextRoad;
     }
 
     pickNextLane() {
@@ -24298,9 +24298,8 @@ Car = (function() {
       this.nextLane = null;
       nextRoad = this.pickNextRoad();
       if (!nextRoad) {
-        return null;
+        throw Error('can not pick next road');
       }
-      // throw Error 'can not pick next road' if not nextRoad
       turnNumber = this.trajectory.current.lane.road.getTurnDirection(nextRoad);
       laneNumber = (function() {
         switch (turnNumber) {
@@ -24332,9 +24331,9 @@ Car = (function() {
     }
 
     updatePath() {
-      var nextIntersection;
-      nextIntersection = this.path.shift();
-      this.trajectory.setNextIntersection(nextIntersection);
+      if (this.path.length > 0) {
+        this.path.shift();
+      }
     }
 
   };
@@ -24381,6 +24380,7 @@ Car = (function() {
 
 }).call(this);
 
+// @trajectory.setNextIntersection(@path[0])
 module.exports = Car;
 
 
@@ -25477,7 +25477,9 @@ World = (function() {
           intersection = obj['intersection'];
           this.addIntersectionToMyCarPath(intersection.id, car);
         }
-        return this.addCar(car);
+        this.addCar(car);
+        car.path.shift();
+        return car.path.shift();
       }
     }
 
@@ -25490,12 +25492,11 @@ World = (function() {
     }
 
     setNewPath(data) {
-      var car, i, intersection, j, len, len1, path, ref, road, source_int, source_lane, source_road;
+      var i, len, path, ref, road, source_int, source_road;
       path = data['path'];
       console.log(`Best Path: ${path}`);
       visualizer.drawTrackPath(path, 'yellow'); // draw the best path on the map
       source_int = this.getIntersection(path[0]);
-      source_lane = null;
       source_road = null;
       ref = source_int.roads;
       for (i = 0, len = ref.length; i < len; i++) {
@@ -25505,16 +25506,7 @@ World = (function() {
           break;
         }
       }
-      source_lane = source_road.lanes[0];
-      car = new Car(source_lane);
-      car.speed = 1.0;
-      car.id = settings.myCar.id;
-      car.color = settings.myCar.color;
-      for (j = 0, len1 = path.length; j < len1; j++) {
-        intersection = path[j];
-        this.addIntersectionToMyCarPath(intersection, car);
-      }
-      this.addCar(car);
+      this.addMyCar(source_road, 0);
       return data;
     }
 
