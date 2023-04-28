@@ -34,7 +34,7 @@
 - [x] Draw a priori track path
 - [x] Choose destination for my car
 - [x] Add algorithm for pathfinding
-- [ ] Enable resize of map when Running checkbox is off
+- [x] Enable resize of map when Running checkbox is off and generate only closed maps
 - [ ] Send map first time to pathFinder, add Unique ID for each map
 - [ ] NO spawn cars when my car is placed on the road for 5 seconds
 - [ ] Add little screen with my car info on the simulator
@@ -49,7 +49,7 @@
 
 
 # TIPS
-- drawSegment must me called like this:
+- drawSegment must be called like this:
    ```coffeescript
    @graphics.drawSegment(myRoad.middleLine)
    @graphics.stroke 'green'

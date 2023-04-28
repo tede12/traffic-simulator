@@ -17,6 +17,9 @@ class World
         @createDynamicMapMethods()
         @trackPath = []
         @bestPath = []
+        @carObject = {
+            lastTimeSpawn: null     # time when last car was spawned
+        }
 
     @property 'instantSpeed',
         get: ->
@@ -93,7 +96,12 @@ class World
                         @addRoad new Road intersection, previous if previous?
                         @addRoad new Road previous, intersection if previous?
                     previous = intersection
-        null
+
+        # Check if maps is OK (all intersections are connected)
+        if settings.connectedMap
+            for id, intersection of @intersections.all()
+                if intersection.roads.length < 2
+                    return @generateMap minX, maxX, minY, maxY
 
     addMyCar: (road, laneId = 0) ->
         if road instanceof Road
@@ -103,6 +111,9 @@ class World
             road = @getRoad(road)
 
         if road
+#           Stop spawning of car for settings.waitCarSpawn secs
+            @carObject.lastTimeSpawn = @time
+
             lane = road.lanes[laneId]
             @removeCarById(settings.myCar.id)
             @carsNumber = @carsNumber + 1
@@ -124,7 +135,9 @@ class World
             car.path.push(intersection)
         return
 
-    setNewPath: (data) ->
+    setNewPath: (data) ->       # todo fix: duplicate code of world.addMyCar();
+        @carObject.lastTimeSpawn = @time
+
         path = data['path']
         console.log "Best Path: #{path}"
 
@@ -179,7 +192,12 @@ class World
     onTick: (delta) =>
         throw Error 'delta > 1' if delta > 1
         @time += delta
-        @refreshCars()
+#       When myCar is spawned, stop spawning of other cars for settings.waitCarSpawn secs
+        if @carObject?.lastTimeSpawn and @time - @carObject.lastTimeSpawn > settings.waitCarSpawn    # todo check time
+            @refreshCars()
+        else if @carObject?.lastTimeSpawn is null
+            @refreshCars()
+
         for id, intersection of @intersections.all()
             intersection.controlSignals.onTick delta
         for id, car of @cars.all()

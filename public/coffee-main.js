@@ -21297,8 +21297,12 @@ waitForElements(['canvas', 'gui'], function() {
   console.log('App started --> ' + new Date().toLocaleTimeString());
   window.settings = settings;
   window.world = new World();
-  world.load();
-  if (world.intersections.length === 0) {
+  // load default map if it exists
+  if (settings.defaultMap && savedMaps[settings.defaultMap]) {
+    mapData = savedMaps[settings.defaultMap];
+    mapData.carsNumber = settings.carsNumber;
+    world.load(mapData, false);
+  } else {
     world.generateMap();
     world.carsNumber = settings.carsNumber;
   }
@@ -24208,7 +24212,7 @@ Car = (function() {
         // Added by me
         if (step <= 0) {
           this.tooLongStop += 1;
-          if (this.tooLongStop > 1000) {
+          if (this.tooLongStop > settings.tooLongStop) {
             this.alive = false;
           }
         }
@@ -24933,14 +24937,14 @@ Road = (function() {
     }
 
     getTurnDirection(other) {
-      var side1, side2, turnNumber;
+      var side1, side2;
       if (this.target !== other.source) {
         throw Error('invalid roads'); // Todo FIX this
       }
       side1 = this.targetSideId;
       side2 = other.sourceSideId;
       // 0 - left, 1 - forward, 2 - right
-      return turnNumber = (side2 - side1 - 1 + 8) % 4;
+      return (side2 - side1 - 1 + 8) % 4;
     }
 
     update() {
@@ -25335,6 +25339,9 @@ World = (function() {
       this.createDynamicMapMethods();
       this.trackPath = [];
       this.bestPath = [];
+      this.carObject = {
+        lastTimeSpawn: null // time when last car was spawned
+      };
     }
 
     createDynamicMapMethods() {
@@ -25401,7 +25408,7 @@ World = (function() {
     }
 
     generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
-      var gridSize, i, intersection, intersectionsNumber, j, k, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, step, x, y;
+      var gridSize, i, id, intersection, intersectionsNumber, j, k, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, x, y;
       this.clear();
       intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0;
       map = {};
@@ -25452,7 +25459,16 @@ World = (function() {
           }
         }
       }
-      return null;
+      // Check if maps is OK (all intersections are connected)
+      if (settings.connectedMap) {
+        ref8 = this.intersections.all();
+        for (id in ref8) {
+          intersection = ref8[id];
+          if (intersection.roads.length < 2) {
+            return this.generateMap(minX, maxX, minY, maxY);
+          }
+        }
+      }
     }
 
     addMyCar(road, laneId = 0) {
@@ -25464,6 +25480,8 @@ World = (function() {
         road = this.getRoad(road);
       }
       if (road) {
+        //           Stop spawning of car for settings.waitCarSpawn secs
+        this.carObject.lastTimeSpawn = this.time;
         lane = road.lanes[laneId];
         this.removeCarById(settings.myCar.id);
         this.carsNumber = this.carsNumber + 1;
@@ -25491,8 +25509,9 @@ World = (function() {
       }
     }
 
-    setNewPath(data) {
+    setNewPath(data) { // todo fix: duplicate code of world.addMyCar();
       var i, len, path, ref, road, source_int, source_road;
+      this.carObject.lastTimeSpawn = this.time;
       path = data['path'];
       console.log(`Best Path: ${path}`);
       visualizer.drawTrackPath(path, 'yellow'); // draw the best path on the map
@@ -25553,21 +25572,26 @@ World = (function() {
     }
 
     onTick(delta) {
-      var car, id, intersection, ref, ref1, results;
+      var car, id, intersection, ref, ref1, ref2, ref3, results;
       if (delta > 1) {
         throw Error('delta > 1');
       }
       this.time += delta;
-      this.refreshCars();
-      ref = this.intersections.all();
-      for (id in ref) {
-        intersection = ref[id];
+      //       When myCar is spawned, stop spawning of other cars for settings.waitCarSpawn secs
+      if (((ref = this.carObject) != null ? ref.lastTimeSpawn : void 0) && this.time - this.carObject.lastTimeSpawn > settings.waitCarSpawn) { // todo check time
+        this.refreshCars();
+      } else if (((ref1 = this.carObject) != null ? ref1.lastTimeSpawn : void 0) === null) {
+        this.refreshCars();
+      }
+      ref2 = this.intersections.all();
+      for (id in ref2) {
+        intersection = ref2[id];
         intersection.controlSignals.onTick(delta);
       }
-      ref1 = this.cars.all();
+      ref3 = this.cars.all();
       results = [];
-      for (id in ref1) {
-        car = ref1[id];
+      for (id in ref3) {
+        car = ref3[id];
         car.move(delta);
         if (!car.alive) {
           results.push(this.removeCar(car));
@@ -25696,6 +25720,8 @@ settings = {
   mapSize: 4, // default is 2
   defaultTimeFactor: 5,
   defaultZoomLevel: 6, // Change this value to change the default zoom level (default is 3)
+  defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
+  connectedMap: true, // enable to generate only connected maps (all intersections are connected)
   debug: true,
   //   See updateCanvasSize() in visualizer.coffee
   canvasWidth: 1400, // fullscreen == true -> $(window).width
@@ -25704,8 +25730,10 @@ settings = {
   //   signals settings
   showRedLights: true,
   triangles: true, // false -> circles
-  carsNumber: 5,
-  carsGap: 3,
+  carsNumber: 150,
+  carsGap: 5,
+  waitCarSpawn: 40, // time dependent to the canvas time factor, it's not seconds
+  tooLongStop: 1000,
   //   car settings
   myCar: {
     id: "MACCHINA",
@@ -26247,7 +26275,9 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
     // Click on lane (add my car)
     hoveredLane = this.getHoveredLane(this.getScaledPoint(e));
     if (e.ctrlKey) {
-      this.visualizer.world.addMyCar(hoveredLane.road);
+      if (hoveredLane != null ? hoveredLane.road : void 0) {
+        this.visualizer.world.addMyCar(hoveredLane.road);
+      }
       e.stopImmediatePropagation();
     }
     // Click on intersection (add intersection to track path)
@@ -26569,7 +26599,7 @@ Visualizer = (function() {
       this.toolHighlighter = new ToolHighlighter(this, true);
       this.toolIntersectionMover = new ToolIntersectionMover(this, true);
       this.toolMover = new ToolMover(this, true);
-      this._running = false;
+      this._running = true;
       this.previousTime = 0;
       this.timeFactor = settings.defaultTimeFactor;
       this.trackPath = world.trackPath;
@@ -26973,57 +27003,57 @@ Visualizer = (function() {
 
     draw(time) {
       var car, delta, id, intersection, ref, ref1, ref2, ref3, ref4, road;
-      delta = (time - this.previousTime) || 0;
-      if (delta > 30) {
-        if (delta > 100) {
-          delta = 100;
-        }
-        this.previousTime = time;
-        this.world.onTick(this.timeFactor * delta / 1000);
-        this.updateCanvasSize();
-        this.graphics.clear(settings.colors.background);
-        this.graphics.save();
-        this.zoomer.transform();
-        this.drawGrid();
-        ref = this.world.intersections.all();
-        for (id in ref) {
-          intersection = ref[id];
-          this.drawIntersection(intersection, 0.9);
-        }
-        ref1 = this.world.roads.all();
-        for (id in ref1) {
-          road = ref1[id];
-          this.drawRoad(road, 0.9);
-        }
-        ref2 = this.world.roads.all();
-        for (id in ref2) {
-          road = ref2[id];
-          this.drawSignals(road);
-        }
-        ref3 = this.world.cars.all();
-        for (id in ref3) {
-          car = ref3[id];
-          this.drawCar(car);
-        }
-        this.toolIntersectionBuilder.draw(); // TODO: all tools
-        this.toolRoadbuilder.draw();
-        this.toolHighlighter.draw();
-        // ------------------------------------------------------------------------
-        // ADDING LINES THAT FOLLOW THE CARS
-        this.graphics.save();
-        ref4 = this.world.cars.all();
-        for (id in ref4) {
-          car = ref4[id];
-          this.drawCarLines(car);
-        }
-        // ------------------------------------------------------------------------
-        this.drawTrackPath();
-        // ------------------------------------------------------------------------
-        this.graphics.restore();
-      }
       if (this.running) {
-        return window.requestAnimationFrame(this.draw);
+        delta = (time - this.previousTime) || 0;
+        if (delta > 30) {
+          if (delta > 100) {
+            delta = 100;
+          }
+          this.previousTime = time;
+          this.world.onTick(this.timeFactor * delta / 1000);
+        }
       }
+      this.updateCanvasSize();
+      this.graphics.clear(settings.colors.background);
+      this.graphics.save();
+      this.zoomer.transform();
+      this.drawGrid();
+      ref = this.world.intersections.all();
+      for (id in ref) {
+        intersection = ref[id];
+        this.drawIntersection(intersection, 0.9);
+      }
+      ref1 = this.world.roads.all();
+      for (id in ref1) {
+        road = ref1[id];
+        this.drawRoad(road, 0.9);
+      }
+      ref2 = this.world.roads.all();
+      for (id in ref2) {
+        road = ref2[id];
+        this.drawSignals(road);
+      }
+      ref3 = this.world.cars.all();
+      for (id in ref3) {
+        car = ref3[id];
+        this.drawCar(car);
+      }
+      this.toolIntersectionBuilder.draw(); // TODO: all tools
+      this.toolRoadbuilder.draw();
+      this.toolHighlighter.draw();
+      // ------------------------------------------------------------------------
+      // ADDING LINES THAT FOLLOW THE CARS
+      this.graphics.save();
+      ref4 = this.world.cars.all();
+      for (id in ref4) {
+        car = ref4[id];
+        this.drawCarLines(car);
+      }
+      // ------------------------------------------------------------------------
+      this.drawTrackPath();
+      // ------------------------------------------------------------------------
+      this.graphics.restore();
+      return window.requestAnimationFrame(this.draw);
     }
 
     checkIfPointOrIntersection(obj) {
@@ -27194,10 +27224,8 @@ Visualizer = (function() {
     }
 
     start() {
-      if (!this._running) {
-        this._running = true;
-        return this.draw();
-      }
+      this._running = true;
+      return this.draw();
     }
 
     stop() {

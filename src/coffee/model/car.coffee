@@ -7,8 +7,6 @@ Trajectory = require './trajectory'
 uniqueId = require '../helpers'
 settings = require '../settings'
 
-
-
 class Car
     constructor: (lane, position) ->
         @id = uniqueId 'car' # @id = _.uniqueId 'car'
@@ -69,9 +67,10 @@ class Car
         safeDistance = distanceGap + timeGap + breakGap
         busyRoadCoeff = (safeDistance / distanceToNextCar) ** 2
         safeIntersectionDistance = 1 + timeGap + @speed ** 2 / (2 * b)
-        intersectionCoeff =
-            (safeIntersectionDistance / @trajectory.distanceToStopLine) ** 2
+        intersectionCoeff = (safeIntersectionDistance / @trajectory.distanceToStopLine) ** 2
+
         coeff = 1 - freeRoadCoeff - busyRoadCoeff - intersectionCoeff
+
         return @maxAcceleration * coeff
 
     move: (delta) ->
@@ -96,7 +95,7 @@ class Car
             # Added by me
             if step <= 0
                 @tooLongStop += 1
-                if @tooLongStop > 1000
+                if @tooLongStop > settings.tooLongStop
                     @alive = false
             # TODO: hacks, should have changed speed
             if @trajectory.nextCarDistance.distance < step

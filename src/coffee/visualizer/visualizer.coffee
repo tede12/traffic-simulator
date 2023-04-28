@@ -36,7 +36,7 @@ class Visualizer
         @toolHighlighter = new ToolHighlighter this, true
         @toolIntersectionMover = new ToolIntersectionMover this, true
         @toolMover = new ToolMover this, true
-        @_running = false
+        @_running = true
         @previousTime = 0
         @timeFactor = settings.defaultTimeFactor
 
@@ -166,9 +166,9 @@ class Visualizer
         if lights[0] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                    new Point(0.1, -0.2),
-                    new Point(0.2, -0.4),
-                    new Point(0.3, -0.2)
+                        new Point(0.1, -0.2),
+                        new Point(0.2, -0.4),
+                        new Point(0.3, -0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, -0.3), 0.1)
@@ -179,9 +179,9 @@ class Visualizer
         else if lights[0] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                    new Point(0.1, -0.2),
-                    new Point(0.2, -0.4),
-                    new Point(0.3, -0.2)
+                        new Point(0.1, -0.2),
+                        new Point(0.2, -0.4),
+                        new Point(0.3, -0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, -0.3), 0.1)
@@ -190,9 +190,9 @@ class Visualizer
         if lights[1] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                    new Point(0.3, -0.1),
-                    new Point(0.5, 0),
-                    new Point(0.3, 0.1)
+                        new Point(0.3, -0.1),
+                        new Point(0.5, 0),
+                        new Point(0.3, 0.1)
                 )
             else
                 @graphics.drawCircle(new Point(0.4, 0), 0.1)
@@ -203,9 +203,9 @@ class Visualizer
         else if lights[1] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                    new Point(0.3, -0.1),
-                    new Point(0.5, 0),
-                    new Point(0.3, 0.1)
+                        new Point(0.3, -0.1),
+                        new Point(0.5, 0),
+                        new Point(0.3, 0.1)
                 )
             else
                 @graphics.drawCircle(new Point(0.4, 0), 0.1)
@@ -214,9 +214,9 @@ class Visualizer
         if lights[2] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                    new Point(0.1, 0.2),
-                    new Point(0.2, 0.4),
-                    new Point(0.3, 0.2)
+                        new Point(0.1, 0.2),
+                        new Point(0.2, 0.4),
+                        new Point(0.3, 0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, 0.3), 0.1)
@@ -226,9 +226,9 @@ class Visualizer
         else if lights[2] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                    new Point(0.1, 0.2),
-                    new Point(0.2, 0.4),
-                    new Point(0.3, 0.2)
+                        new Point(0.1, 0.2),
+                        new Point(0.2, 0.4),
+                        new Point(0.3, 0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, 0.3), 0.1)
@@ -390,33 +390,36 @@ class Visualizer
                 height: canvasHeight
 
     draw: (time) =>
-        delta = (time - @previousTime) || 0
-        if delta > 30
-            delta = 100 if delta > 100
-            @previousTime = time
-            @world.onTick @timeFactor * delta / 1000
-            @updateCanvasSize()
-            @graphics.clear settings.colors.background
-            @graphics.save()
-            @zoomer.transform()
-            @drawGrid()
-            for id, intersection of @world.intersections.all()
-                @drawIntersection intersection, 0.9
-            @drawRoad road, 0.9 for id, road of @world.roads.all()
-            @drawSignals road for id, road of @world.roads.all()
-            @drawCar car for id, car of @world.cars.all()
-            @toolIntersectionBuilder.draw() # TODO: all tools
-            @toolRoadbuilder.draw()
-            @toolHighlighter.draw()
-            # ------------------------------------------------------------------------
-            # ADDING LINES THAT FOLLOW THE CARS
-            @graphics.save()
-            @drawCarLines car for id, car of @world.cars.all()
-            # ------------------------------------------------------------------------
-            @drawTrackPath()
-            # ------------------------------------------------------------------------
-            @graphics.restore()
-        window.requestAnimationFrame @draw if @running
+        if @running
+            delta = (time - @previousTime) || 0
+            if delta > 30
+                delta = 100 if delta > 100
+                @previousTime = time
+                @world.onTick @timeFactor * delta / 1000
+
+        @updateCanvasSize()
+        @graphics.clear settings.colors.background
+        @graphics.save()
+        @zoomer.transform()
+        @drawGrid()
+        for id, intersection of @world.intersections.all()
+            @drawIntersection intersection, 0.9
+        @drawRoad road, 0.9 for id, road of @world.roads.all()
+        @drawSignals road for id, road of @world.roads.all()
+        @drawCar car for id, car of @world.cars.all()
+        @toolIntersectionBuilder.draw() # TODO: all tools
+        @toolRoadbuilder.draw()
+        @toolHighlighter.draw()
+        # ------------------------------------------------------------------------
+        # ADDING LINES THAT FOLLOW THE CARS
+        @graphics.save()
+        @drawCarLines car for id, car of @world.cars.all()
+        # ------------------------------------------------------------------------
+        @drawTrackPath()
+        # ------------------------------------------------------------------------
+        @graphics.restore()
+
+        window.requestAnimationFrame @draw
 
     checkIfPointOrIntersection: (obj) ->
         """ Check if obj is a point or an intersection and return the intersection object """
@@ -473,7 +476,6 @@ class Visualizer
     drawTrackPath: (newPath = [], color = 'blue') ->
 #       TODO: add curve when needed
 #       TODO: set colors for more paths (now is only blue, because it's overwritten each time)
-        
         if newPath instanceof Array and newPath.length >= 2     # reset trackPath
             @world.trackPath = []
             for i in newPath
@@ -568,11 +570,11 @@ class Visualizer
             if running then @start() else @stop()
 
     start: ->
-        unless @_running
-            @_running = true
-            @draw()
+        @_running = true
+        @draw()
 
     stop: ->
         @_running = false
+
 
 module.exports = Visualizer
