@@ -42,7 +42,7 @@ waitForElements ['canvas', 'gui'], ->
     if settings.defaultMap and savedMaps[settings.defaultMap]
         mapData = savedMaps[settings.defaultMap]
         mapData.carsNumber = settings.carsNumber
-        world.load mapData, false
+        world.load mapData, settings.defaultMap, false
     else
         world.generateMap()
         world.carsNumber = settings.carsNumber
@@ -77,8 +77,10 @@ waitForElements ['canvas', 'gui'], ->
     gui.add(settings, 'triangles').listen()
     guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen()
     guiVisualizer.add(visualizer, 'timeFactor', 0.1, 10).listen()
-    guiWorld.add(world, 'carsNumber').min(0).max(200).step(1).listen()
+    guiWorld.add(world, 'carsNumber').min(0).max(500).step(1).listen()
     guiWorld.add(world, 'instantSpeed').step(0.00001).listen()
+    guiWorld.add(world, 'time').listen()
+    guiWorld.add(world, 'activeCars').listen()
     gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen()
     guiSavedMaps = gui.addFolder('saved maps')
     for mapName, mapData of savedMaps

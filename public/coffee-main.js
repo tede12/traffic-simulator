@@ -21241,6 +21241,869 @@ return jQuery;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{}],8:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "NIL", {
+  enumerable: true,
+  get: function () {
+    return _nil.default;
+  }
+});
+Object.defineProperty(exports, "parse", {
+  enumerable: true,
+  get: function () {
+    return _parse.default;
+  }
+});
+Object.defineProperty(exports, "stringify", {
+  enumerable: true,
+  get: function () {
+    return _stringify.default;
+  }
+});
+Object.defineProperty(exports, "v1", {
+  enumerable: true,
+  get: function () {
+    return _v.default;
+  }
+});
+Object.defineProperty(exports, "v3", {
+  enumerable: true,
+  get: function () {
+    return _v2.default;
+  }
+});
+Object.defineProperty(exports, "v4", {
+  enumerable: true,
+  get: function () {
+    return _v3.default;
+  }
+});
+Object.defineProperty(exports, "v5", {
+  enumerable: true,
+  get: function () {
+    return _v4.default;
+  }
+});
+Object.defineProperty(exports, "validate", {
+  enumerable: true,
+  get: function () {
+    return _validate.default;
+  }
+});
+Object.defineProperty(exports, "version", {
+  enumerable: true,
+  get: function () {
+    return _version.default;
+  }
+});
+
+var _v = _interopRequireDefault(require("./v1.js"));
+
+var _v2 = _interopRequireDefault(require("./v3.js"));
+
+var _v3 = _interopRequireDefault(require("./v4.js"));
+
+var _v4 = _interopRequireDefault(require("./v5.js"));
+
+var _nil = _interopRequireDefault(require("./nil.js"));
+
+var _version = _interopRequireDefault(require("./version.js"));
+
+var _validate = _interopRequireDefault(require("./validate.js"));
+
+var _stringify = _interopRequireDefault(require("./stringify.js"));
+
+var _parse = _interopRequireDefault(require("./parse.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+},{"./nil.js":11,"./parse.js":12,"./stringify.js":16,"./v1.js":17,"./v3.js":18,"./v4.js":20,"./v5.js":21,"./validate.js":22,"./version.js":23}],9:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+/*
+ * Browser-compatible JavaScript MD5
+ *
+ * Modification of JavaScript MD5
+ * https://github.com/blueimp/JavaScript-MD5
+ *
+ * Copyright 2011, Sebastian Tschan
+ * https://blueimp.net
+ *
+ * Licensed under the MIT license:
+ * https://opensource.org/licenses/MIT
+ *
+ * Based on
+ * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
+ * Digest Algorithm, as defined in RFC 1321.
+ * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
+ * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
+ * Distributed under the BSD License
+ * See http://pajhome.org.uk/crypt/md5 for more info.
+ */
+function md5(bytes) {
+  if (typeof bytes === 'string') {
+    const msg = unescape(encodeURIComponent(bytes)); // UTF8 escape
+
+    bytes = new Uint8Array(msg.length);
+
+    for (let i = 0; i < msg.length; ++i) {
+      bytes[i] = msg.charCodeAt(i);
+    }
+  }
+
+  return md5ToHexEncodedArray(wordsToMd5(bytesToWords(bytes), bytes.length * 8));
+}
+/*
+ * Convert an array of little-endian words to an array of bytes
+ */
+
+
+function md5ToHexEncodedArray(input) {
+  const output = [];
+  const length32 = input.length * 32;
+  const hexTab = '0123456789abcdef';
+
+  for (let i = 0; i < length32; i += 8) {
+    const x = input[i >> 5] >>> i % 32 & 0xff;
+    const hex = parseInt(hexTab.charAt(x >>> 4 & 0x0f) + hexTab.charAt(x & 0x0f), 16);
+    output.push(hex);
+  }
+
+  return output;
+}
+/**
+ * Calculate output length with padding and bit length
+ */
+
+
+function getOutputLength(inputLength8) {
+  return (inputLength8 + 64 >>> 9 << 4) + 14 + 1;
+}
+/*
+ * Calculate the MD5 of an array of little-endian words, and a bit length.
+ */
+
+
+function wordsToMd5(x, len) {
+  /* append padding */
+  x[len >> 5] |= 0x80 << len % 32;
+  x[getOutputLength(len) - 1] = len;
+  let a = 1732584193;
+  let b = -271733879;
+  let c = -1732584194;
+  let d = 271733878;
+
+  for (let i = 0; i < x.length; i += 16) {
+    const olda = a;
+    const oldb = b;
+    const oldc = c;
+    const oldd = d;
+    a = md5ff(a, b, c, d, x[i], 7, -680876936);
+    d = md5ff(d, a, b, c, x[i + 1], 12, -389564586);
+    c = md5ff(c, d, a, b, x[i + 2], 17, 606105819);
+    b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330);
+    a = md5ff(a, b, c, d, x[i + 4], 7, -176418897);
+    d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426);
+    c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341);
+    b = md5ff(b, c, d, a, x[i + 7], 22, -45705983);
+    a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416);
+    d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417);
+    c = md5ff(c, d, a, b, x[i + 10], 17, -42063);
+    b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162);
+    a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682);
+    d = md5ff(d, a, b, c, x[i + 13], 12, -40341101);
+    c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290);
+    b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329);
+    a = md5gg(a, b, c, d, x[i + 1], 5, -165796510);
+    d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632);
+    c = md5gg(c, d, a, b, x[i + 11], 14, 643717713);
+    b = md5gg(b, c, d, a, x[i], 20, -373897302);
+    a = md5gg(a, b, c, d, x[i + 5], 5, -701558691);
+    d = md5gg(d, a, b, c, x[i + 10], 9, 38016083);
+    c = md5gg(c, d, a, b, x[i + 15], 14, -660478335);
+    b = md5gg(b, c, d, a, x[i + 4], 20, -405537848);
+    a = md5gg(a, b, c, d, x[i + 9], 5, 568446438);
+    d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690);
+    c = md5gg(c, d, a, b, x[i + 3], 14, -187363961);
+    b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501);
+    a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467);
+    d = md5gg(d, a, b, c, x[i + 2], 9, -51403784);
+    c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473);
+    b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734);
+    a = md5hh(a, b, c, d, x[i + 5], 4, -378558);
+    d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463);
+    c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562);
+    b = md5hh(b, c, d, a, x[i + 14], 23, -35309556);
+    a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060);
+    d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353);
+    c = md5hh(c, d, a, b, x[i + 7], 16, -155497632);
+    b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640);
+    a = md5hh(a, b, c, d, x[i + 13], 4, 681279174);
+    d = md5hh(d, a, b, c, x[i], 11, -358537222);
+    c = md5hh(c, d, a, b, x[i + 3], 16, -722521979);
+    b = md5hh(b, c, d, a, x[i + 6], 23, 76029189);
+    a = md5hh(a, b, c, d, x[i + 9], 4, -640364487);
+    d = md5hh(d, a, b, c, x[i + 12], 11, -421815835);
+    c = md5hh(c, d, a, b, x[i + 15], 16, 530742520);
+    b = md5hh(b, c, d, a, x[i + 2], 23, -995338651);
+    a = md5ii(a, b, c, d, x[i], 6, -198630844);
+    d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415);
+    c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905);
+    b = md5ii(b, c, d, a, x[i + 5], 21, -57434055);
+    a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571);
+    d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606);
+    c = md5ii(c, d, a, b, x[i + 10], 15, -1051523);
+    b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799);
+    a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359);
+    d = md5ii(d, a, b, c, x[i + 15], 10, -30611744);
+    c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380);
+    b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649);
+    a = md5ii(a, b, c, d, x[i + 4], 6, -145523070);
+    d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379);
+    c = md5ii(c, d, a, b, x[i + 2], 15, 718787259);
+    b = md5ii(b, c, d, a, x[i + 9], 21, -343485551);
+    a = safeAdd(a, olda);
+    b = safeAdd(b, oldb);
+    c = safeAdd(c, oldc);
+    d = safeAdd(d, oldd);
+  }
+
+  return [a, b, c, d];
+}
+/*
+ * Convert an array bytes to an array of little-endian words
+ * Characters >255 have their high-byte silently ignored.
+ */
+
+
+function bytesToWords(input) {
+  if (input.length === 0) {
+    return [];
+  }
+
+  const length8 = input.length * 8;
+  const output = new Uint32Array(getOutputLength(length8));
+
+  for (let i = 0; i < length8; i += 8) {
+    output[i >> 5] |= (input[i / 8] & 0xff) << i % 32;
+  }
+
+  return output;
+}
+/*
+ * Add integers, wrapping at 2^32. This uses 16-bit operations internally
+ * to work around bugs in some JS interpreters.
+ */
+
+
+function safeAdd(x, y) {
+  const lsw = (x & 0xffff) + (y & 0xffff);
+  const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+  return msw << 16 | lsw & 0xffff;
+}
+/*
+ * Bitwise rotate a 32-bit number to the left.
+ */
+
+
+function bitRotateLeft(num, cnt) {
+  return num << cnt | num >>> 32 - cnt;
+}
+/*
+ * These functions implement the four basic operations the algorithm uses.
+ */
+
+
+function md5cmn(q, a, b, x, s, t) {
+  return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b);
+}
+
+function md5ff(a, b, c, d, x, s, t) {
+  return md5cmn(b & c | ~b & d, a, b, x, s, t);
+}
+
+function md5gg(a, b, c, d, x, s, t) {
+  return md5cmn(b & d | c & ~d, a, b, x, s, t);
+}
+
+function md5hh(a, b, c, d, x, s, t) {
+  return md5cmn(b ^ c ^ d, a, b, x, s, t);
+}
+
+function md5ii(a, b, c, d, x, s, t) {
+  return md5cmn(c ^ (b | ~d), a, b, x, s, t);
+}
+
+var _default = md5;
+exports.default = _default;
+},{}],10:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+const randomUUID = typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+var _default = {
+  randomUUID
+};
+exports.default = _default;
+},{}],11:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = '00000000-0000-0000-0000-000000000000';
+exports.default = _default;
+},{}],12:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _validate = _interopRequireDefault(require("./validate.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function parse(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  let v;
+  const arr = new Uint8Array(16); // Parse ########-....-....-....-............
+
+  arr[0] = (v = parseInt(uuid.slice(0, 8), 16)) >>> 24;
+  arr[1] = v >>> 16 & 0xff;
+  arr[2] = v >>> 8 & 0xff;
+  arr[3] = v & 0xff; // Parse ........-####-....-....-............
+
+  arr[4] = (v = parseInt(uuid.slice(9, 13), 16)) >>> 8;
+  arr[5] = v & 0xff; // Parse ........-....-####-....-............
+
+  arr[6] = (v = parseInt(uuid.slice(14, 18), 16)) >>> 8;
+  arr[7] = v & 0xff; // Parse ........-....-....-####-............
+
+  arr[8] = (v = parseInt(uuid.slice(19, 23), 16)) >>> 8;
+  arr[9] = v & 0xff; // Parse ........-....-....-....-############
+  // (Use "/" to avoid 32-bit truncation when bit-shifting high-order bytes)
+
+  arr[10] = (v = parseInt(uuid.slice(24, 36), 16)) / 0x10000000000 & 0xff;
+  arr[11] = v / 0x100000000 & 0xff;
+  arr[12] = v >>> 24 & 0xff;
+  arr[13] = v >>> 16 & 0xff;
+  arr[14] = v >>> 8 & 0xff;
+  arr[15] = v & 0xff;
+  return arr;
+}
+
+var _default = parse;
+exports.default = _default;
+},{"./validate.js":22}],13:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+exports.default = _default;
+},{}],14:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = rng;
+// Unique ID creation requires a high quality random # generator. In the browser we therefore
+// require the crypto API and do not support built-in fallback to lower quality random number
+// generators (like Math.random()).
+let getRandomValues;
+const rnds8 = new Uint8Array(16);
+
+function rng() {
+  // lazy load so that environments that need to polyfill have a chance to do so
+  if (!getRandomValues) {
+    // getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
+    getRandomValues = typeof crypto !== 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
+
+    if (!getRandomValues) {
+      throw new Error('crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported');
+    }
+  }
+
+  return getRandomValues(rnds8);
+}
+},{}],15:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+// Adapted from Chris Veness' SHA1 code at
+// http://www.movable-type.co.uk/scripts/sha1.html
+function f(s, x, y, z) {
+  switch (s) {
+    case 0:
+      return x & y ^ ~x & z;
+
+    case 1:
+      return x ^ y ^ z;
+
+    case 2:
+      return x & y ^ x & z ^ y & z;
+
+    case 3:
+      return x ^ y ^ z;
+  }
+}
+
+function ROTL(x, n) {
+  return x << n | x >>> 32 - n;
+}
+
+function sha1(bytes) {
+  const K = [0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6];
+  const H = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0];
+
+  if (typeof bytes === 'string') {
+    const msg = unescape(encodeURIComponent(bytes)); // UTF8 escape
+
+    bytes = [];
+
+    for (let i = 0; i < msg.length; ++i) {
+      bytes.push(msg.charCodeAt(i));
+    }
+  } else if (!Array.isArray(bytes)) {
+    // Convert Array-like to Array
+    bytes = Array.prototype.slice.call(bytes);
+  }
+
+  bytes.push(0x80);
+  const l = bytes.length / 4 + 2;
+  const N = Math.ceil(l / 16);
+  const M = new Array(N);
+
+  for (let i = 0; i < N; ++i) {
+    const arr = new Uint32Array(16);
+
+    for (let j = 0; j < 16; ++j) {
+      arr[j] = bytes[i * 64 + j * 4] << 24 | bytes[i * 64 + j * 4 + 1] << 16 | bytes[i * 64 + j * 4 + 2] << 8 | bytes[i * 64 + j * 4 + 3];
+    }
+
+    M[i] = arr;
+  }
+
+  M[N - 1][14] = (bytes.length - 1) * 8 / Math.pow(2, 32);
+  M[N - 1][14] = Math.floor(M[N - 1][14]);
+  M[N - 1][15] = (bytes.length - 1) * 8 & 0xffffffff;
+
+  for (let i = 0; i < N; ++i) {
+    const W = new Uint32Array(80);
+
+    for (let t = 0; t < 16; ++t) {
+      W[t] = M[i][t];
+    }
+
+    for (let t = 16; t < 80; ++t) {
+      W[t] = ROTL(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16], 1);
+    }
+
+    let a = H[0];
+    let b = H[1];
+    let c = H[2];
+    let d = H[3];
+    let e = H[4];
+
+    for (let t = 0; t < 80; ++t) {
+      const s = Math.floor(t / 20);
+      const T = ROTL(a, 5) + f(s, b, c, d) + e + K[s] + W[t] >>> 0;
+      e = d;
+      d = c;
+      c = ROTL(b, 30) >>> 0;
+      b = a;
+      a = T;
+    }
+
+    H[0] = H[0] + a >>> 0;
+    H[1] = H[1] + b >>> 0;
+    H[2] = H[2] + c >>> 0;
+    H[3] = H[3] + d >>> 0;
+    H[4] = H[4] + e >>> 0;
+  }
+
+  return [H[0] >> 24 & 0xff, H[0] >> 16 & 0xff, H[0] >> 8 & 0xff, H[0] & 0xff, H[1] >> 24 & 0xff, H[1] >> 16 & 0xff, H[1] >> 8 & 0xff, H[1] & 0xff, H[2] >> 24 & 0xff, H[2] >> 16 & 0xff, H[2] >> 8 & 0xff, H[2] & 0xff, H[3] >> 24 & 0xff, H[3] >> 16 & 0xff, H[3] >> 8 & 0xff, H[3] & 0xff, H[4] >> 24 & 0xff, H[4] >> 16 & 0xff, H[4] >> 8 & 0xff, H[4] & 0xff];
+}
+
+var _default = sha1;
+exports.default = _default;
+},{}],16:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+exports.unsafeStringify = unsafeStringify;
+
+var _validate = _interopRequireDefault(require("./validate.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+const byteToHex = [];
+
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 0x100).toString(16).slice(1));
+}
+
+function unsafeStringify(arr, offset = 0) {
+  // Note: Be careful editing this code!  It's been tuned for performance
+  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+}
+
+function stringify(arr, offset = 0) {
+  const uuid = unsafeStringify(arr, offset); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  // of the following:
+  // - One or more input array values don't map to a hex octet (leading to
+  // "undefined" in the uuid)
+  // - Invalid input values for the RFC `version` or `variant` fields
+
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Stringified UUID is invalid');
+  }
+
+  return uuid;
+}
+
+var _default = stringify;
+exports.default = _default;
+},{"./validate.js":22}],17:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _rng = _interopRequireDefault(require("./rng.js"));
+
+var _stringify = require("./stringify.js");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+let _nodeId;
+
+let _clockseq; // Previous uuid creation time
+
+
+let _lastMSecs = 0;
+let _lastNSecs = 0; // See https://github.com/uuidjs/uuid for API details
+
+function v1(options, buf, offset) {
+  let i = buf && offset || 0;
+  const b = buf || new Array(16);
+  options = options || {};
+  let node = options.node || _nodeId;
+  let clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq; // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+
+  if (node == null || clockseq == null) {
+    const seedBytes = options.random || (options.rng || _rng.default)();
+
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [seedBytes[0] | 0x01, seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]];
+    }
+
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  } // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+
+
+  let msecs = options.msecs !== undefined ? options.msecs : Date.now(); // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+
+  let nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1; // Time since last uuid creation (in msecs)
+
+  const dt = msecs - _lastMSecs + (nsecs - _lastNSecs) / 10000; // Per 4.2.1.2, Bump clockseq on clock regression
+
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  } // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+
+
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  } // Per 4.2.1.2 Throw error if too many uuids are requested
+
+
+  if (nsecs >= 10000) {
+    throw new Error("uuid.v1(): Can't create more than 10M uuids/sec");
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq; // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+
+  msecs += 12219292800000; // `time_low`
+
+  const tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff; // `time_mid`
+
+  const tmh = msecs / 0x100000000 * 10000 & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff; // `time_high_and_version`
+
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+
+  b[i++] = tmh >>> 16 & 0xff; // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+
+  b[i++] = clockseq >>> 8 | 0x80; // `clock_seq_low`
+
+  b[i++] = clockseq & 0xff; // `node`
+
+  for (let n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf || (0, _stringify.unsafeStringify)(b);
+}
+
+var _default = v1;
+exports.default = _default;
+},{"./rng.js":14,"./stringify.js":16}],18:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _v = _interopRequireDefault(require("./v35.js"));
+
+var _md = _interopRequireDefault(require("./md5.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v3 = (0, _v.default)('v3', 0x30, _md.default);
+var _default = v3;
+exports.default = _default;
+},{"./md5.js":9,"./v35.js":19}],19:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.URL = exports.DNS = void 0;
+exports.default = v35;
+
+var _stringify = require("./stringify.js");
+
+var _parse = _interopRequireDefault(require("./parse.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function stringToBytes(str) {
+  str = unescape(encodeURIComponent(str)); // UTF8 escape
+
+  const bytes = [];
+
+  for (let i = 0; i < str.length; ++i) {
+    bytes.push(str.charCodeAt(i));
+  }
+
+  return bytes;
+}
+
+const DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+exports.DNS = DNS;
+const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+exports.URL = URL;
+
+function v35(name, version, hashfunc) {
+  function generateUUID(value, namespace, buf, offset) {
+    var _namespace;
+
+    if (typeof value === 'string') {
+      value = stringToBytes(value);
+    }
+
+    if (typeof namespace === 'string') {
+      namespace = (0, _parse.default)(namespace);
+    }
+
+    if (((_namespace = namespace) === null || _namespace === void 0 ? void 0 : _namespace.length) !== 16) {
+      throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
+    } // Compute hash of namespace and value, Per 4.3
+    // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
+    // hashfunc([...namespace, ... value])`
+
+
+    let bytes = new Uint8Array(16 + value.length);
+    bytes.set(namespace);
+    bytes.set(value, namespace.length);
+    bytes = hashfunc(bytes);
+    bytes[6] = bytes[6] & 0x0f | version;
+    bytes[8] = bytes[8] & 0x3f | 0x80;
+
+    if (buf) {
+      offset = offset || 0;
+
+      for (let i = 0; i < 16; ++i) {
+        buf[offset + i] = bytes[i];
+      }
+
+      return buf;
+    }
+
+    return (0, _stringify.unsafeStringify)(bytes);
+  } // Function#name is not settable on some platforms (#270)
+
+
+  try {
+    generateUUID.name = name; // eslint-disable-next-line no-empty
+  } catch (err) {} // For CommonJS default export support
+
+
+  generateUUID.DNS = DNS;
+  generateUUID.URL = URL;
+  return generateUUID;
+}
+},{"./parse.js":12,"./stringify.js":16}],20:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _native = _interopRequireDefault(require("./native.js"));
+
+var _rng = _interopRequireDefault(require("./rng.js"));
+
+var _stringify = require("./stringify.js");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function v4(options, buf, offset) {
+  if (_native.default.randomUUID && !buf && !options) {
+    return _native.default.randomUUID();
+  }
+
+  options = options || {};
+
+  const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+
+
+  rnds[6] = rnds[6] & 0x0f | 0x40;
+  rnds[8] = rnds[8] & 0x3f | 0x80; // Copy bytes to buffer, if provided
+
+  if (buf) {
+    offset = offset || 0;
+
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+
+    return buf;
+  }
+
+  return (0, _stringify.unsafeStringify)(rnds);
+}
+
+var _default = v4;
+exports.default = _default;
+},{"./native.js":10,"./rng.js":14,"./stringify.js":16}],21:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _v = _interopRequireDefault(require("./v35.js"));
+
+var _sha = _interopRequireDefault(require("./sha1.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v5 = (0, _v.default)('v5', 0x50, _sha.default);
+var _default = v5;
+exports.default = _default;
+},{"./sha1.js":15,"./v35.js":19}],22:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _regex = _interopRequireDefault(require("./regex.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function validate(uuid) {
+  return typeof uuid === 'string' && _regex.default.test(uuid);
+}
+
+var _default = validate;
+exports.default = _default;
+},{"./regex.js":13}],23:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _validate = _interopRequireDefault(require("./validate.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function version(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  return parseInt(uuid.slice(14, 15), 16);
+}
+
+var _default = version;
+exports.default = _default;
+},{"./validate.js":22}],24:[function(require,module,exports){
 'use strict';
 var $, DAT, Visualizer, World, _, savedMaps, settings, waitForElements;
 
@@ -21301,7 +22164,7 @@ waitForElements(['canvas', 'gui'], function() {
   if (settings.defaultMap && savedMaps[settings.defaultMap]) {
     mapData = savedMaps[settings.defaultMap];
     mapData.carsNumber = settings.carsNumber;
-    world.load(mapData, false);
+    world.load(mapData, settings.defaultMap, false);
   } else {
     world.generateMap();
     world.carsNumber = settings.carsNumber;
@@ -21335,8 +22198,10 @@ waitForElements(['canvas', 'gui'], function() {
   gui.add(settings, 'triangles').listen();
   guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen();
   guiVisualizer.add(visualizer, 'timeFactor', 0.1, 10).listen();
-  guiWorld.add(world, 'carsNumber').min(0).max(200).step(1).listen();
+  guiWorld.add(world, 'carsNumber').min(0).max(500).step(1).listen();
   guiWorld.add(world, 'instantSpeed').step(0.00001).listen();
+  guiWorld.add(world, 'time').listen();
+  guiWorld.add(world, 'activeCars').listen();
   gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen();
   guiSavedMaps = gui.addFolder('saved maps');
   for (mapName in savedMaps) {
@@ -21347,7 +22212,7 @@ waitForElements(['canvas', 'gui'], function() {
 });
 
 
-},{"./helpers":13,"./maps":14,"./model/world":23,"./settings":24,"./visualizer/visualizer":32,"dat-gui":2,"jquery":6,"underscore":7}],9:[function(require,module,exports){
+},{"./helpers":29,"./maps":30,"./model/world":39,"./settings":40,"./visualizer/visualizer":48,"dat-gui":2,"jquery":6,"underscore":7}],25:[function(require,module,exports){
 'use strict';
 var Curve, Segment;
 
@@ -21419,7 +22284,7 @@ Curve = (function() {
 module.exports = Curve;
 
 
-},{"../helpers":13,"./segment":12}],10:[function(require,module,exports){
+},{"../helpers":29,"./segment":28}],26:[function(require,module,exports){
 'use strict';
 var Point, atan2, sqrt;
 
@@ -21477,7 +22342,7 @@ Point = (function() {
 module.exports = Point;
 
 
-},{"../helpers":13}],11:[function(require,module,exports){
+},{"../helpers":29}],27:[function(require,module,exports){
 'use strict';
 var Point, Rect, Segment, _, abs;
 
@@ -21618,7 +22483,7 @@ Rect = class Rect {
 module.exports = Rect;
 
 
-},{"../helpers":13,"./point":10,"./segment":12,"underscore":7}],12:[function(require,module,exports){
+},{"../helpers":29,"./point":26,"./segment":28,"underscore":7}],28:[function(require,module,exports){
 'use strict';
 var Segment;
 
@@ -21695,7 +22560,7 @@ Segment = (function() {
 module.exports = Segment;
 
 
-},{"../helpers":13}],13:[function(require,module,exports){
+},{"../helpers":29}],29:[function(require,module,exports){
 'use strict';
 var idCounter, uniqueId;
 
@@ -21720,7 +22585,7 @@ uniqueId = function(prefix) {
 module.exports = uniqueId;
 
 
-},{}],14:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 var savedMaps;
 
@@ -24123,7 +24988,7 @@ savedMaps = {
 module.exports = savedMaps;
 
 
-},{}],15:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 var Car, Trajectory, _, max, min, random, settings, sqrt, uniqueId;
 
@@ -24154,7 +25019,6 @@ Car = (function() {
       this.maxDeceleration = 3;
       this.trajectory = new Trajectory(this, lane, position);
       this.alive = true;
-      this.preferedLane = null;
       this.tooLongStop = 0;
       this.trackPoints = [];
       this.path = [];
@@ -24202,7 +25066,7 @@ Car = (function() {
                 return currentLane.rightmostAdjacent;
               default:
                 //currentLane
-                return currentLane.rightmostAdjacent; //settato così perchè il semaforo per andare dritti e a destra vanno in contemporanea
+                return currentLane.rightmostAdjacent; // is set like this because the semaphore to go straight and right go together
             }
           })();
           if (preferredLane !== currentLane) {
@@ -24304,8 +25168,11 @@ Car = (function() {
       this.nextLane = null;
       nextRoad = this.pickNextRoad();
       if (!nextRoad) {
-        throw Error('can not pick next road');
+        // When there are not connected maps, we can't pick next road and the car throws an error
+        // So we just return null
+        return null;
       }
+      //            throw Error 'can not pick next road'
       turnNumber = this.trajectory.current.lane.road.getTurnDirection(nextRoad);
       laneNumber = (function() {
         switch (turnNumber) {
@@ -24328,7 +25195,6 @@ Car = (function() {
       var nextLane;
       nextLane = this.nextLane;
       this.nextLane = null;
-      this.preferedLane = null;
       return nextLane;
     }
 
@@ -24389,7 +25255,7 @@ Car = (function() {
 module.exports = Car;
 
 
-},{"../helpers":13,"../settings":24,"./trajectory":22,"underscore":7}],16:[function(require,module,exports){
+},{"../helpers":29,"../settings":40,"./trajectory":38,"underscore":7}],32:[function(require,module,exports){
 'use strict';
 var ControlSignals, random, settings,
   indexOf = [].indexOf;
@@ -24499,7 +25365,7 @@ ControlSignals = (function() {
 module.exports = ControlSignals;
 
 
-},{"../helpers":13,"../settings":24}],17:[function(require,module,exports){
+},{"../helpers":29,"../settings":40}],33:[function(require,module,exports){
 'use strict';
 var ControlSignals, Intersection, Rect, _, uniqueId;
 
@@ -24563,7 +25429,7 @@ Intersection = class Intersection {
 module.exports = Intersection;
 
 
-},{"../geom/rect":11,"../helpers":13,"./control-signals":16,"underscore":7}],18:[function(require,module,exports){
+},{"../geom/rect":27,"../helpers":29,"./control-signals":32,"underscore":7}],34:[function(require,module,exports){
 'use strict';
 var LanePosition, _, uniqueId;
 
@@ -24650,7 +25516,7 @@ LanePosition = (function() {
 module.exports = LanePosition;
 
 
-},{"../helpers":13,"underscore":7}],19:[function(require,module,exports){
+},{"../helpers":29,"underscore":7}],35:[function(require,module,exports){
 'use strict';
 var Lane, Rect, Segment, _, uniqueId;
 
@@ -24817,7 +25683,7 @@ Lane = (function() {
 module.exports = Lane;
 
 
-},{"../geom/rect":11,"../geom/segment":12,"../helpers":13,"underscore":7}],20:[function(require,module,exports){
+},{"../geom/rect":27,"../geom/segment":28,"../helpers":29,"underscore":7}],36:[function(require,module,exports){
 'use strict';
 var Pool;
 
@@ -24884,7 +25750,7 @@ Pool = (function() {
 module.exports = Pool;
 
 
-},{"../helpers":13}],21:[function(require,module,exports){
+},{"../helpers":29}],37:[function(require,module,exports){
 'use strict';
 var Lane, Point, Rect, Road, Segment, _, max, min, settings, uniqueId;
 
@@ -25042,7 +25908,7 @@ Road = (function() {
 module.exports = Road;
 
 
-},{"../geom/point":10,"../geom/rect":11,"../geom/segment":12,"../helpers":13,"../settings":24,"./lane":19,"underscore":7}],22:[function(require,module,exports){
+},{"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers":29,"../settings":40,"./lane":35,"underscore":7}],38:[function(require,module,exports){
 'use strict';
 var Curve, LanePosition, Trajectory, _, max, min;
 
@@ -25308,9 +26174,9 @@ Trajectory = (function() {
 module.exports = Trajectory;
 
 
-},{"../geom/curve":9,"../helpers":13,"./lane-position":18,"underscore":7}],23:[function(require,module,exports){
+},{"../geom/curve":25,"../helpers":29,"./lane-position":34,"underscore":7}],39:[function(require,module,exports){
 'use strict';
-var Car, Intersection, Pool, Rect, Road, World, _, random, savedMaps, settings;
+var Car, Intersection, Pool, Rect, Road, World, _, random, savedMaps, settings, uuid;
 
 ({random} = Math);
 
@@ -25332,6 +26198,8 @@ settings = require('../settings');
 
 savedMaps = require('../maps');
 
+uuid = require('uuid');
+
 World = (function() {
   class World {
     constructor() {
@@ -25343,6 +26211,7 @@ World = (function() {
       this.carObject = {
         lastTimeSpawn: null // time when last car was spawned
       };
+      this.activeCars = 0;
     }
 
     createDynamicMapMethods() {
@@ -25355,7 +26224,7 @@ World = (function() {
         //           do prevents mapName and mapData from being overwritten in the loop with the last values
         results.push((function(mapName, mapData) {
           return constructor.prototype[mapName] = (function() {
-            return this.load(mapData, false);
+            return this.load(mapData, mapName, false);
           });
         })(mapName, mapData));
       }
@@ -25370,18 +26239,30 @@ World = (function() {
       this.roads = new Pool(Road, obj.roads);
       this.cars = new Pool(Car, obj.cars);
       this.carsNumber = 0;
-      return this.time = 0;
+      this.time = 0;
+      return this.mapId = null;
     }
 
-    save() {
+    save(forRequest = false) {
       var data;
       data = _.extend({}, this);
       delete data.cars;
+      if (forRequest) {
+        //           get only intersections, roads
+        return JSON.stringify({
+          mapId: data.mapId,
+          intersections: data.intersections,
+          roads: data.roads,
+          carsNumber: data.carsNumber,
+          time: data.time
+        });
+      }
+      //                controlSignals: data.controlSignals
       return localStorage.world = JSON.stringify(data);
     }
 
-    load(data, parse = true) {
-      var id, intersection, ref, ref1, results, road;
+    load(data, mapName, parse = true) {
+      var id, intersection, ref, ref1, road;
       data = data || localStorage.world;
       if (data && parse) {
         data = JSON.parse(data);
@@ -25397,15 +26278,17 @@ World = (function() {
         this.addIntersection(Intersection.copy(intersection));
       }
       ref1 = data.roads;
-      results = [];
       for (id in ref1) {
         road = ref1[id];
         road = Road.copy(road);
         road.source = this.getIntersection(road.source);
         road.target = this.getIntersection(road.target);
-        results.push(this.addRoad(road));
+        this.addRoad(road);
       }
-      return results;
+      this.mapId = mapName;
+      return this.newRequest(settings.newMapUrl, 'POST', null, {
+        map: this.save(true)
+      });
     }
 
     generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
@@ -25470,6 +26353,12 @@ World = (function() {
           }
         }
       }
+      this.mapId = uuid.v4(); // generate new map id
+      console.log('Map generated');
+      // Send new map to server
+      return this.newRequest(settings.newMapUrl, 'POST', null, {
+        map: this.save(true)
+      });
     }
 
     addMyCar(road, laneId = 0) {
@@ -25530,31 +26419,40 @@ World = (function() {
       return data;
     }
 
-    newRequest(url, params) {
+    newRequest(url, method = 'GET', params = null, data = null) {
       `xmlHttpRequest with CORS prevention`;
-      var xhr;
+      var error, xhr;
       // add params to url as query string parameters
       if (params) {
         url = url + '?' + new URLSearchParams(params).toString();
       }
       xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true);
+      xhr.open(method, url, false); // Change async to false
+      if (data) {
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        data = JSON.stringify(data);
+      }
       xhr.cors = true;
-      xhr.onreadystatechange = (e) => {
+      try {
+        //           Send request synchronously
+        xhr.send(data);
         if (xhr.readyState === XMLHttpRequest.DONE) {
           if (xhr.status === 200) {
-            //                   Parse response to json
-            return this.setNewPath(JSON.parse(xhr.responseText));
+            return xhr.responseText;
           } else {
-            return console.log('Error: ' + xhr.status);
+            console.log(`[Request Error]: ${xhr.status}`);
+            return false;
           }
         }
-      };
-      return xhr.send();
+      } catch (error1) {
+        error = error1;
+        console.log(`[Request Error]: ${error}`);
+        return false;
+      }
     }
 
     addMyCarAPI() {
-      var params, sourceId, sourceId_prefix, targetId, targetId_prefix;
+      var data, params, sourceId, sourceId_prefix, targetId, targetId_prefix;
       //       add track path to MyCar Object with only source and target intersection and make an api request to retrieve the best path
       sourceId_prefix = this.trackPath[0]['intersection'].id;
       targetId_prefix = this.trackPath[this.trackPath.length - 1]['intersection'].id; // get the last intersection in the track path (allow to repeat the command more than once)
@@ -25562,10 +26460,21 @@ World = (function() {
       targetId = targetId_prefix.slice('intersection'.length);
       params = {
         'fromIntersection': sourceId,
-        'mapId': 0,
+        'mapId': this.mapId,
         'toIntersection': targetId
       };
-      return this.newRequest(settings.pathFinderUrl, params);
+      data = this.newRequest(settings.pathFinderUrl, 'GET', params, null);
+      if (data) {
+        //           Parse response to json
+        data = JSON.parse(data);
+        if (data['status'] === 'ok') {
+          return this.setNewPath(data);
+        } else {
+          return console.log(`Error: ${data['message']}`);
+        }
+      } else {
+        return console.log('Error: No data received from server');
+      }
     }
 
     clear() {
@@ -25656,7 +26565,9 @@ World = (function() {
       var lane, road;
       road = _.sample(this.roads.all());
       if (road != null) {
-        lane = _.sample(road.lanes);
+        //           lane = _.sample road.lanes  # original code
+        //           takes only the first lane -> this prevents to have during generation of the map more cars spawned on the same lane
+        lane = road.lanes[0];
         if (lane != null) {
           return this.addCar(new Car(lane));
         }
@@ -25695,7 +26606,7 @@ World = (function() {
 module.exports = World;
 
 
-},{"../geom/rect":11,"../helpers":13,"../maps":14,"../settings":24,"./car":15,"./intersection":17,"./pool":20,"./road":21,"underscore":7}],24:[function(require,module,exports){
+},{"../geom/rect":27,"../helpers":29,"../maps":30,"../settings":40,"./car":31,"./intersection":33,"./pool":36,"./road":37,"underscore":7,"uuid":8}],40:[function(require,module,exports){
 'use strict';
 var settings;
 
@@ -25743,13 +26654,14 @@ settings = {
     carLine: 'black'
   },
   //   API
-  pathFinderUrl: 'http://localhost:8000/pathFinder'
+  pathFinderUrl: 'http://localhost:8000/pathFinder',
+  newMapUrl: 'http://localhost:8000/newMap'
 };
 
 module.exports = settings;
 
 
-},{}],25:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 var Curve, Graphics, PI, Point, Rect, Segment, settings;
 
@@ -25952,7 +26864,7 @@ Graphics = class Graphics {
 module.exports = Graphics;
 
 
-},{"../geom/curve":9,"../geom/point":10,"../geom/rect":11,"../geom/segment":12,"../helpers.coffee":13,"../settings":24}],26:[function(require,module,exports){
+},{"../geom/curve":25,"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers.coffee":29,"../settings":40}],42:[function(require,module,exports){
 'use strict';
 var Point, Tool, ToolHighlighter, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -26054,7 +26966,7 @@ ToolHighlighter = class ToolHighlighter extends Tool {
 module.exports = ToolHighlighter;
 
 
-},{"../geom/point.coffee":10,"../helpers.coffee":13,"../settings.coffee":24,"./tool.coffee":31}],27:[function(require,module,exports){
+},{"../geom/point.coffee":26,"../helpers.coffee":29,"../settings.coffee":40,"./tool.coffee":47}],43:[function(require,module,exports){
 'use strict';
 var Intersection, Tool, ToolIntersectionBuilder,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -26122,7 +27034,7 @@ ToolIntersectionBuilder = class ToolIntersectionBuilder extends Tool {
 module.exports = ToolIntersectionBuilder;
 
 
-},{"../helpers.coffee":13,"../model/intersection.coffee":17,"./tool.coffee":31}],28:[function(require,module,exports){
+},{"../helpers.coffee":29,"../model/intersection.coffee":33,"./tool.coffee":47}],44:[function(require,module,exports){
 'use strict';
 var Tool, ToolIntersectionMover,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -26177,7 +27089,7 @@ ToolIntersectionMover = class ToolIntersectionMover extends Tool {
 module.exports = ToolIntersectionMover;
 
 
-},{"../helpers.coffee":13,"./tool.coffee":31}],29:[function(require,module,exports){
+},{"../helpers.coffee":29,"./tool.coffee":47}],45:[function(require,module,exports){
 'use strict';
 var Mover, Tool,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -26231,7 +27143,7 @@ Mover = class Mover extends Tool {
 module.exports = Mover;
 
 
-},{"../helpers.coffee":13,"./tool.coffee":31}],30:[function(require,module,exports){
+},{"../helpers.coffee":29,"./tool.coffee":47}],46:[function(require,module,exports){
 'use strict';
 var Car, Road, Tool, ToolRoadBuilder, _, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -26378,7 +27290,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
 module.exports = ToolRoadBuilder;
 
 
-},{"../helpers.coffee":13,"../model/car.coffee":15,"../model/road.coffee":21,"../settings.coffee":24,"./tool.coffee":31,"underscore":7}],31:[function(require,module,exports){
+},{"../helpers.coffee":29,"../model/car.coffee":31,"../model/road.coffee":37,"../settings.coffee":40,"./tool.coffee":47,"underscore":7}],47:[function(require,module,exports){
 'use strict';
 var $, DOCUMENT_METHODS, METHODS, Point, Rect, Tool, _;
 
@@ -26544,7 +27456,7 @@ Tool = class Tool {
 module.exports = Tool;
 
 
-},{"../geom/point":10,"../geom/rect":11,"../helpers":13,"jquery":6,"jquery-mousewheel":5,"underscore":7}],32:[function(require,module,exports){
+},{"../geom/point":26,"../geom/rect":27,"../helpers":29,"jquery":6,"jquery-mousewheel":5,"underscore":7}],48:[function(require,module,exports){
 'use strict';
 var $, Graphics, Intersection, PI, Point, Rect, Segment, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, chroma, settings;
 
@@ -27003,7 +27915,7 @@ Visualizer = (function() {
     }
 
     draw(time) {
-      var car, delta, id, intersection, ref, ref1, ref2, ref3, ref4, road;
+      var activeCars, car, delta, id, intersection, ref, ref1, ref2, ref3, ref4, ref5, road;
       if (this.running) {
         delta = (time - this.previousTime) || 0;
         if (delta > 30) {
@@ -27054,6 +27966,16 @@ Visualizer = (function() {
       this.drawTrackPath();
       // ------------------------------------------------------------------------
       this.graphics.restore();
+      // get active cars number for each car get alive attribute
+      activeCars = 0;
+      ref5 = this.world.cars.all();
+      for (id in ref5) {
+        car = ref5[id];
+        if (car.alive) {
+          activeCars++;
+        }
+      }
+      this.world.activeCars = activeCars;
       return window.requestAnimationFrame(this.draw);
     }
 
@@ -27255,7 +28177,7 @@ Visualizer = (function() {
 module.exports = Visualizer;
 
 
-},{"../geom/point":10,"../geom/rect":11,"../geom/segment":12,"../helpers":13,"../model/intersection":17,"../settings":24,"./graphics":25,"./highlighter":26,"./intersection-builder":27,"./intersection-mover":28,"./mover":29,"./road-builder":30,"./zoomer":33,"chroma-js":1,"jquery":6,"underscore":7}],33:[function(require,module,exports){
+},{"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers":29,"../model/intersection":33,"../settings":40,"./graphics":41,"./highlighter":42,"./intersection-builder":43,"./intersection-mover":44,"./mover":45,"./road-builder":46,"./zoomer":49,"chroma-js":1,"jquery":6,"underscore":7}],49:[function(require,module,exports){
 'use strict';
 var Point, Rect, Tool, Zoomer, max, min, settings;
 
@@ -27388,6 +28310,6 @@ Zoomer = (function() {
 module.exports = Zoomer;
 
 
-},{"../geom/point.coffee":10,"../geom/rect.coffee":11,"../helpers.coffee":13,"../settings.coffee":24,"./tool.coffee":31}]},{},[8])
+},{"../geom/point.coffee":26,"../geom/rect.coffee":27,"../helpers.coffee":29,"../settings.coffee":40,"./tool.coffee":47}]},{},[24])
 
 //# sourceMappingURL=coffee-main.js.map

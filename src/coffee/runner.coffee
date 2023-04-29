@@ -12,7 +12,7 @@ measureAverageSpeed = (setupCallback) ->
     map = fs.readFileSync './experiments/map.json', {encoding: 'utf8'}
     console.log map
     # world.generateMap()
-    world.load map
+    world.load map, 'experiment_map'
     world.carsNumber =
             setupCallback?(world)
     results = []

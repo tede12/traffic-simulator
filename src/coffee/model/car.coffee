@@ -21,7 +21,6 @@ class Car
         @maxDeceleration = 3
         @trajectory = new Trajectory this, lane, position
         @alive = true
-        @preferedLane = null
         @tooLongStop = 0
         @trackPoints = []
         @path = []
@@ -88,7 +87,7 @@ class Car
                     when 2 then currentLane.rightmostAdjacent
                     else
                         #currentLane
-                        currentLane.rightmostAdjacent #settato così perchè il semaforo per andare dritti e a destra vanno in contemporanea
+                        currentLane.rightmostAdjacent  # is set like this because the semaphore to go straight and right go together
                 if preferredLane isnt currentLane
                     @trajectory.changeLane preferredLane
 
@@ -159,7 +158,10 @@ class Car
         @nextLane = null
         nextRoad = @pickNextRoad()
         if not nextRoad
-            throw Error 'can not pick next road'
+            # When there are not connected maps, we can't pick next road and the car throws an error
+            # So we just return null
+            return null
+#            throw Error 'can not pick next road'
         turnNumber = @trajectory.current.lane.road.getTurnDirection nextRoad
         laneNumber = switch turnNumber
             when 0 then nextRoad.lanesNumber - 1
@@ -173,7 +175,6 @@ class Car
     popNextLane: ->
         nextLane = @nextLane
         @nextLane = null
-        @preferedLane = null
         return nextLane
 
     setPath: (intersections) ->

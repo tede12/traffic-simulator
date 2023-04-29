@@ -419,6 +419,13 @@ class Visualizer
         # ------------------------------------------------------------------------
         @graphics.restore()
 
+        # get active cars number for each car get alive attribute
+        activeCars = 0
+        for id, car of @world.cars.all()
+            if car.alive
+                activeCars++
+        @world.activeCars = activeCars
+
         window.requestAnimationFrame @draw
 
     checkIfPointOrIntersection: (obj) ->

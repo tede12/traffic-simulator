@@ -35,8 +35,8 @@
 - [x] Choose destination for my car
 - [x] Add algorithm for pathfinding
 - [x] Enable resize of map when Running checkbox is off and generate only closed maps
-- [ ] Send map first time to pathFinder, add Unique ID for each map
-- [ ] NO spawn cars when my car is placed on the road for 5 seconds
+- [x] Send map first time to pathFinder, add Unique ID for each map
+- [x] NO spawn cars when my car is placed on the road for 5 seconds
 - [ ] Add little screen with my car info on the simulator
 - [ ] Set new weights and get the current best path when car is moving
 - [ ] Socket for checking if pathFinder server is running
@@ -46,6 +46,13 @@
 - [x] Fix blocked cars (see on .move() method of Car class)
 - [x] Check algorithm for car generation and trajectory
 - [x] After the pathFinder sends the new path, if there are too many cars on the road, myCar fails to get direction
+- [ ] It seems that when there are generated maps with roads that pass one through another, the pathFinder fails to find the best path,
+with error: dijkstra.c:948 : Couldn't reach some of the requested target vertices. -> This can happen if the graph is not strongly connected or if none of the target vertices have outgoing edges.)  
+This could be handled in 2 ways:
+  - [ ] Generate only maps with no roads that pass one through another
+  - [ ] Fix the pathFinder algorithm to find the best path even if there are roads that pass one through another
+- [ ] Sometimes the map do not spawn cars immediately (after a while they should be spawn, but not always)
+
 - [ ] When an intersection is already occupied by some cars, the new car should wait for entering the intersection even if it has green light
 
 

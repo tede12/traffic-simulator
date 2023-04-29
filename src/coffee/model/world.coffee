@@ -10,6 +10,8 @@ Pool = require './pool'
 Rect = require '../geom/rect'
 settings = require '../settings'
 savedMaps = require '../maps'
+uuid = require 'uuid'
+
 
 class World
     constructor: ->
@@ -20,6 +22,7 @@ class World
         @carObject = {
             lastTimeSpawn: null     # time when last car was spawned
         }
+        @activeCars = 0
 
     @property 'instantSpeed',
         get: ->
@@ -33,7 +36,7 @@ class World
         for mapName, mapData of savedMaps
 #           do prevents mapName and mapData from being overwritten in the loop with the last values
             do (mapName, mapData) ->
-                constructor::[mapName] = (-> @load mapData, false)
+                constructor::[mapName] = (-> @load mapData, mapName, false)
 
     set: (obj) ->
         obj ?= {}
@@ -42,13 +45,27 @@ class World
         @cars = new Pool Car, obj.cars
         @carsNumber = 0
         @time = 0
+        @mapId = null
 
-    save: ->
+
+    save: (forRequest = false) ->
         data = _.extend {}, this
         delete data.cars
+
+        if forRequest
+#           get only intersections, roads
+            return JSON.stringify {
+                mapId: data.mapId
+                intersections: data.intersections
+                roads: data.roads
+                carsNumber: data.carsNumber
+                time: data.time
+#                controlSignals: data.controlSignals
+            }
+
         localStorage.world = JSON.stringify data
 
-    load: (data, parse = true) ->
+    load: (data, mapName, parse = true) ->
         data = data or localStorage.world
         if data and parse
             data = JSON.parse data
@@ -62,6 +79,9 @@ class World
             road.source = @getIntersection road.source
             road.target = @getIntersection road.target
             @addRoad road
+
+        @mapId = mapName
+        @newRequest settings.newMapUrl, 'POST', null, {map: @save(true)}
 
     generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
         @clear()
@@ -103,6 +123,12 @@ class World
                 if intersection.roads.length < 2
                     return @generateMap minX, maxX, minY, maxY
 
+        @mapId = uuid.v4() # generate new map id
+        console.log 'Map generated'
+        # Send new map to server
+        @newRequest(settings.newMapUrl, 'POST', null, {map: @save(true)})
+
+
     addMyCar: (road, laneId = 0) ->
         if road instanceof Road
             roadId = road.id
@@ -141,7 +167,7 @@ class World
         path = data['path']
         console.log "Best Path: #{path}"
 
-        visualizer.drawTrackPath path, 'yellow'  # draw the best path on the map
+        visualizer.drawTrackPath path, 'yellow' # draw the best path on the map
         source_int = @getIntersection(path[0])
         source_road = null
 
@@ -152,39 +178,57 @@ class World
         @addMyCar(source_road, 0)
         return data
 
-    newRequest: (url, params) ->
+    newRequest: (url, method = 'GET', params = null, data = null) ->
         """xmlHttpRequest with CORS prevention"""
         # add params to url as query string parameters
         if params
             url = url + '?' + new URLSearchParams(params).toString()
 
         xhr = new XMLHttpRequest()
-        xhr.open 'GET', url, true
+        xhr.open(method, url, false) # Change async to false
+        if data
+            xhr.setRequestHeader('Content-Type', 'application/json')
+            data = JSON.stringify data
+
         xhr.cors = true
 
-        xhr.onreadystatechange = (e) =>
+        try
+#           Send request synchronously
+            xhr.send(data)
+
             if xhr.readyState == XMLHttpRequest.DONE
                 if xhr.status == 200
-#                   Parse response to json
-                    @setNewPath JSON.parse xhr.responseText
+                    return xhr.responseText
                 else
-                    console.log 'Error: ' + xhr.status
-        xhr.send()
+                    console.log "[Request Error]: #{xhr.status}"
+                    return false
+        catch error
+            console.log "[Request Error]: #{error}"
+            return false
 
 
     addMyCarAPI: () ->
 #       add track path to MyCar Object with only source and target intersection and make an api request to retrieve the best path
         sourceId_prefix = @trackPath[0]['intersection'].id
-        targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id  # get the last intersection in the track path (allow to repeat the command more than once)
+        targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)
         sourceId = sourceId_prefix.slice 'intersection'.length
         targetId = targetId_prefix.slice 'intersection'.length
 
         params = {
             'fromIntersection': sourceId,
-            'mapId': 0,
+            'mapId': @mapId,
             'toIntersection': targetId
         }
-        return @newRequest settings.pathFinderUrl, params
+        data = @newRequest settings.pathFinderUrl, 'GET', params, null
+        if data
+#           Parse response to json
+            data = JSON.parse data
+            if data['status'] == 'ok'
+                @setNewPath data
+            else
+                console.log "Error: #{data['message']}"
+        else
+            console.log 'Error: No data received from server'
 
     clear: ->
         @set {}
@@ -241,7 +285,9 @@ class World
     addRandomCar: ->
         road = _.sample @roads.all()
         if road?
-            lane = _.sample road.lanes
+#           lane = _.sample road.lanes  # original code
+#           takes only the first lane -> this prevents to have during generation of the map more cars spawned on the same lane
+            lane = road.lanes[0]
             @addCar new Car lane if lane?
 
     removeRandomCar: ->

@@ -47,6 +47,7 @@ settings =
 
 #   API
     pathFinderUrl: 'http://localhost:8000/pathFinder'
+    newMapUrl: 'http://localhost:8000/newMap'
 
 
 module.exports = settings
