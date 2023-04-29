@@ -83,13 +83,14 @@ class Car
             if not @trajectory.isChangingLanes and @nextLane
                 currentLane = @trajectory.current.lane
                 turnNumber = currentLane.getTurnDirection @nextLane
-                preferedLane = switch turnNumber
+                preferredLane = switch turnNumber
                     when 0 then currentLane.leftmostAdjacent
                     when 2 then currentLane.rightmostAdjacent
                     else
-                        currentLane
-                if preferedLane isnt currentLane
-                    @trajectory.changeLane preferedLane
+                        #currentLane
+                        currentLane.rightmostAdjacent #settato così perchè il semaforo per andare dritti e a destra vanno in contemporanea
+                if preferredLane isnt currentLane
+                    @trajectory.changeLane preferredLane
 
             step = @speed * delta + 0.5 * acceleration * delta ** 2
             # Added by me
@@ -112,13 +113,14 @@ class Car
         if not @trajectory.isChangingLanes and @nextLane
             currentLane = @trajectory.current.lane
             turnNumber = currentLane.getTurnDirection @nextLane
-            preferedLane = switch turnNumber
+            preferredLane = switch turnNumber
                 when 0 then currentLane.leftmostAdjacent
                 when 2 then currentLane.rightmostAdjacent
                 else
-                    currentLane
-            if preferedLane isnt currentLane
-                @trajectory.changeLane preferedLane
+                    #currentLane
+                    currentLane.rightmostAdjacent #settato così perchè il semaforo per andare dritti e a destra vanno in contemporanea
+            if preferredLane isnt currentLane
+                @trajectory.changeLane preferredLane
 
         step = @speed * delta + 0.5 * acceleration * delta ** 2
 
@@ -161,7 +163,7 @@ class Car
         turnNumber = @trajectory.current.lane.road.getTurnDirection nextRoad
         laneNumber = switch turnNumber
             when 0 then nextRoad.lanesNumber - 1
-            when 1 then _.random 0, nextRoad.lanesNumber - 1
+            when 1 then 0
             when 2 then 0
         @nextLane = nextRoad.lanes[laneNumber]
         throw Error 'can not pick next lane' if not @nextLane
@@ -180,7 +182,6 @@ class Car
     updatePath: () ->
         if @path.length > 0
             @path.shift()
-           # @trajectory.setNextIntersection(@path[0])
         return
 
 module.exports = Car

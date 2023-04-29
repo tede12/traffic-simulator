@@ -46,6 +46,7 @@
 - [x] Fix blocked cars (see on .move() method of Car class)
 - [x] Check algorithm for car generation and trajectory
 - [x] After the pathFinder sends the new path, if there are too many cars on the road, myCar fails to get direction
+- [ ] When an intersection is already occupied by some cars, the new car should wait for entering the intersection even if it has green light
 
 
 # TIPS

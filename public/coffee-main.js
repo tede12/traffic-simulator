@@ -24185,7 +24185,7 @@ Car = (function() {
     }
 
     move(delta) {
-      var acceleration, currentLane, preferedLane, step, turnNumber;
+      var acceleration, currentLane, preferredLane, step, turnNumber;
       if (this.id === settings.myCar.id) {
         return this.moveMyCar(delta);
       } else {
@@ -24194,18 +24194,19 @@ Car = (function() {
         if (!this.trajectory.isChangingLanes && this.nextLane) {
           currentLane = this.trajectory.current.lane;
           turnNumber = currentLane.getTurnDirection(this.nextLane);
-          preferedLane = (function() {
+          preferredLane = (function() {
             switch (turnNumber) {
               case 0:
                 return currentLane.leftmostAdjacent;
               case 2:
                 return currentLane.rightmostAdjacent;
               default:
-                return currentLane;
+                //currentLane
+                return currentLane.rightmostAdjacent; //settato così perchè il semaforo per andare dritti e a destra vanno in contemporanea
             }
           })();
-          if (preferedLane !== currentLane) {
-            this.trajectory.changeLane(preferedLane);
+          if (preferredLane !== currentLane) {
+            this.trajectory.changeLane(preferredLane);
           }
         }
         step = this.speed * delta + 0.5 * acceleration * delta ** 2;
@@ -24230,24 +24231,25 @@ Car = (function() {
     }
 
     moveMyCar(delta) {
-      var acceleration, currentLane, preferedLane, step, turnNumber;
+      var acceleration, currentLane, preferredLane, step, turnNumber;
       acceleration = this.getAcceleration();
       this.speed += acceleration * delta;
       if (!this.trajectory.isChangingLanes && this.nextLane) {
         currentLane = this.trajectory.current.lane;
         turnNumber = currentLane.getTurnDirection(this.nextLane);
-        preferedLane = (function() {
+        preferredLane = (function() {
           switch (turnNumber) {
             case 0:
               return currentLane.leftmostAdjacent;
             case 2:
               return currentLane.rightmostAdjacent;
             default:
-              return currentLane;
+              //currentLane
+              return currentLane.rightmostAdjacent; //settato così perchè il semaforo per andare dritti e a destra vanno in contemporanea
           }
         })();
-        if (preferedLane !== currentLane) {
-          this.trajectory.changeLane(preferedLane);
+        if (preferredLane !== currentLane) {
+          this.trajectory.changeLane(preferredLane);
         }
       }
       step = this.speed * delta + 0.5 * acceleration * delta ** 2;
@@ -24310,7 +24312,7 @@ Car = (function() {
           case 0:
             return nextRoad.lanesNumber - 1;
           case 1:
-            return _.random(0, nextRoad.lanesNumber - 1);
+            return 0;
           case 2:
             return 0;
         }
@@ -24384,7 +24386,6 @@ Car = (function() {
 
 }).call(this);
 
-// @trajectory.setNextIntersection(@path[0])
 module.exports = Car;
 
 
