@@ -71,6 +71,9 @@ class World
             data = JSON.parse data
         return unless data?
         @clear()
+        @trackPath = []
+        trackPathElement = document.getElementById('trackPath');
+        trackPathElement.innerHTML = '';
         @carsNumber = data.carsNumber or 0
         for id, intersection of data.intersections
             @addIntersection Intersection.copy intersection
@@ -85,10 +88,15 @@ class World
 
     generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
         @clear()
+
+        # clear trackPath
+        @trackPath = []
+        trackPathElement = document.getElementById('trackPath');
+        trackPathElement.innerHTML = '';
+
         # set to 0 all property of mapsIdCounter
         for key, value of mapsIdCounter
             mapsIdCounter[key] = 0
-        console.log mapsIdCounter
         intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0
         map = {}
         gridSize = settings.gridSize
@@ -164,7 +172,7 @@ class World
             car.path.push(intersection)
         return
 
-    setNewPath: (data) ->       # todo fix: duplicate code of world.addMyCar();
+    setNewPath: (data) ->
         @carObject.lastTimeSpawn = @time
 
         path = data['path']

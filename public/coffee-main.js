@@ -26255,7 +26255,7 @@ World = (function() {
     }
 
     load(data, mapName, parse = true) {
-      var id, intersection, ref, ref1, road;
+      var id, intersection, ref, ref1, road, trackPathElement;
       data = data || localStorage.world;
       if (data && parse) {
         data = JSON.parse(data);
@@ -26264,6 +26264,9 @@ World = (function() {
         return;
       }
       this.clear();
+      this.trackPath = [];
+      trackPathElement = document.getElementById('trackPath');
+      trackPathElement.innerHTML = '';
       this.carsNumber = data.carsNumber || 0;
       ref = data.intersections;
       for (id in ref) {
@@ -26285,14 +26288,16 @@ World = (function() {
     }
 
     generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
-      var gridSize, i, id, intersection, intersectionsNumber, j, k, key, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, value, x, y;
+      var gridSize, i, id, intersection, intersectionsNumber, j, k, key, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, trackPathElement, value, x, y;
       this.clear();
-// set to 0 all property of mapsIdCounter
+      // clear trackPath
+      this.trackPath = [];
+      trackPathElement = document.getElementById('trackPath');
+      trackPathElement.innerHTML = '';
       for (key in mapsIdCounter) {
         value = mapsIdCounter[key];
         mapsIdCounter[key] = 0;
       }
-      console.log(mapsIdCounter);
       intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0;
       map = {};
       gridSize = settings.gridSize;
@@ -26398,7 +26403,7 @@ World = (function() {
       }
     }
 
-    setNewPath(data) { // todo fix: duplicate code of world.addMyCar();
+    setNewPath(data) {
       var i, len, path, ref, road, source_int, source_road;
       this.carObject.lastTimeSpawn = this.time;
       path = data['path'];
