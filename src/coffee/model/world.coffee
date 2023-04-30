@@ -11,7 +11,7 @@ Rect = require '../geom/rect'
 settings = require '../settings'
 savedMaps = require '../maps'
 uuid = require 'uuid'
-
+mapsIdCounter = require '../mapsIdCounter'
 
 class World
     constructor: ->
@@ -85,6 +85,10 @@ class World
 
     generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
         @clear()
+        # set to 0 all property of mapsIdCounter
+        for key, value of mapsIdCounter
+            mapsIdCounter[key] = 0
+        console.log mapsIdCounter
         intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0
         map = {}
         gridSize = settings.gridSize
@@ -127,7 +131,6 @@ class World
         console.log 'Map generated'
         # Send new map to server
         @newRequest(settings.newMapUrl, 'POST', null, {map: @save(true)})
-
 
     addMyCar: (road, laneId = 0) ->
         if road instanceof Road

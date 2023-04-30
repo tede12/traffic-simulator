@@ -21246,24 +21246,6 @@ return jQuery;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-Object.defineProperty(exports, "NIL", {
-  enumerable: true,
-  get: function () {
-    return _nil.default;
-  }
-});
-Object.defineProperty(exports, "parse", {
-  enumerable: true,
-  get: function () {
-    return _parse.default;
-  }
-});
-Object.defineProperty(exports, "stringify", {
-  enumerable: true,
-  get: function () {
-    return _stringify.default;
-  }
-});
 Object.defineProperty(exports, "v1", {
   enumerable: true,
   get: function () {
@@ -21288,16 +21270,34 @@ Object.defineProperty(exports, "v5", {
     return _v4.default;
   }
 });
-Object.defineProperty(exports, "validate", {
+Object.defineProperty(exports, "NIL", {
   enumerable: true,
   get: function () {
-    return _validate.default;
+    return _nil.default;
   }
 });
 Object.defineProperty(exports, "version", {
   enumerable: true,
   get: function () {
     return _version.default;
+  }
+});
+Object.defineProperty(exports, "validate", {
+  enumerable: true,
+  get: function () {
+    return _validate.default;
+  }
+});
+Object.defineProperty(exports, "stringify", {
+  enumerable: true,
+  get: function () {
+    return _stringify.default;
+  }
+});
+Object.defineProperty(exports, "parse", {
+  enumerable: true,
+  get: function () {
+    return _parse.default;
   }
 });
 
@@ -21320,7 +21320,7 @@ var _stringify = _interopRequireDefault(require("./stringify.js"));
 var _parse = _interopRequireDefault(require("./parse.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./nil.js":11,"./parse.js":12,"./stringify.js":16,"./v1.js":17,"./v3.js":18,"./v4.js":20,"./v5.js":21,"./validate.js":22,"./version.js":23}],9:[function(require,module,exports){
+},{"./nil.js":10,"./parse.js":11,"./stringify.js":15,"./v1.js":16,"./v3.js":17,"./v4.js":19,"./v5.js":20,"./validate.js":21,"./version.js":22}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21551,21 +21551,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-const randomUUID = typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID.bind(crypto);
-var _default = {
-  randomUUID
-};
-exports.default = _default;
-},{}],11:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
 var _default = '00000000-0000-0000-0000-000000000000';
 exports.default = _default;
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21611,7 +21599,7 @@ function parse(uuid) {
 
 var _default = parse;
 exports.default = _default;
-},{"./validate.js":22}],13:[function(require,module,exports){
+},{"./validate.js":21}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21620,7 +21608,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
 exports.default = _default;
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21636,8 +21624,9 @@ const rnds8 = new Uint8Array(16);
 function rng() {
   // lazy load so that environments that need to polyfill have a chance to do so
   if (!getRandomValues) {
-    // getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
-    getRandomValues = typeof crypto !== 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
+    // getRandomValues needs to be invoked in a context where "this" is a Crypto implementation. Also,
+    // find the complete implementation of crypto (msCrypto) on IE11.
+    getRandomValues = typeof crypto !== 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto) || typeof msCrypto !== 'undefined' && typeof msCrypto.getRandomValues === 'function' && msCrypto.getRandomValues.bind(msCrypto);
 
     if (!getRandomValues) {
       throw new Error('crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported');
@@ -21646,7 +21635,7 @@ function rng() {
 
   return getRandomValues(rnds8);
 }
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21751,14 +21740,13 @@ function sha1(bytes) {
 
 var _default = sha1;
 exports.default = _default;
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-exports.unsafeStringify = unsafeStringify;
 
 var _validate = _interopRequireDefault(require("./validate.js"));
 
@@ -21771,17 +21759,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const byteToHex = [];
 
 for (let i = 0; i < 256; ++i) {
-  byteToHex.push((i + 0x100).toString(16).slice(1));
-}
-
-function unsafeStringify(arr, offset = 0) {
-  // Note: Be careful editing this code!  It's been tuned for performance
-  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+  byteToHex.push((i + 0x100).toString(16).substr(1));
 }
 
 function stringify(arr, offset = 0) {
-  const uuid = unsafeStringify(arr, offset); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  // Note: Be careful editing this code!  It's been tuned for performance
+  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
   // of the following:
   // - One or more input array values don't map to a hex octet (leading to
   // "undefined" in the uuid)
@@ -21796,7 +21780,7 @@ function stringify(arr, offset = 0) {
 
 var _default = stringify;
 exports.default = _default;
-},{"./validate.js":22}],17:[function(require,module,exports){
+},{"./validate.js":21}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21806,7 +21790,7 @@ exports.default = void 0;
 
 var _rng = _interopRequireDefault(require("./rng.js"));
 
-var _stringify = require("./stringify.js");
+var _stringify = _interopRequireDefault(require("./stringify.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -21899,12 +21883,12 @@ function v1(options, buf, offset) {
     b[i + n] = node[n];
   }
 
-  return buf || (0, _stringify.unsafeStringify)(b);
+  return buf || (0, _stringify.default)(b);
 }
 
 var _default = v1;
 exports.default = _default;
-},{"./rng.js":14,"./stringify.js":16}],18:[function(require,module,exports){
+},{"./rng.js":13,"./stringify.js":15}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21921,16 +21905,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const v3 = (0, _v.default)('v3', 0x30, _md.default);
 var _default = v3;
 exports.default = _default;
-},{"./md5.js":9,"./v35.js":19}],19:[function(require,module,exports){
+},{"./md5.js":9,"./v35.js":18}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.default = _default;
 exports.URL = exports.DNS = void 0;
-exports.default = v35;
 
-var _stringify = require("./stringify.js");
+var _stringify = _interopRequireDefault(require("./stringify.js"));
 
 var _parse = _interopRequireDefault(require("./parse.js"));
 
@@ -21953,10 +21937,8 @@ exports.DNS = DNS;
 const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 exports.URL = URL;
 
-function v35(name, version, hashfunc) {
+function _default(name, version, hashfunc) {
   function generateUUID(value, namespace, buf, offset) {
-    var _namespace;
-
     if (typeof value === 'string') {
       value = stringToBytes(value);
     }
@@ -21965,7 +21947,7 @@ function v35(name, version, hashfunc) {
       namespace = (0, _parse.default)(namespace);
     }
 
-    if (((_namespace = namespace) === null || _namespace === void 0 ? void 0 : _namespace.length) !== 16) {
+    if (namespace.length !== 16) {
       throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
     } // Compute hash of namespace and value, Per 4.3
     // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
@@ -21989,7 +21971,7 @@ function v35(name, version, hashfunc) {
       return buf;
     }
 
-    return (0, _stringify.unsafeStringify)(bytes);
+    return (0, _stringify.default)(bytes);
   } // Function#name is not settable on some platforms (#270)
 
 
@@ -22002,7 +21984,7 @@ function v35(name, version, hashfunc) {
   generateUUID.URL = URL;
   return generateUUID;
 }
-},{"./parse.js":12,"./stringify.js":16}],20:[function(require,module,exports){
+},{"./parse.js":11,"./stringify.js":15}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22010,19 +21992,13 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _native = _interopRequireDefault(require("./native.js"));
-
 var _rng = _interopRequireDefault(require("./rng.js"));
 
-var _stringify = require("./stringify.js");
+var _stringify = _interopRequireDefault(require("./stringify.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function v4(options, buf, offset) {
-  if (_native.default.randomUUID && !buf && !options) {
-    return _native.default.randomUUID();
-  }
-
   options = options || {};
 
   const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
@@ -22041,12 +22017,12 @@ function v4(options, buf, offset) {
     return buf;
   }
 
-  return (0, _stringify.unsafeStringify)(rnds);
+  return (0, _stringify.default)(rnds);
 }
 
 var _default = v4;
 exports.default = _default;
-},{"./native.js":10,"./rng.js":14,"./stringify.js":16}],21:[function(require,module,exports){
+},{"./rng.js":13,"./stringify.js":15}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22063,7 +22039,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const v5 = (0, _v.default)('v5', 0x50, _sha.default);
 var _default = v5;
 exports.default = _default;
-},{"./sha1.js":15,"./v35.js":19}],22:[function(require,module,exports){
+},{"./sha1.js":14,"./v35.js":18}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22081,7 +22057,7 @@ function validate(uuid) {
 
 var _default = validate;
 exports.default = _default;
-},{"./regex.js":13}],23:[function(require,module,exports){
+},{"./regex.js":12}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22098,12 +22074,12 @@ function version(uuid) {
     throw TypeError('Invalid UUID');
   }
 
-  return parseInt(uuid.slice(14, 15), 16);
+  return parseInt(uuid.substr(14, 1), 16);
 }
 
 var _default = version;
 exports.default = _default;
-},{"./validate.js":22}],24:[function(require,module,exports){
+},{"./validate.js":21}],23:[function(require,module,exports){
 'use strict';
 var $, DAT, Visualizer, World, _, savedMaps, settings, waitForElements;
 
@@ -22212,7 +22188,7 @@ waitForElements(['canvas', 'gui'], function() {
 });
 
 
-},{"./helpers":29,"./maps":30,"./model/world":39,"./settings":40,"./visualizer/visualizer":48,"dat-gui":2,"jquery":6,"underscore":7}],25:[function(require,module,exports){
+},{"./helpers":28,"./maps":29,"./model/world":39,"./settings":40,"./visualizer/visualizer":48,"dat-gui":2,"jquery":6,"underscore":7}],24:[function(require,module,exports){
 'use strict';
 var Curve, Segment;
 
@@ -22284,7 +22260,7 @@ Curve = (function() {
 module.exports = Curve;
 
 
-},{"../helpers":29,"./segment":28}],26:[function(require,module,exports){
+},{"../helpers":28,"./segment":27}],25:[function(require,module,exports){
 'use strict';
 var Point, atan2, sqrt;
 
@@ -22342,7 +22318,7 @@ Point = (function() {
 module.exports = Point;
 
 
-},{"../helpers":29}],27:[function(require,module,exports){
+},{"../helpers":28}],26:[function(require,module,exports){
 'use strict';
 var Point, Rect, Segment, _, abs;
 
@@ -22483,7 +22459,7 @@ Rect = class Rect {
 module.exports = Rect;
 
 
-},{"../helpers":29,"./point":26,"./segment":28,"underscore":7}],28:[function(require,module,exports){
+},{"../helpers":28,"./point":25,"./segment":27,"underscore":7}],27:[function(require,module,exports){
 'use strict';
 var Segment;
 
@@ -22560,32 +22536,32 @@ Segment = (function() {
 module.exports = Segment;
 
 
-},{"../helpers":29}],29:[function(require,module,exports){
+},{"../helpers":28}],28:[function(require,module,exports){
 'use strict';
-var idCounter, uniqueId;
+var mapsIdCounter, uniqueId;
 
 //_ = require 'underscore'
 //id = _.uniqueId 'car'      # old code
 
 //module.exports = {}
+mapsIdCounter = require('./mapsIdCounter');
+
 Function.prototype.property = function(prop, desc) {
   return Object.defineProperty(this.prototype, prop, desc);
 };
 
 // Generate a unique integer id (unique within the entire client session).
 // Useful for temporary DOM ids.
-idCounter = {};
-
 uniqueId = function(prefix) {
   var id;
-  id = ++idCounter[prefix] || (idCounter[prefix] = 1);
+  id = ++mapsIdCounter[prefix] || (mapsIdCounter[prefix] = 1);
   return prefix + id;
 };
 
 module.exports = uniqueId;
 
 
-},{}],30:[function(require,module,exports){
+},{"./mapsIdCounter":30}],29:[function(require,module,exports){
 'use strict';
 var savedMaps;
 
@@ -24268,6 +24244,162 @@ savedMaps = {
     "time": 66.33855000000004,
     "trackPath": []
   },
+  "map_semplice": {
+    "intersections": {
+      "intersection1": {
+        "id": "intersection1",
+        "rect": {
+          "x": -42,
+          "y": 0,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.9479743836461125,
+          "phaseOffset": 94.66763575323544
+        }
+      },
+      "intersection2": {
+        "id": "intersection2",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.9741343229976489,
+          "phaseOffset": 3.8664580723590136
+        }
+      },
+      "intersection3": {
+        "id": "intersection3",
+        "rect": {
+          "x": 42,
+          "y": 0,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.6763116557404703,
+          "phaseOffset": 27.113770026741115
+        }
+      },
+      "intersection4": {
+        "id": "intersection4",
+        "rect": {
+          "x": 42,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.7196118014172435,
+          "phaseOffset": 42.09140048192721
+        }
+      },
+      "intersection5": {
+        "id": "intersection5",
+        "rect": {
+          "x": 0,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.31777769449575577,
+          "phaseOffset": 28.50633200161039
+        }
+      },
+      "intersection6": {
+        "id": "intersection6",
+        "rect": {
+          "x": -42,
+          "y": -42,
+          "_width": 14,
+          "_height": 14
+        },
+        "controlSignals": {
+          "flipMultiplier": 0.050492654229082,
+          "phaseOffset": 91.51886321434517
+        }
+      }
+    },
+    "roads": {
+      "road57": {
+        "id": "road57",
+        "source": "intersection6",
+        "target": "intersection1"
+      },
+      "road58": {
+        "id": "road58",
+        "source": "intersection1",
+        "target": "intersection6"
+      },
+      "road59": {
+        "id": "road59",
+        "source": "intersection1",
+        "target": "intersection2"
+      },
+      "road60": {
+        "id": "road60",
+        "source": "intersection2",
+        "target": "intersection1"
+      },
+      "road61": {
+        "id": "road61",
+        "source": "intersection2",
+        "target": "intersection3"
+      },
+      "road62": {
+        "id": "road62",
+        "source": "intersection3",
+        "target": "intersection2"
+      },
+      "road63": {
+        "id": "road63",
+        "source": "intersection3",
+        "target": "intersection4"
+      },
+      "road64": {
+        "id": "road64",
+        "source": "intersection4",
+        "target": "intersection3"
+      },
+      "road65": {
+        "id": "road65",
+        "source": "intersection4",
+        "target": "intersection5"
+      },
+      "road66": {
+        "id": "road66",
+        "source": "intersection5",
+        "target": "intersection4"
+      },
+      "road67": {
+        "id": "road67",
+        "source": "intersection5",
+        "target": "intersection6"
+      },
+      "road68": {
+        "id": "road68",
+        "source": "intersection6",
+        "target": "intersection5"
+      },
+      "road69": {
+        "id": "road69",
+        "source": "intersection5",
+        "target": "intersection2"
+      },
+      "road70": {
+        "id": "road70",
+        "source": "intersection2",
+        "target": "intersection5"
+      }
+    },
+    "carsNumber": 2,
+    "time": 138.33831499999914
+  },
   "map_media": {
     "intersections": {
       "intersection1": {
@@ -24513,166 +24645,10 @@ savedMaps = {
     "carsNumber": 2,
     "time": 173.50094999999797
   },
-  "map_semplice": {
-    "intersections": {
-      "intersection21": {
-        "id": "intersection21",
-        "rect": {
-          "x": -42,
-          "y": 0,
-          "_width": 14,
-          "_height": 14
-        },
-        "controlSignals": {
-          "flipMultiplier": 0.9479743836461125,
-          "phaseOffset": 94.66763575323544
-        }
-      },
-      "intersection22": {
-        "id": "intersection22",
-        "rect": {
-          "x": 0,
-          "y": 0,
-          "_width": 14,
-          "_height": 14
-        },
-        "controlSignals": {
-          "flipMultiplier": 0.9741343229976489,
-          "phaseOffset": 3.8664580723590136
-        }
-      },
-      "intersection23": {
-        "id": "intersection23",
-        "rect": {
-          "x": 42,
-          "y": 0,
-          "_width": 14,
-          "_height": 14
-        },
-        "controlSignals": {
-          "flipMultiplier": 0.6763116557404703,
-          "phaseOffset": 27.113770026741115
-        }
-      },
-      "intersection24": {
-        "id": "intersection24",
-        "rect": {
-          "x": 42,
-          "y": -42,
-          "_width": 14,
-          "_height": 14
-        },
-        "controlSignals": {
-          "flipMultiplier": 0.7196118014172435,
-          "phaseOffset": 42.09140048192721
-        }
-      },
-      "intersection25": {
-        "id": "intersection25",
-        "rect": {
-          "x": 0,
-          "y": -42,
-          "_width": 14,
-          "_height": 14
-        },
-        "controlSignals": {
-          "flipMultiplier": 0.31777769449575577,
-          "phaseOffset": 28.50633200161039
-        }
-      },
-      "intersection26": {
-        "id": "intersection26",
-        "rect": {
-          "x": -42,
-          "y": -42,
-          "_width": 14,
-          "_height": 14
-        },
-        "controlSignals": {
-          "flipMultiplier": 0.050492654229082,
-          "phaseOffset": 91.51886321434517
-        }
-      }
-    },
-    "roads": {
-      "road57": {
-        "id": "road57",
-        "source": "intersection26",
-        "target": "intersection21"
-      },
-      "road58": {
-        "id": "road58",
-        "source": "intersection21",
-        "target": "intersection26"
-      },
-      "road59": {
-        "id": "road59",
-        "source": "intersection21",
-        "target": "intersection22"
-      },
-      "road60": {
-        "id": "road60",
-        "source": "intersection22",
-        "target": "intersection21"
-      },
-      "road61": {
-        "id": "road61",
-        "source": "intersection22",
-        "target": "intersection23"
-      },
-      "road62": {
-        "id": "road62",
-        "source": "intersection23",
-        "target": "intersection22"
-      },
-      "road63": {
-        "id": "road63",
-        "source": "intersection23",
-        "target": "intersection24"
-      },
-      "road64": {
-        "id": "road64",
-        "source": "intersection24",
-        "target": "intersection23"
-      },
-      "road65": {
-        "id": "road65",
-        "source": "intersection24",
-        "target": "intersection25"
-      },
-      "road66": {
-        "id": "road66",
-        "source": "intersection25",
-        "target": "intersection24"
-      },
-      "road67": {
-        "id": "road67",
-        "source": "intersection25",
-        "target": "intersection26"
-      },
-      "road68": {
-        "id": "road68",
-        "source": "intersection26",
-        "target": "intersection25"
-      },
-      "road69": {
-        "id": "road69",
-        "source": "intersection25",
-        "target": "intersection22"
-      },
-      "road70": {
-        "id": "road70",
-        "source": "intersection22",
-        "target": "intersection25"
-      }
-    },
-    "carsNumber": 2,
-    "time": 138.33831499999914
-  },
   "mappa_complicata": {
     "intersections": {
-      "intersection87": {
-        "id": "intersection87",
+      "intersection1": {
+        "id": "intersection1",
         "rect": {
           "x": -112,
           "y": -70,
@@ -24684,8 +24660,8 @@ savedMaps = {
           "phaseOffset": 1.5642095884635498
         }
       },
-      "intersection88": {
-        "id": "intersection88",
+      "intersection2": {
+        "id": "intersection2",
         "rect": {
           "x": -112,
           "y": -42,
@@ -24697,8 +24673,8 @@ savedMaps = {
           "phaseOffset": 35.77074627552086
         }
       },
-      "intersection89": {
-        "id": "intersection89",
+      "intersection3": {
+        "id": "intersection3",
         "rect": {
           "x": -112,
           "y": -14,
@@ -24710,8 +24686,8 @@ savedMaps = {
           "phaseOffset": 17.473850551103844
         }
       },
-      "intersection90": {
-        "id": "intersection90",
+      "intersection4": {
+        "id": "intersection4",
         "rect": {
           "x": -112,
           "y": 14,
@@ -24723,8 +24699,8 @@ savedMaps = {
           "phaseOffset": 22.21522877435507
         }
       },
-      "intersection91": {
-        "id": "intersection91",
+      "intersection5": {
+        "id": "intersection5",
         "rect": {
           "x": -28,
           "y": 14,
@@ -24736,8 +24712,8 @@ savedMaps = {
           "phaseOffset": 48.78687282771161
         }
       },
-      "intersection92": {
-        "id": "intersection92",
+      "intersection6": {
+        "id": "intersection6",
         "rect": {
           "x": -28,
           "y": -14,
@@ -24749,8 +24725,8 @@ savedMaps = {
           "phaseOffset": 66.47258451973501
         }
       },
-      "intersection93": {
-        "id": "intersection93",
+      "intersection7": {
+        "id": "intersection7",
         "rect": {
           "x": -28,
           "y": -42,
@@ -24762,8 +24738,8 @@ savedMaps = {
           "phaseOffset": 15.743268270901535
         }
       },
-      "intersection94": {
-        "id": "intersection94",
+      "intersection8": {
+        "id": "intersection8",
         "rect": {
           "x": -28,
           "y": -70,
@@ -24775,8 +24751,8 @@ savedMaps = {
           "phaseOffset": 79.34935652703616
         }
       },
-      "intersection95": {
-        "id": "intersection95",
+      "intersection9": {
+        "id": "intersection9",
         "rect": {
           "x": 42,
           "y": -70,
@@ -24788,8 +24764,8 @@ savedMaps = {
           "phaseOffset": 19.39702370556622
         }
       },
-      "intersection96": {
-        "id": "intersection96",
+      "intersection10": {
+        "id": "intersection10",
         "rect": {
           "x": 42,
           "y": -42,
@@ -24801,8 +24777,8 @@ savedMaps = {
           "phaseOffset": 0.7379432534991848
         }
       },
-      "intersection97": {
-        "id": "intersection97",
+      "intersection11": {
+        "id": "intersection11",
         "rect": {
           "x": 42,
           "y": -14,
@@ -24814,8 +24790,8 @@ savedMaps = {
           "phaseOffset": 14.990724495653529
         }
       },
-      "intersection98": {
-        "id": "intersection98",
+      "intersection12": {
+        "id": "intersection12",
         "rect": {
           "x": 42,
           "y": 14,
@@ -24831,153 +24807,153 @@ savedMaps = {
     "roads": {
       "road201": {
         "id": "road201",
-        "source": "intersection91",
-        "target": "intersection98"
+        "source": "intersection5",
+        "target": "intersection12"
       },
       "road202": {
         "id": "road202",
-        "source": "intersection98",
-        "target": "intersection91"
+        "source": "intersection12",
+        "target": "intersection5"
       },
       "road203": {
         "id": "road203",
-        "source": "intersection98",
-        "target": "intersection97"
+        "source": "intersection12",
+        "target": "intersection11"
       },
       "road204": {
         "id": "road204",
-        "source": "intersection97",
-        "target": "intersection98"
+        "source": "intersection11",
+        "target": "intersection12"
       },
       "road205": {
         "id": "road205",
-        "source": "intersection97",
-        "target": "intersection96"
+        "source": "intersection11",
+        "target": "intersection10"
       },
       "road206": {
         "id": "road206",
-        "source": "intersection96",
-        "target": "intersection97"
+        "source": "intersection10",
+        "target": "intersection11"
       },
       "road207": {
         "id": "road207",
-        "source": "intersection96",
-        "target": "intersection95"
+        "source": "intersection10",
+        "target": "intersection9"
       },
       "road208": {
         "id": "road208",
-        "source": "intersection95",
-        "target": "intersection96"
+        "source": "intersection9",
+        "target": "intersection10"
       },
       "road209": {
         "id": "road209",
-        "source": "intersection95",
-        "target": "intersection94"
+        "source": "intersection9",
+        "target": "intersection8"
       },
       "road210": {
         "id": "road210",
-        "source": "intersection94",
-        "target": "intersection95"
+        "source": "intersection8",
+        "target": "intersection9"
       },
       "road211": {
         "id": "road211",
-        "source": "intersection94",
-        "target": "intersection93"
+        "source": "intersection8",
+        "target": "intersection7"
       },
       "road212": {
         "id": "road212",
-        "source": "intersection93",
-        "target": "intersection94"
+        "source": "intersection7",
+        "target": "intersection8"
       },
       "road213": {
         "id": "road213",
-        "source": "intersection93",
-        "target": "intersection88"
+        "source": "intersection7",
+        "target": "intersection2"
       },
       "road214": {
         "id": "road214",
-        "source": "intersection88",
-        "target": "intersection93"
+        "source": "intersection2",
+        "target": "intersection7"
       },
       "road215": {
         "id": "road215",
-        "source": "intersection87",
-        "target": "intersection88"
+        "source": "intersection1",
+        "target": "intersection2"
       },
       "road216": {
         "id": "road216",
-        "source": "intersection88",
-        "target": "intersection87"
+        "source": "intersection2",
+        "target": "intersection1"
       },
       "road217": {
         "id": "road217",
-        "source": "intersection87",
-        "target": "intersection94"
+        "source": "intersection1",
+        "target": "intersection8"
       },
       "road218": {
         "id": "road218",
-        "source": "intersection94",
-        "target": "intersection87"
+        "source": "intersection8",
+        "target": "intersection1"
       },
       "road219": {
         "id": "road219",
-        "source": "intersection92",
-        "target": "intersection93"
+        "source": "intersection6",
+        "target": "intersection7"
       },
       "road220": {
         "id": "road220",
-        "source": "intersection93",
-        "target": "intersection92"
+        "source": "intersection7",
+        "target": "intersection6"
       },
       "road221": {
         "id": "road221",
-        "source": "intersection92",
-        "target": "intersection89"
+        "source": "intersection6",
+        "target": "intersection3"
       },
       "road222": {
         "id": "road222",
-        "source": "intersection89",
-        "target": "intersection92"
+        "source": "intersection3",
+        "target": "intersection6"
       },
       "road223": {
         "id": "road223",
-        "source": "intersection89",
-        "target": "intersection90"
+        "source": "intersection3",
+        "target": "intersection4"
       },
       "road224": {
         "id": "road224",
-        "source": "intersection90",
-        "target": "intersection89"
+        "source": "intersection4",
+        "target": "intersection3"
       },
       "road225": {
         "id": "road225",
-        "source": "intersection90",
-        "target": "intersection91"
+        "source": "intersection4",
+        "target": "intersection5"
       },
       "road226": {
         "id": "road226",
-        "source": "intersection91",
-        "target": "intersection90"
+        "source": "intersection5",
+        "target": "intersection4"
       },
       "road227": {
         "id": "road227",
-        "source": "intersection88",
-        "target": "intersection89"
+        "source": "intersection2",
+        "target": "intersection3"
       },
       "road228": {
         "id": "road228",
-        "source": "intersection89",
-        "target": "intersection88"
+        "source": "intersection3",
+        "target": "intersection2"
       },
       "road231": {
         "id": "road231",
-        "source": "intersection91",
-        "target": "intersection92"
+        "source": "intersection5",
+        "target": "intersection6"
       },
       "road232": {
         "id": "road232",
-        "source": "intersection92",
-        "target": "intersection91"
+        "source": "intersection6",
+        "target": "intersection5"
       }
     },
     "carsNumber": 4,
@@ -24986,6 +24962,21 @@ savedMaps = {
 };
 
 module.exports = savedMaps;
+
+
+},{}],30:[function(require,module,exports){
+'use strict';
+var mapsIdCounter;
+
+mapsIdCounter = {
+  "car": 0,
+  "intersection": 0,
+  "lane": 0,
+  "road": 0,
+  "trafficLight": 0
+};
+
+module.exports = mapsIdCounter;
 
 
 },{}],31:[function(require,module,exports){
@@ -25255,7 +25246,7 @@ Car = (function() {
 module.exports = Car;
 
 
-},{"../helpers":29,"../settings":40,"./trajectory":38,"underscore":7}],32:[function(require,module,exports){
+},{"../helpers":28,"../settings":40,"./trajectory":38,"underscore":7}],32:[function(require,module,exports){
 'use strict';
 var ControlSignals, random, settings,
   indexOf = [].indexOf;
@@ -25365,7 +25356,7 @@ ControlSignals = (function() {
 module.exports = ControlSignals;
 
 
-},{"../helpers":29,"../settings":40}],33:[function(require,module,exports){
+},{"../helpers":28,"../settings":40}],33:[function(require,module,exports){
 'use strict';
 var ControlSignals, Intersection, Rect, _, uniqueId;
 
@@ -25429,7 +25420,7 @@ Intersection = class Intersection {
 module.exports = Intersection;
 
 
-},{"../geom/rect":27,"../helpers":29,"./control-signals":32,"underscore":7}],34:[function(require,module,exports){
+},{"../geom/rect":26,"../helpers":28,"./control-signals":32,"underscore":7}],34:[function(require,module,exports){
 'use strict';
 var LanePosition, _, uniqueId;
 
@@ -25516,7 +25507,7 @@ LanePosition = (function() {
 module.exports = LanePosition;
 
 
-},{"../helpers":29,"underscore":7}],35:[function(require,module,exports){
+},{"../helpers":28,"underscore":7}],35:[function(require,module,exports){
 'use strict';
 var Lane, Rect, Segment, _, uniqueId;
 
@@ -25683,7 +25674,7 @@ Lane = (function() {
 module.exports = Lane;
 
 
-},{"../geom/rect":27,"../geom/segment":28,"../helpers":29,"underscore":7}],36:[function(require,module,exports){
+},{"../geom/rect":26,"../geom/segment":27,"../helpers":28,"underscore":7}],36:[function(require,module,exports){
 'use strict';
 var Pool;
 
@@ -25750,7 +25741,7 @@ Pool = (function() {
 module.exports = Pool;
 
 
-},{"../helpers":29}],37:[function(require,module,exports){
+},{"../helpers":28}],37:[function(require,module,exports){
 'use strict';
 var Lane, Point, Rect, Road, Segment, _, max, min, settings, uniqueId;
 
@@ -25908,7 +25899,7 @@ Road = (function() {
 module.exports = Road;
 
 
-},{"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers":29,"../settings":40,"./lane":35,"underscore":7}],38:[function(require,module,exports){
+},{"../geom/point":25,"../geom/rect":26,"../geom/segment":27,"../helpers":28,"../settings":40,"./lane":35,"underscore":7}],38:[function(require,module,exports){
 'use strict';
 var Curve, LanePosition, Trajectory, _, max, min;
 
@@ -26174,9 +26165,9 @@ Trajectory = (function() {
 module.exports = Trajectory;
 
 
-},{"../geom/curve":25,"../helpers":29,"./lane-position":34,"underscore":7}],39:[function(require,module,exports){
+},{"../geom/curve":24,"../helpers":28,"./lane-position":34,"underscore":7}],39:[function(require,module,exports){
 'use strict';
-var Car, Intersection, Pool, Rect, Road, World, _, random, savedMaps, settings, uuid;
+var Car, Intersection, Pool, Rect, Road, World, _, mapsIdCounter, random, savedMaps, settings, uuid;
 
 ({random} = Math);
 
@@ -26199,6 +26190,8 @@ settings = require('../settings');
 savedMaps = require('../maps');
 
 uuid = require('uuid');
+
+mapsIdCounter = require('../mapsIdCounter');
 
 World = (function() {
   class World {
@@ -26292,8 +26285,14 @@ World = (function() {
     }
 
     generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
-      var gridSize, i, id, intersection, intersectionsNumber, j, k, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, x, y;
+      var gridSize, i, id, intersection, intersectionsNumber, j, k, key, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, value, x, y;
       this.clear();
+// set to 0 all property of mapsIdCounter
+      for (key in mapsIdCounter) {
+        value = mapsIdCounter[key];
+        mapsIdCounter[key] = 0;
+      }
+      console.log(mapsIdCounter);
       intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0;
       map = {};
       gridSize = settings.gridSize;
@@ -26606,7 +26605,7 @@ World = (function() {
 module.exports = World;
 
 
-},{"../geom/rect":27,"../helpers":29,"../maps":30,"../settings":40,"./car":31,"./intersection":33,"./pool":36,"./road":37,"underscore":7,"uuid":8}],40:[function(require,module,exports){
+},{"../geom/rect":26,"../helpers":28,"../maps":29,"../mapsIdCounter":30,"../settings":40,"./car":31,"./intersection":33,"./pool":36,"./road":37,"underscore":7,"uuid":8}],40:[function(require,module,exports){
 'use strict';
 var settings;
 
@@ -26864,7 +26863,7 @@ Graphics = class Graphics {
 module.exports = Graphics;
 
 
-},{"../geom/curve":25,"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers.coffee":29,"../settings":40}],42:[function(require,module,exports){
+},{"../geom/curve":24,"../geom/point":25,"../geom/rect":26,"../geom/segment":27,"../helpers.coffee":28,"../settings":40}],42:[function(require,module,exports){
 'use strict';
 var Point, Tool, ToolHighlighter, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -26966,7 +26965,7 @@ ToolHighlighter = class ToolHighlighter extends Tool {
 module.exports = ToolHighlighter;
 
 
-},{"../geom/point.coffee":26,"../helpers.coffee":29,"../settings.coffee":40,"./tool.coffee":47}],43:[function(require,module,exports){
+},{"../geom/point.coffee":25,"../helpers.coffee":28,"../settings.coffee":40,"./tool.coffee":47}],43:[function(require,module,exports){
 'use strict';
 var Intersection, Tool, ToolIntersectionBuilder,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27034,7 +27033,7 @@ ToolIntersectionBuilder = class ToolIntersectionBuilder extends Tool {
 module.exports = ToolIntersectionBuilder;
 
 
-},{"../helpers.coffee":29,"../model/intersection.coffee":33,"./tool.coffee":47}],44:[function(require,module,exports){
+},{"../helpers.coffee":28,"../model/intersection.coffee":33,"./tool.coffee":47}],44:[function(require,module,exports){
 'use strict';
 var Tool, ToolIntersectionMover,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27089,7 +27088,7 @@ ToolIntersectionMover = class ToolIntersectionMover extends Tool {
 module.exports = ToolIntersectionMover;
 
 
-},{"../helpers.coffee":29,"./tool.coffee":47}],45:[function(require,module,exports){
+},{"../helpers.coffee":28,"./tool.coffee":47}],45:[function(require,module,exports){
 'use strict';
 var Mover, Tool,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27143,7 +27142,7 @@ Mover = class Mover extends Tool {
 module.exports = Mover;
 
 
-},{"../helpers.coffee":29,"./tool.coffee":47}],46:[function(require,module,exports){
+},{"../helpers.coffee":28,"./tool.coffee":47}],46:[function(require,module,exports){
 'use strict';
 var Car, Road, Tool, ToolRoadBuilder, _, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27290,7 +27289,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
 module.exports = ToolRoadBuilder;
 
 
-},{"../helpers.coffee":29,"../model/car.coffee":31,"../model/road.coffee":37,"../settings.coffee":40,"./tool.coffee":47,"underscore":7}],47:[function(require,module,exports){
+},{"../helpers.coffee":28,"../model/car.coffee":31,"../model/road.coffee":37,"../settings.coffee":40,"./tool.coffee":47,"underscore":7}],47:[function(require,module,exports){
 'use strict';
 var $, DOCUMENT_METHODS, METHODS, Point, Rect, Tool, _;
 
@@ -27456,7 +27455,7 @@ Tool = class Tool {
 module.exports = Tool;
 
 
-},{"../geom/point":26,"../geom/rect":27,"../helpers":29,"jquery":6,"jquery-mousewheel":5,"underscore":7}],48:[function(require,module,exports){
+},{"../geom/point":25,"../geom/rect":26,"../helpers":28,"jquery":6,"jquery-mousewheel":5,"underscore":7}],48:[function(require,module,exports){
 'use strict';
 var $, Graphics, Intersection, PI, Point, Rect, Segment, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, chroma, settings;
 
@@ -28177,7 +28176,7 @@ Visualizer = (function() {
 module.exports = Visualizer;
 
 
-},{"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers":29,"../model/intersection":33,"../settings":40,"./graphics":41,"./highlighter":42,"./intersection-builder":43,"./intersection-mover":44,"./mover":45,"./road-builder":46,"./zoomer":49,"chroma-js":1,"jquery":6,"underscore":7}],49:[function(require,module,exports){
+},{"../geom/point":25,"../geom/rect":26,"../geom/segment":27,"../helpers":28,"../model/intersection":33,"../settings":40,"./graphics":41,"./highlighter":42,"./intersection-builder":43,"./intersection-mover":44,"./mover":45,"./road-builder":46,"./zoomer":49,"chroma-js":1,"jquery":6,"underscore":7}],49:[function(require,module,exports){
 'use strict';
 var Point, Rect, Tool, Zoomer, max, min, settings;
 
@@ -28310,6 +28309,6 @@ Zoomer = (function() {
 module.exports = Zoomer;
 
 
-},{"../geom/point.coffee":26,"../geom/rect.coffee":27,"../helpers.coffee":29,"../settings.coffee":40,"./tool.coffee":47}]},{},[24])
+},{"../geom/point.coffee":25,"../geom/rect.coffee":26,"../helpers.coffee":28,"../settings.coffee":40,"./tool.coffee":47}]},{},[23])
 
 //# sourceMappingURL=coffee-main.js.map
