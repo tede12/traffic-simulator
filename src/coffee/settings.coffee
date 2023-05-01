@@ -45,9 +45,14 @@ settings =
         maxFollowPoints: 1000  # 3000 is the default value, 0 to disable
         carLine: 'black'
 
+#   roads setting
+    updateRoadsInterval: 50
+
 #   API
     pathFinderUrl: 'http://localhost:8000/pathFinder'
-    newMapUrl: 'http://localhost:8000/newMap'
+    mapUrl: 'http://localhost:8000/map'
+    roadsUrl: 'http://localhost:8000/roads'
+
 
 
 module.exports = settings

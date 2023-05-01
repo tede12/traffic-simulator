@@ -23,6 +23,7 @@ class World
             lastTimeSpawn: null     # time when last car was spawned
         }
         @activeCars = 0
+        @roadsUpdateCounterInterval = 0
 
     @property 'instantSpeed',
         get: ->
@@ -81,10 +82,11 @@ class World
             road = Road.copy road
             road.source = @getIntersection road.source
             road.target = @getIntersection road.target
+            road.carsNumber = 0
             @addRoad road
 
         @mapId = mapName
-        @newRequest settings.newMapUrl, 'POST', null, {map: @save(true)}
+        @newRequest settings.mapUrl, 'POST', null, {map: @save(true)}
 
     generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
         @clear()
@@ -138,7 +140,7 @@ class World
         @mapId = uuid.v4() # generate new map id
         console.log 'Map generated'
         # Send new map to server
-        @newRequest(settings.newMapUrl, 'POST', null, {map: @save(true)})
+        @newRequest(settings.mapUrl, 'POST', null, {map: @save(true)})
 
     addMyCar: (road, laneId = 0) ->
         if road instanceof Road
@@ -191,6 +193,7 @@ class World
 
     newRequest: (url, method = 'GET', params = null, data = null) ->
         """xmlHttpRequest with CORS prevention"""
+        console.log method
         # add params to url as query string parameters
         if params
             url = url + '?' + new URLSearchParams(params).toString()
@@ -258,6 +261,19 @@ class World
         for id, car of @cars.all()
             car.move delta
             @removeCar car unless car.alive
+
+        #reset carsNumber of each road and update it
+        for id, road of @roads.all()
+            road.carsNumber = 0
+        for id, car of @cars.all()
+            road = car.trajectory.current.lane.road
+            road.carsNumber += 1
+
+        #send api post request to update carsNumber of each road
+        if @roadsUpdateCounterInterval == settings.updateRoadsInterval
+            @newRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
+            @roadsUpdateCounterInterval = 0
+        @roadsUpdateCounterInterval++
 
     refreshCars: ->
         @addRandomCar() if @cars.length < @carsNumber

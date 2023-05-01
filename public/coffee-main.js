@@ -25074,6 +25074,8 @@ Car = (function() {
         }
         // TODO: hacks, should have changed speed
         if (this.trajectory.nextCarDistance.distance < step) {
+          this.speed = this.speed / 10;
+          step = this.speed * delta + 0.5 * acceleration * delta ** 2;
           console.log('bad IDM');
         }
         if (this.trajectory.timeToMakeTurn(step)) {
@@ -25109,7 +25111,7 @@ Car = (function() {
       }
       step = this.speed * delta + 0.5 * acceleration * delta ** 2;
       if (this.trajectory.nextCarDistance.distance < step) {
-        this.speed === this.speed / 10;
+        this.speed = this.speed / 10;
         step = this.speed * delta + 0.5 * acceleration * delta ** 2;
       }
       if (this.trajectory.timeToMakeTurn(step)) {
@@ -25771,6 +25773,7 @@ Road = (function() {
       this.id = uniqueId('road'); // @id = _.uniqueId 'road'
       this.lanes = [];
       this.lanesNumber = null;
+      this.carsNumber = 0;
       this.update();
     }
 
@@ -25790,7 +25793,8 @@ Road = (function() {
         id: this.id,
         source: this.source.id,
         target: this.target.id,
-        length: this.length
+        length: this.length,
+        carsNumber: this.carsNumber
       };
     }
 
@@ -26205,6 +26209,7 @@ World = (function() {
         lastTimeSpawn: null // time when last car was spawned
       };
       this.activeCars = 0;
+      this.roadsUpdateCounterInterval = 0;
     }
 
     createDynamicMapMethods() {
@@ -26279,10 +26284,11 @@ World = (function() {
         road = Road.copy(road);
         road.source = this.getIntersection(road.source);
         road.target = this.getIntersection(road.target);
+        road.carsNumber = 0;
         this.addRoad(road);
       }
       this.mapId = mapName;
-      return this.newRequest(settings.newMapUrl, 'POST', null, {
+      return this.newRequest(settings.mapUrl, 'POST', null, {
         map: this.save(true)
       });
     }
@@ -26360,7 +26366,7 @@ World = (function() {
       this.mapId = uuid.v4(); // generate new map id
       console.log('Map generated');
       // Send new map to server
-      return this.newRequest(settings.newMapUrl, 'POST', null, {
+      return this.newRequest(settings.mapUrl, 'POST', null, {
         map: this.save(true)
       });
     }
@@ -26426,6 +26432,7 @@ World = (function() {
     newRequest(url, method = 'GET', params = null, data = null) {
       `xmlHttpRequest with CORS prevention`;
       var error, xhr;
+      console.log(method);
       // add params to url as query string parameters
       if (params) {
         url = url + '?' + new URLSearchParams(params).toString();
@@ -26486,7 +26493,7 @@ World = (function() {
     }
 
     onTick(delta) {
-      var car, id, intersection, ref, ref1, ref2, ref3, results;
+      var car, id, intersection, ref, ref1, ref2, ref3, ref4, ref5, road;
       if (delta > 1) {
         throw Error('delta > 1');
       }
@@ -26503,17 +26510,34 @@ World = (function() {
         intersection.controlSignals.onTick(delta);
       }
       ref3 = this.cars.all();
-      results = [];
       for (id in ref3) {
         car = ref3[id];
         car.move(delta);
         if (!car.alive) {
-          results.push(this.removeCar(car));
-        } else {
-          results.push(void 0);
+          this.removeCar(car);
         }
       }
-      return results;
+      ref4 = this.roads.all();
+      //reset carsNumber of each road and update it
+      for (id in ref4) {
+        road = ref4[id];
+        road.carsNumber = 0;
+      }
+      ref5 = this.cars.all();
+      for (id in ref5) {
+        car = ref5[id];
+        road = car.trajectory.current.lane.road;
+        road.carsNumber += 1;
+      }
+      //send api post request to update carsNumber of each road
+      if (this.roadsUpdateCounterInterval === settings.updateRoadsInterval) {
+        this.newRequest(settings.roadsUrl, 'PATCH', null, {
+          mapId: this.mapId,
+          roads: this.roads.all()
+        });
+        this.roadsUpdateCounterInterval = 0;
+      }
+      return this.roadsUpdateCounterInterval++;
     }
 
     refreshCars() {
@@ -26657,9 +26681,12 @@ settings = {
     maxFollowPoints: 1000, // 3000 is the default value, 0 to disable
     carLine: 'black'
   },
+  //   roads setting
+  updateRoadsInterval: 50,
   //   API
   pathFinderUrl: 'http://localhost:8000/pathFinder',
-  newMapUrl: 'http://localhost:8000/newMap'
+  mapUrl: 'http://localhost:8000/map',
+  roadsUrl: 'http://localhost:8000/roads'
 };
 
 module.exports = settings;
@@ -27506,8 +27533,8 @@ Visualizer = (function() {
       this.$canvas = $('#canvas');
       this.canvas = this.$canvas[0];
       this.ctx = this.canvas.getContext('2d');
-      this.carImage = new Image();
-      this.carImage.src = 'images/car.png';
+      //        @carImage = new Image()
+      //        @carImage.src = 'images/car.png'
       this.updateCanvasSize();
       this.zoomer = new Zoomer(settings.defaultZoomLevel, this, true);
       this.graphics = new Graphics(this.ctx);

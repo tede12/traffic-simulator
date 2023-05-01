@@ -99,6 +99,8 @@ class Car
                     @alive = false
             # TODO: hacks, should have changed speed
             if @trajectory.nextCarDistance.distance < step
+                @speed = @speed / 10
+                step = @speed * delta + 0.5 * acceleration * delta ** 2
                 console.log 'bad IDM'
 
             if @trajectory.timeToMakeTurn(step)
@@ -124,7 +126,7 @@ class Car
         step = @speed * delta + 0.5 * acceleration * delta ** 2
 
         if @trajectory.nextCarDistance.distance < step
-            @speed == @speed / 10
+            @speed = @speed / 10
             step = @speed * delta + 0.5 * acceleration * delta ** 2
 
         if @trajectory.timeToMakeTurn(step)

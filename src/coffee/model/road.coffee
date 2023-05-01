@@ -16,6 +16,7 @@ class Road
         @id = uniqueId 'road' # @id = _.uniqueId 'road'
         @lanes = []
         @lanesNumber = null
+        @carsNumber = 0
         @update()
 
     @copy: (road) ->
@@ -30,6 +31,7 @@ class Road
             source: @source.id
             target: @target.id
             length: @length
+            carsNumber: @carsNumber
 
     @property 'length',
         get: -> @targetSide.target.subtract(@sourceSide.source).length
