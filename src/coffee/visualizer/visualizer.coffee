@@ -25,8 +25,8 @@ class Visualizer
         @canvas = @$canvas[0]
         @ctx = @canvas.getContext('2d')
 
-        @carImage = new Image()
-        @carImage.src = 'images/car.png'
+#        @carImage = new Image()
+#        @carImage.src = 'images/car.png'
 
         @updateCanvasSize()
         @zoomer = new Zoomer settings.defaultZoomLevel, this, true
