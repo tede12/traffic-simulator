@@ -33,6 +33,7 @@ settings =
 #   signals settings
     showRedLights: true
     triangles: true  # false -> circles
+    trafficHighlight: true
     carsNumber: 150
     carsGap: 5
     waitCarSpawn: 40  # time dependent to the canvas time factor, it's not seconds

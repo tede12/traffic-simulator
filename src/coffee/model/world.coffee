@@ -214,7 +214,7 @@ class World
             console.log "[Request Error]: #{error}"
             return false
 
-    getShortestPathAPI: (lengthOnly= "false") ->
+    getShortestPathAPI: (lengthOnly = "false") ->
         sourceId_prefix = @trackPath[0]['intersection'].id
         targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)
         sourceId = sourceId_prefix.slice 'intersection'.length
@@ -252,13 +252,15 @@ class World
 
     clear: ->
         @set {}
+        @carObject.lastTimeSpawn = null
 
     onTick: (delta) =>
         throw Error 'delta > 1' if delta > 1
         @time += delta
-#       When myCar is spawned, stop spawning of other cars for settings.waitCarSpawn secs
-        if @carObject?.lastTimeSpawn and @time - @carObject.lastTimeSpawn > settings.waitCarSpawn    # todo check time
+        #       When myCar is spawned, stop spawning of other cars for settings.waitCarSpawn secs
+        if @carObject?.lastTimeSpawn and @time - @carObject.lastTimeSpawn > settings.waitCarSpawn
             @refreshCars()
+            @carObject.lastTimeSpawn = null
         else if @carObject?.lastTimeSpawn is null
             @refreshCars()
 
@@ -268,14 +270,32 @@ class World
             car.move delta
             @removeCar car unless car.alive
 
-        #reset carsNumber of each road and update it
+        # reset carsNumber of each road and update it
         for id, road of @roads.all()
             road.carsNumber = 0
         for id, car of @cars.all()
             road = car.trajectory.current.lane.road
             road.carsNumber += 1
 
-        #send api post request to update carsNumber of each road
+        # Assign a color to the road in base of the number of cars / road length ratio (for showing traffic)
+        for id, road of @roads.all()
+            if settings.trafficHighlight
+                if road.length > 0
+                    averageCarLength = 4.5
+                    ratio = road.carsNumber / (road.length / averageCarLength)
+
+                    for lane in road.lanes
+                        if 0 <= ratio <= 0.5
+                            lane.color = settings.colors.road  # should be the 'green' version of traffic
+                        else if 0.5 < ratio <= 0.8
+                            lane.color = 'orange'  # '#FFD580' more light
+                        else if ratio > 0.8
+                            lane.color = 'red'
+            else
+                [lane.color = settings.colors.road for lane in road.lanes]
+
+
+        # send api post request to update carsNumber of each road
         if @roadsUpdateCounterInterval == settings.updateRoadsInterval
             @newRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
             @roadsUpdateCounterInterval = 0

@@ -42,6 +42,7 @@
 - [ ] Set new weights and get the current best path when car is moving
   - [x] endpoint on API in order to set new weights or an updated version of the map object
   - [x] get number of cars on each road (don't overcomplicate things with lane based on next intersection)
+  - [ ] get traffic lights status for each intersection and improve the algorithm with this info
 - [ ] Socket for checking if pathFinder server is running
 - [ ] Integrate MQTT with correct request protocol (meeting required)
 
@@ -52,14 +53,12 @@
 - [x] Check algorithm for car generation and trajectory
 - [x] After the pathFinder sends the new path, if there are too many cars on the road, myCar fails to get direction
 - [x] It seems that when there are generated maps with roads that pass one through another, the pathFinder fails to find the best path,
-with error: dijkstra.c:948 : Couldn't reach some of the requested target vertices. -> This can happen if the graph is not strongly connected or if none of the target vertices have outgoing edges.)  
-This could be handled in 2 ways:
-  - [ ] Generate only maps with no roads that pass one through another
-  - [ ] Fix the pathFinder algorithm to find the best path even if there are roads that pass one through another
+with error: dijkstra.c:948 : Couldn't reach some of the requested target vertices. -> This can happen if the graph is not strongly connected or if none of the target vertices have outgoing edges.)
+Handled with:
   - [x] IntersectionId must be in increasing order to work correctly with graph library
-- [ ] Sometimes the map do not spawn cars immediately (after a while they should be spawn, but not always)
+- [x] Sometimes the map do not spawn cars immediately (after a while they should be spawn, but not always)
 
-- [ ] When an intersection is already occupied by some cars, the new car should wait for entering the intersection even if it has green light
+- [ ] (Not required) When an intersection is already occupied by some cars, the new car should wait for entering the intersection even if it has green light
 
 
 # TIPS
