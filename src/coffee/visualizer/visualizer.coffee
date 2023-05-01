@@ -41,6 +41,7 @@ class Visualizer
         @timeFactor = settings.defaultTimeFactor
 
         @trackPath = world.trackPath
+        @lengthOnlyTrackPath = world.lengthOnlyTrackPath
 
     drawIntersection: (intersection, alpha) ->
         color = intersection.color or settings.colors.intersection
@@ -415,7 +416,8 @@ class Visualizer
         @graphics.save()
         @drawCarLines car for id, car of @world.cars.all()
         # ------------------------------------------------------------------------
-        @drawTrackPath()
+        @drawShortestPath([], 'green')
+        @drawTrackPath([], 'yellow')
         # ------------------------------------------------------------------------
         @graphics.restore()
 
@@ -480,6 +482,54 @@ class Visualizer
                 if lane.stringDirection == direction
                     return lane
 
+    drawShortestPath: (newPath = [], color = 'green') ->
+        if newPath instanceof Array and newPath.length >= 2     # reset trackPath
+            @world.lenghtOnlyPath = []
+            for i in newPath
+                @world.lenghtOnlyPath.push({'intersection': @checkIfPointOrIntersection(i)})
+
+        if @world.lenghtOnlyPath.length < 2
+            return
+
+        getIntersections = []
+        for i in @world.lenghtOnlyPath
+            getIntersections.push(i['intersection'])
+
+        firstIntersection = @checkIfPointOrIntersection(getIntersections[0])
+        startPoint = firstIntersection.rect.center() # first intersection
+
+        lastIntersection = @checkIfPointOrIntersection(getIntersections[getIntersections.length - 1])
+        endPoint = lastIntersection.rect.center() # last last intersection
+
+        newTrackPath = {'startPoint': startPoint}
+        lastPoint = startPoint
+
+        dir = @checkBeforeAndNextPath(getIntersections, 0)
+        lane = @getIntersectionLaneByDirection(firstIntersection, dir)
+
+        for i in [1..getIntersections.length - 2]
+            intersect = @checkIfPointOrIntersection(getIntersections[i])
+            newPoint = intersect?.rect.center()
+            if newPoint is undefined
+                console.log 'Intersection ' + intersect.id + ' not found'
+                return
+
+            dir = @checkBeforeAndNextPath(getIntersections, i)
+            lane = @getIntersectionLaneByDirection(intersect, dir)
+
+            # good version
+            segment = new Segment lastPoint, newPoint
+            newTrackPath[intersect.id] = segment
+            lastPoint = newPoint
+
+            # if the last point add last segment and endPoint
+            if i == getIntersections.length - 2
+                segment = new Segment lastPoint, endPoint
+                newTrackPath['lastSegment'] = segment
+                newTrackPath['endPoint'] = endPoint
+
+        @graphics.drawPolylineFeatures newTrackPath, 0.7, color
+
     drawTrackPath: (newPath = [], color = 'blue') ->
 #       TODO: add curve when needed
 #       TODO: set colors for more paths (now is only blue, because it's overwritten each time)
@@ -528,7 +578,7 @@ class Visualizer
                 newTrackPath['lastSegment'] = segment
                 newTrackPath['endPoint'] = endPoint
 
-        @graphics.drawPolylineFeatures newTrackPath, 0.3, color
+        @graphics.drawPolylineFeatures newTrackPath, 0.7, color
         @graphics.restore()
 
 

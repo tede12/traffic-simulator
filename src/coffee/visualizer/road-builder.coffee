@@ -56,6 +56,12 @@ class ToolRoadBuilder extends Tool
             @visualizer.world.addMyCarAPI()
             e.stopImmediatePropagation()
 
+        if e.altKey and e.keyCode is 71  # character 'g'
+            console.log 'Get Shortest Path based only on length with API'
+            path = @visualizer.world.getShortestPathAPI('true')
+            @visualizer.drawShortestPath path, 'green'
+            e.stopImmediatePropagation()
+
     mouseup: (e) =>
         @visualizer.world.addRoad @road if @road?
         @visualizer.world.addRoad @dualRoad if @dualRoad?

@@ -26205,6 +26205,7 @@ World = (function() {
       this.createDynamicMapMethods();
       this.trackPath = [];
       this.bestPath = [];
+      this.lenghtOnlyPath = [];
       this.carObject = {
         lastTimeSpawn: null // time when last car was spawned
       };
@@ -26260,7 +26261,7 @@ World = (function() {
     }
 
     load(data, mapName, parse = true) {
-      var id, intersection, ref, ref1, road, trackPathElement;
+      var id, intersection, lenghtOnlyPathElement, ref, ref1, road, trackPathElement;
       data = data || localStorage.world;
       if (data && parse) {
         data = JSON.parse(data);
@@ -26269,9 +26270,13 @@ World = (function() {
         return;
       }
       this.clear();
+      //clear trackPath
       this.trackPath = [];
       trackPathElement = document.getElementById('trackPath');
       trackPathElement.innerHTML = '';
+      this.lenghtOnlyPath = [];
+      lenghtOnlyPathElement = document.getElementById('lenghtOnlyPath');
+      lenghtOnlyPathElement.innerHTML = '';
       this.carsNumber = data.carsNumber || 0;
       ref = data.intersections;
       for (id in ref) {
@@ -26294,12 +26299,15 @@ World = (function() {
     }
 
     generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
-      var gridSize, i, id, intersection, intersectionsNumber, j, k, key, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, trackPathElement, value, x, y;
+      var gridSize, i, id, intersection, intersectionsNumber, j, k, key, l, lenghtOnlyPathElement, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, trackPathElement, value, x, y;
       this.clear();
       // clear trackPath
       this.trackPath = [];
       trackPathElement = document.getElementById('trackPath');
       trackPathElement.innerHTML = '';
+      this.lenghtOnlyPath = [];
+      lenghtOnlyPathElement = document.getElementById('lenghtOnlyPath');
+      lenghtOnlyPathElement.innerHTML = '';
       for (key in mapsIdCounter) {
         value = mapsIdCounter[key];
         mapsIdCounter[key] = 0;
@@ -26409,30 +26417,9 @@ World = (function() {
       }
     }
 
-    setNewPath(data) {
-      var i, len, path, ref, road, source_int, source_road;
-      this.carObject.lastTimeSpawn = this.time;
-      path = data['path'];
-      console.log(`Best Path: ${path}`);
-      visualizer.drawTrackPath(path, 'yellow'); // draw the best path on the map
-      source_int = this.getIntersection(path[0]);
-      source_road = null;
-      ref = source_int.roads;
-      for (i = 0, len = ref.length; i < len; i++) {
-        road = ref[i];
-        if (road.target.id === path[1]) {
-          source_road = road;
-          break;
-        }
-      }
-      this.addMyCar(source_road, 0);
-      return data;
-    }
-
     newRequest(url, method = 'GET', params = null, data = null) {
       `xmlHttpRequest with CORS prevention`;
       var error, xhr;
-      console.log(method);
       // add params to url as query string parameters
       if (params) {
         url = url + '?' + new URLSearchParams(params).toString();
@@ -26462,9 +26449,8 @@ World = (function() {
       }
     }
 
-    addMyCarAPI() {
+    getShortestPathAPI(lengthOnly = "false") {
       var data, params, sourceId, sourceId_prefix, targetId, targetId_prefix;
-      //       add track path to MyCar Object with only source and target intersection and make an api request to retrieve the best path
       sourceId_prefix = this.trackPath[0]['intersection'].id;
       targetId_prefix = this.trackPath[this.trackPath.length - 1]['intersection'].id; // get the last intersection in the track path (allow to repeat the command more than once)
       sourceId = sourceId_prefix.slice('intersection'.length);
@@ -26472,20 +26458,39 @@ World = (function() {
       params = {
         'fromIntersection': sourceId,
         'mapId': this.mapId,
-        'toIntersection': targetId
+        'toIntersection': targetId,
+        'lengthOnly': lengthOnly
       };
       data = this.newRequest(settings.pathFinderUrl, 'GET', params, null);
       if (data) {
-        //           Parse response to json
         data = JSON.parse(data);
         if (data['status'] === 'ok') {
-          return this.setNewPath(data);
+          return data['path'];
         } else {
           return console.log(`Error: ${data['message']}`);
         }
       } else {
         return console.log('Error: No data received from server');
       }
+    }
+
+    addMyCarAPI() {
+      var i, len, path, ref, road, source_int, source_road;
+      path = this.getShortestPathAPI();
+      this.carObject.lastTimeSpawn = this.time;
+      console.log(`Best Path: ${path}`);
+      visualizer.drawTrackPath(path, 'yellow'); // draw the best path on the map
+      source_int = this.getIntersection(path[0]);
+      source_road = null;
+      ref = source_int.roads;
+      for (i = 0, len = ref.length; i < len; i++) {
+        road = ref[i];
+        if (road.target.id === path[1]) {
+          source_road = road;
+          break;
+        }
+      }
+      return this.addMyCar(source_road, 0);
     }
 
     clear() {
@@ -27239,6 +27244,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   }
 
   keydown(e) {
+    var path;
     boundMethodCheck(this, ToolRoadBuilder);
     if (e.altKey && e.keyCode === 83) { // character 's'
       console.log('Saving track path');
@@ -27252,6 +27258,12 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
     if (e.altKey && e.keyCode === 67) { // character 'c'
       console.log('Add MyCar with API');
       this.visualizer.world.addMyCarAPI();
+      e.stopImmediatePropagation();
+    }
+    if (e.altKey && e.keyCode === 71) { // character 'g'
+      console.log('Get Shortest Path based only on length with API');
+      path = this.visualizer.world.getShortestPathAPI('true');
+      this.visualizer.drawShortestPath(path, 'green');
       return e.stopImmediatePropagation();
     }
   }
@@ -27547,6 +27559,7 @@ Visualizer = (function() {
       this.previousTime = 0;
       this.timeFactor = settings.defaultTimeFactor;
       this.trackPath = world.trackPath;
+      this.lengthOnlyTrackPath = world.lengthOnlyTrackPath;
     }
 
     drawIntersection(intersection, alpha) {
@@ -27994,7 +28007,8 @@ Visualizer = (function() {
         this.drawCarLines(car);
       }
       // ------------------------------------------------------------------------
-      this.drawTrackPath();
+      this.drawShortestPath([], 'green');
+      this.drawTrackPath([], 'yellow');
       // ------------------------------------------------------------------------
       this.graphics.restore();
       // get active cars number for each car get alive attribute
@@ -28082,6 +28096,59 @@ Visualizer = (function() {
       }
     }
 
+    drawShortestPath(newPath = [], color = 'green') {
+      var dir, endPoint, firstIntersection, getIntersections, i, intersect, k, lane, lastIntersection, lastPoint, len, len1, m, n, newPoint, newTrackPath, ref, ref1, segment, startPoint;
+      if (newPath instanceof Array && newPath.length >= 2) { // reset trackPath
+        this.world.lenghtOnlyPath = [];
+        for (k = 0, len = newPath.length; k < len; k++) {
+          i = newPath[k];
+          this.world.lenghtOnlyPath.push({
+            'intersection': this.checkIfPointOrIntersection(i)
+          });
+        }
+      }
+      if (this.world.lenghtOnlyPath.length < 2) {
+        return;
+      }
+      getIntersections = [];
+      ref = this.world.lenghtOnlyPath;
+      for (m = 0, len1 = ref.length; m < len1; m++) {
+        i = ref[m];
+        getIntersections.push(i['intersection']);
+      }
+      firstIntersection = this.checkIfPointOrIntersection(getIntersections[0]);
+      startPoint = firstIntersection.rect.center(); // first intersection
+      lastIntersection = this.checkIfPointOrIntersection(getIntersections[getIntersections.length - 1]);
+      endPoint = lastIntersection.rect.center(); // last last intersection
+      newTrackPath = {
+        'startPoint': startPoint
+      };
+      lastPoint = startPoint;
+      dir = this.checkBeforeAndNextPath(getIntersections, 0);
+      lane = this.getIntersectionLaneByDirection(firstIntersection, dir);
+      for (i = n = 1, ref1 = getIntersections.length - 2; (1 <= ref1 ? n <= ref1 : n >= ref1); i = 1 <= ref1 ? ++n : --n) {
+        intersect = this.checkIfPointOrIntersection(getIntersections[i]);
+        newPoint = intersect != null ? intersect.rect.center() : void 0;
+        if (newPoint === void 0) {
+          console.log('Intersection ' + intersect.id + ' not found');
+          return;
+        }
+        dir = this.checkBeforeAndNextPath(getIntersections, i);
+        lane = this.getIntersectionLaneByDirection(intersect, dir);
+        // good version
+        segment = new Segment(lastPoint, newPoint);
+        newTrackPath[intersect.id] = segment;
+        lastPoint = newPoint;
+        // if the last point add last segment and endPoint
+        if (i === getIntersections.length - 2) {
+          segment = new Segment(lastPoint, endPoint);
+          newTrackPath['lastSegment'] = segment;
+          newTrackPath['endPoint'] = endPoint;
+        }
+      }
+      return this.graphics.drawPolylineFeatures(newTrackPath, 0.7, color);
+    }
+
     drawTrackPath(newPath = [], color = 'blue') {
       var dir, endPoint, firstIntersection, getIntersections, i, intersect, k, lane, lastIntersection, lastPoint, len, len1, m, n, newPoint, newTrackPath, ref, ref1, segment, startPoint;
       //       TODO: add curve when needed
@@ -28134,7 +28201,7 @@ Visualizer = (function() {
           newTrackPath['endPoint'] = endPoint;
         }
       }
-      this.graphics.drawPolylineFeatures(newTrackPath, 0.3, color);
+      this.graphics.drawPolylineFeatures(newTrackPath, 0.7, color);
       return this.graphics.restore();
     }
 

@@ -19,6 +19,7 @@ class World
         @createDynamicMapMethods()
         @trackPath = []
         @bestPath = []
+        @lenghtOnlyPath = []
         @carObject = {
             lastTimeSpawn: null     # time when last car was spawned
         }
@@ -72,9 +73,15 @@ class World
             data = JSON.parse data
         return unless data?
         @clear()
+
+        #clear trackPath
         @trackPath = []
         trackPathElement = document.getElementById('trackPath');
         trackPathElement.innerHTML = '';
+        @lenghtOnlyPath = []
+        lenghtOnlyPathElement = document.getElementById('lenghtOnlyPath');
+        lenghtOnlyPathElement.innerHTML = '';
+
         @carsNumber = data.carsNumber or 0
         for id, intersection of data.intersections
             @addIntersection Intersection.copy intersection
@@ -95,6 +102,10 @@ class World
         @trackPath = []
         trackPathElement = document.getElementById('trackPath');
         trackPathElement.innerHTML = '';
+        # clear lenghtOnlyPath
+        @lenghtOnlyPath = []
+        lenghtOnlyPathElement = document.getElementById('lenghtOnlyPath');
+        lenghtOnlyPathElement.innerHTML = '';
 
         # set to 0 all property of mapsIdCounter
         for key, value of mapsIdCounter
@@ -174,26 +185,9 @@ class World
             car.path.push(intersection)
         return
 
-    setNewPath: (data) ->
-        @carObject.lastTimeSpawn = @time
-
-        path = data['path']
-        console.log "Best Path: #{path}"
-
-        visualizer.drawTrackPath path, 'yellow' # draw the best path on the map
-        source_int = @getIntersection(path[0])
-        source_road = null
-
-        for road in source_int.roads
-            if road.target.id == path[1]
-                source_road = road
-                break
-        @addMyCar(source_road, 0)
-        return data
 
     newRequest: (url, method = 'GET', params = null, data = null) ->
         """xmlHttpRequest with CORS prevention"""
-        console.log method
         # add params to url as query string parameters
         if params
             url = url + '?' + new URLSearchParams(params).toString()
@@ -220,9 +214,7 @@ class World
             console.log "[Request Error]: #{error}"
             return false
 
-
-    addMyCarAPI: () ->
-#       add track path to MyCar Object with only source and target intersection and make an api request to retrieve the best path
+    getShortestPathAPI: (lengthOnly= "false") ->
         sourceId_prefix = @trackPath[0]['intersection'].id
         targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)
         sourceId = sourceId_prefix.slice 'intersection'.length
@@ -231,18 +223,32 @@ class World
         params = {
             'fromIntersection': sourceId,
             'mapId': @mapId,
-            'toIntersection': targetId
+            'toIntersection': targetId,
+            'lengthOnly': lengthOnly
         }
         data = @newRequest settings.pathFinderUrl, 'GET', params, null
         if data
-#           Parse response to json
             data = JSON.parse data
             if data['status'] == 'ok'
-                @setNewPath data
+                return data['path']
             else
                 console.log "Error: #{data['message']}"
         else
             console.log 'Error: No data received from server'
+
+
+    addMyCarAPI: () ->
+        path = @getShortestPathAPI()
+        @carObject.lastTimeSpawn = @time
+        console.log "Best Path: #{path}"
+        visualizer.drawTrackPath path, 'yellow' # draw the best path on the map
+        source_int = @getIntersection(path[0])
+        source_road = null
+        for road in source_int.roads
+            if road.target.id == path[1]
+                source_road = road
+                break
+        @addMyCar(source_road, 0)
 
     clear: ->
         @set {}

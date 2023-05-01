@@ -22,6 +22,7 @@
 - alt (or option) + 's' - save and draw track path (if it exists, else remove it)
 - alt (or option) + 'c' - send path to pathFinder, draw path and start car (needs pathFinder server running)
   - repeating the command in different period of time, you will get the best path in the current situation
+- alt (or option) + 'd' - ask the shortest path based only on road length to api and draw path (needs pathFinder server running)
 
 ## TODO
 
@@ -39,8 +40,8 @@
 - [x] NO spawn cars when my car is placed on the road for 5 seconds
 - [ ] Add little screen with my car info on the simulator
 - [ ] Set new weights and get the current best path when car is moving
-  - [ ] endpoint on API in order to set new weights or an updated version of the map object
-  - [ ] get number of cars on each road (don't overcomplicate things with lane based on next intersection)
+  - [x] endpoint on API in order to set new weights or an updated version of the map object
+  - [x] get number of cars on each road (don't overcomplicate things with lane based on next intersection)
 - [ ] Socket for checking if pathFinder server is running
 - [ ] Integrate MQTT with correct request protocol (meeting required)
 
