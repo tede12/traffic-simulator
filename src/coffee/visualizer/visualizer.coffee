@@ -144,6 +144,11 @@ class Visualizer
         sideId = road.targetSideId
         lights = intersection.controlSignals.state[sideId]
 
+#        TODO ADD SIGNALS STATE HERE
+#        lane0 = left
+#        lane1 = forwardRight
+#        lane.signalState = timeToRed or timeToGreen
+
         @ctx.save()
         @ctx.translate segment.center.x, segment.center.y
         @ctx.rotate (sideId + 1) * PI / 2
@@ -484,15 +489,15 @@ class Visualizer
 
     drawShortestPath: (newPath = [], color = 'green') ->
         if newPath instanceof Array and newPath.length >= 2     # reset trackPath
-            @world.lenghtOnlyPath = []
+            @world.lengthOnlyPath = []
             for i in newPath
-                @world.lenghtOnlyPath.push({'intersection': @checkIfPointOrIntersection(i)})
+                @world.lengthOnlyPath.push({'intersection': @checkIfPointOrIntersection(i)})
 
-        if @world.lenghtOnlyPath.length < 2
+        if @world.lengthOnlyPath.length < 2
             return
 
         getIntersections = []
-        for i in @world.lenghtOnlyPath
+        for i in @world.lengthOnlyPath
             getIntersections.push(i['intersection'])
 
         firstIntersection = @checkIfPointOrIntersection(getIntersections[0])

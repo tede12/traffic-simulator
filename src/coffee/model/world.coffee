@@ -12,6 +12,7 @@ settings = require '../settings'
 savedMaps = require '../maps'
 uuid = require 'uuid'
 mapsIdCounter = require '../mapsIdCounter'
+clearCounters = require '../helpers'
 
 class World
     constructor: ->
@@ -19,7 +20,7 @@ class World
         @createDynamicMapMethods()
         @trackPath = []
         @bestPath = []
-        @lenghtOnlyPath = []
+        @lengthOnlyPath = []
         @carObject = {
             lastTimeSpawn: null     # time when last car was spawned
         }
@@ -78,9 +79,9 @@ class World
         @trackPath = []
         trackPathElement = document.getElementById('trackPath');
         trackPathElement.innerHTML = '';
-        @lenghtOnlyPath = []
-        lenghtOnlyPathElement = document.getElementById('lenghtOnlyPath');
-        lenghtOnlyPathElement.innerHTML = '';
+        @lengthOnlyPath = []
+        lengthOnlyPathElement = document.getElementById('lengthOnlyPath');
+        lengthOnlyPathElement.innerHTML = '';
 
         @carsNumber = data.carsNumber or 0
         for id, intersection of data.intersections
@@ -102,14 +103,11 @@ class World
         @trackPath = []
         trackPathElement = document.getElementById('trackPath');
         trackPathElement.innerHTML = '';
-        # clear lenghtOnlyPath
-        @lenghtOnlyPath = []
-        lenghtOnlyPathElement = document.getElementById('lenghtOnlyPath');
-        lenghtOnlyPathElement.innerHTML = '';
+        # clear lengthOnlyPath
+        @lengthOnlyPath = []
+        lengthOnlyPathElement = document.getElementById('lengthOnlyPath');
+        lengthOnlyPathElement.innerHTML = '';
 
-        # set to 0 all property of mapsIdCounter
-        for key, value of mapsIdCounter
-            mapsIdCounter[key] = 0
         intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0
         map = {}
         gridSize = settings.gridSize
@@ -215,6 +213,12 @@ class World
             return false
 
     getShortestPathAPI: (lengthOnly = "false") ->
+        """lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads"""
+
+        # send api post request to update carsNumber of each road
+        if lengthOnly == "false"
+            @newRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
+
         sourceId_prefix = @trackPath[0]['intersection'].id
         targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)
         sourceId = sourceId_prefix.slice 'intersection'.length
@@ -253,6 +257,10 @@ class World
     clear: ->
         @set {}
         @carObject.lastTimeSpawn = null
+        # set to 0 all property of mapsIdCounter
+        for key, value of mapsIdCounter
+            mapsIdCounter[key] = 0
+
 
     onTick: (delta) =>
         throw Error 'delta > 1' if delta > 1
@@ -266,40 +274,29 @@ class World
 
         for id, intersection of @intersections.all()
             intersection.controlSignals.onTick delta
+
         for id, car of @cars.all()
             car.move delta
             @removeCar car unless car.alive
 
-        # reset carsNumber of each road and update it
-        for id, road of @roads.all()
-            road.carsNumber = 0
-        for id, car of @cars.all()
-            road = car.trajectory.current.lane.road
-            road.carsNumber += 1
-
         # Assign a color to the road in base of the number of cars / road length ratio (for showing traffic)
         for id, road of @roads.all()
             if settings.trafficHighlight
-                if road.length > 0
-                    averageCarLength = 4.5
-                    ratio = road.carsNumber / (road.length / averageCarLength)
+                roadCarsNumber = 0
+                for lane in road.lanes
+                    ratio = lane.carsNumber / (road.length / settings.averageCarLength)
+                    if 0 <= ratio <= 0.5
+                        lane.color = settings.colors.road  # should be the 'green' version of traffic
+                    else if 0.5 < ratio <= 0.8
+                        lane.color = 'orange'  # '#FFD580' more light
+                    else if ratio > 0.8
+                        lane.color = 'red'
+                    roadCarsNumber += lane.carsNumber
 
-                    for lane in road.lanes
-                        if 0 <= ratio <= 0.5
-                            lane.color = settings.colors.road  # should be the 'green' version of traffic
-                        else if 0.5 < ratio <= 0.8
-                            lane.color = 'orange'  # '#FFD580' more light
-                        else if ratio > 0.8
-                            lane.color = 'red'
+                # update road carsNumber
+                road.carsNumber = roadCarsNumber
             else
                 [lane.color = settings.colors.road for lane in road.lanes]
-
-
-        # send api post request to update carsNumber of each road
-        if @roadsUpdateCounterInterval == settings.updateRoadsInterval
-            @newRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
-            @roadsUpdateCounterInterval = 0
-        @roadsUpdateCounterInterval++
 
     refreshCars: ->
         @addRandomCar() if @cars.length < @carsNumber

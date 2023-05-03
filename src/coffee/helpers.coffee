@@ -14,4 +14,7 @@ uniqueId = (prefix) ->
     id = ++mapsIdCounter[prefix] || (mapsIdCounter[prefix] = 1);
     return prefix + id;
 
+#for key, value of mapsIdCounter
+#    mapsIdCounter[key] = 0
+
 module.exports = uniqueId

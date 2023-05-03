@@ -14,6 +14,7 @@ class Lane
         @leftmostAdjacent = null
         @rightmostAdjacent = null
         @carsPositions = {}
+        @carsNumber = 0
         @update()
 
     toJSON: ->
@@ -85,10 +86,12 @@ class Lane
     addCarPosition: (carPosition) ->
         throw Error 'car is already here' if carPosition.id of @carsPositions
         @carsPositions[carPosition.id] = carPosition
+        @carsNumber += 1
 
     removeCar: (carPosition) ->
         throw Error 'removing unknown car' unless carPosition.id of @carsPositions
         delete @carsPositions[carPosition.id]
+        @carsNumber -= 1
 
     getNext: (carPosition) ->
         throw Error 'car is on other lane' if carPosition.lane isnt this

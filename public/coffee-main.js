@@ -22583,6 +22583,8 @@ uniqueId = function(prefix) {
   return prefix + id;
 };
 
+//for key, value of mapsIdCounter
+//    mapsIdCounter[key] = 0
 module.exports = uniqueId;
 
 
@@ -25560,6 +25562,7 @@ Lane = (function() {
       this.leftmostAdjacent = null;
       this.rightmostAdjacent = null;
       this.carsPositions = {};
+      this.carsNumber = 0;
       this.update();
     }
 
@@ -25592,14 +25595,16 @@ Lane = (function() {
       if (carPosition.id in this.carsPositions) {
         throw Error('car is already here');
       }
-      return this.carsPositions[carPosition.id] = carPosition;
+      this.carsPositions[carPosition.id] = carPosition;
+      return this.carsNumber += 1;
     }
 
     removeCar(carPosition) {
       if (!(carPosition.id in this.carsPositions)) {
         throw Error('removing unknown car');
       }
-      return delete this.carsPositions[carPosition.id];
+      delete this.carsPositions[carPosition.id];
+      return this.carsNumber -= 1;
     }
 
     getNext(carPosition) {
@@ -25798,7 +25803,6 @@ Road = (function() {
       this.id = uniqueId('road'); // @id = _.uniqueId 'road'
       this.lanes = [];
       this.lanesNumber = null;
-      this.carsNumber = 0;
       this.update();
     }
 
@@ -25819,7 +25823,12 @@ Road = (function() {
         source: this.source.id,
         target: this.target.id,
         length: this.length,
-        carsNumber: this.carsNumber
+        carsNumber: this.lanes.reduce((function(sum, lane) {
+          return sum + lane.carsNumber;
+        }), 0),
+        lanesCarNumbers: this.lanes.map(function(lane) {
+          return lane.carsNumber;
+        })
       };
     }
 
@@ -26196,7 +26205,7 @@ module.exports = Trajectory;
 
 },{"../geom/curve":25,"../helpers":29,"./lane-position":35,"underscore":7}],40:[function(require,module,exports){
 'use strict';
-var Car, Intersection, Pool, Rect, Road, World, _, mapsIdCounter, random, savedMaps, settings, uuid;
+var Car, Intersection, Pool, Rect, Road, World, _, clearCounters, mapsIdCounter, random, savedMaps, settings, uuid;
 
 ({random} = Math);
 
@@ -26222,6 +26231,8 @@ uuid = require('uuid');
 
 mapsIdCounter = require('../mapsIdCounter');
 
+clearCounters = require('../helpers');
+
 World = (function() {
   class World {
     constructor() {
@@ -26230,7 +26241,7 @@ World = (function() {
       this.createDynamicMapMethods();
       this.trackPath = [];
       this.bestPath = [];
-      this.lenghtOnlyPath = [];
+      this.lengthOnlyPath = [];
       this.carObject = {
         lastTimeSpawn: null // time when last car was spawned
       };
@@ -26286,7 +26297,7 @@ World = (function() {
     }
 
     load(data, mapName, parse = true) {
-      var id, intersection, lenghtOnlyPathElement, ref, ref1, road, trackPathElement;
+      var id, intersection, lengthOnlyPathElement, ref, ref1, road, trackPathElement;
       data = data || localStorage.world;
       if (data && parse) {
         data = JSON.parse(data);
@@ -26299,9 +26310,9 @@ World = (function() {
       this.trackPath = [];
       trackPathElement = document.getElementById('trackPath');
       trackPathElement.innerHTML = '';
-      this.lenghtOnlyPath = [];
-      lenghtOnlyPathElement = document.getElementById('lenghtOnlyPath');
-      lenghtOnlyPathElement.innerHTML = '';
+      this.lengthOnlyPath = [];
+      lengthOnlyPathElement = document.getElementById('lengthOnlyPath');
+      lengthOnlyPathElement.innerHTML = '';
       this.carsNumber = data.carsNumber || 0;
       ref = data.intersections;
       for (id in ref) {
@@ -26324,19 +26335,15 @@ World = (function() {
     }
 
     generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
-      var gridSize, i, id, intersection, intersectionsNumber, j, k, key, l, lenghtOnlyPathElement, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, trackPathElement, value, x, y;
+      var gridSize, i, id, intersection, intersectionsNumber, j, k, l, lengthOnlyPathElement, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, trackPathElement, x, y;
       this.clear();
       // clear trackPath
       this.trackPath = [];
       trackPathElement = document.getElementById('trackPath');
       trackPathElement.innerHTML = '';
-      this.lenghtOnlyPath = [];
-      lenghtOnlyPathElement = document.getElementById('lenghtOnlyPath');
-      lenghtOnlyPathElement.innerHTML = '';
-      for (key in mapsIdCounter) {
-        value = mapsIdCounter[key];
-        mapsIdCounter[key] = 0;
-      }
+      this.lengthOnlyPath = [];
+      lengthOnlyPathElement = document.getElementById('lengthOnlyPath');
+      lengthOnlyPathElement.innerHTML = '';
       intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0;
       map = {};
       gridSize = settings.gridSize;
@@ -26475,7 +26482,15 @@ World = (function() {
     }
 
     getShortestPathAPI(lengthOnly = "false") {
+      `lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads`;
       var data, params, sourceId, sourceId_prefix, targetId, targetId_prefix;
+      // send api post request to update carsNumber of each road
+      if (lengthOnly === "false") {
+        this.newRequest(settings.roadsUrl, 'PATCH', null, {
+          mapId: this.mapId,
+          roads: this.roads.all()
+        });
+      }
       sourceId_prefix = this.trackPath[0]['intersection'].id;
       targetId_prefix = this.trackPath[this.trackPath.length - 1]['intersection'].id; // get the last intersection in the track path (allow to repeat the command more than once)
       sourceId = sourceId_prefix.slice('intersection'.length);
@@ -26519,12 +26534,20 @@ World = (function() {
     }
 
     clear() {
+      var key, results, value;
       this.set({});
-      return this.carObject.lastTimeSpawn = null;
+      this.carObject.lastTimeSpawn = null;
+// set to 0 all property of mapsIdCounter
+      results = [];
+      for (key in mapsIdCounter) {
+        value = mapsIdCounter[key];
+        results.push(mapsIdCounter[key] = 0);
+      }
+      return results;
     }
 
     onTick(delta) {
-      var averageCarLength, car, i, id, intersection, lane, len, ratio, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, road;
+      var car, i, id, intersection, lane, len, ratio, ref, ref1, ref2, ref3, ref4, ref5, results, road, roadCarsNumber;
       if (delta > 1) {
         throw Error('delta > 1');
       }
@@ -26550,64 +26573,46 @@ World = (function() {
         }
       }
       ref4 = this.roads.all();
-      // reset carsNumber of each road and update it
+      // Assign a color to the road in base of the number of cars / road length ratio (for showing traffic)
+      results = [];
       for (id in ref4) {
         road = ref4[id];
-        road.carsNumber = 0;
-      }
-      ref5 = this.cars.all();
-      for (id in ref5) {
-        car = ref5[id];
-        road = car.trajectory.current.lane.road;
-        road.carsNumber += 1;
-      }
-      ref6 = this.roads.all();
-      // Assign a color to the road in base of the number of cars / road length ratio (for showing traffic)
-      for (id in ref6) {
-        road = ref6[id];
         if (settings.trafficHighlight) {
-          if (road.length > 0) {
-            averageCarLength = 4.5;
-            ratio = road.carsNumber / (road.length / averageCarLength);
-            ref7 = road.lanes;
-            for (i = 0, len = ref7.length; i < len; i++) {
-              lane = ref7[i];
-              if ((0 <= ratio && ratio <= 0.5)) {
-                lane.color = settings.colors.road; // should be the 'green' version of traffic
-              } else if ((0.5 < ratio && ratio <= 0.8)) {
-                lane.color = 'orange'; // '#FFD580' more light
-              } else if (ratio > 0.8) {
-                lane.color = 'red';
-              }
+          roadCarsNumber = 0;
+          ref5 = road.lanes;
+          for (i = 0, len = ref5.length; i < len; i++) {
+            lane = ref5[i];
+            ratio = lane.carsNumber / (road.length / settings.averageCarLength);
+            if ((0 <= ratio && ratio <= 0.5)) {
+              lane.color = settings.colors.road; // should be the 'green' version of traffic
+            } else if ((0.5 < ratio && ratio <= 0.8)) {
+              lane.color = 'orange'; // '#FFD580' more light
+            } else if (ratio > 0.8) {
+              lane.color = 'red';
             }
+            roadCarsNumber += lane.carsNumber;
           }
+          // update road carsNumber
+          results.push(road.carsNumber = roadCarsNumber);
         } else {
-          [
+          results.push([
             (function() {
               var j,
             len1,
-            ref8,
-            results;
-              ref8 = road.lanes;
-              results = [];
-              for (j = 0, len1 = ref8.length; j < len1; j++) {
-                lane = ref8[j];
-                results.push(lane.color = settings.colors.road);
+            ref6,
+            results1;
+              ref6 = road.lanes;
+              results1 = [];
+              for (j = 0, len1 = ref6.length; j < len1; j++) {
+                lane = ref6[j];
+                results1.push(lane.color = settings.colors.road);
               }
-              return results;
+              return results1;
             })()
-          ];
+          ]);
         }
       }
-      // send api post request to update carsNumber of each road
-      if (this.roadsUpdateCounterInterval === settings.updateRoadsInterval) {
-        this.newRequest(settings.roadsUrl, 'PATCH', null, {
-          mapId: this.mapId,
-          roads: this.roads.all()
-        });
-        this.roadsUpdateCounterInterval = 0;
-      }
-      return this.roadsUpdateCounterInterval++;
+      return results;
     }
 
     refreshCars() {
@@ -26728,6 +26733,7 @@ settings = {
   lightsFlipInterval: 160,
   gridSize: 14,
   mapSize: 4, // default is 2
+  averageCarLength: 4.5,
   defaultTimeFactor: 5,
   defaultZoomLevel: 6, // Change this value to change the default zoom level (default is 3)
   defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
@@ -27766,6 +27772,10 @@ Visualizer = (function() {
       segment = road.targetSide;
       sideId = road.targetSideId;
       lights = intersection.controlSignals.state[sideId];
+      //        TODO ADD SIGNALS STATE HERE
+      //        lane0 = left
+      //        lane1 = forwardRight
+      //        lane.signalState = timeToRed or timeToGreen
       this.ctx.save();
       this.ctx.translate(segment.center.x, segment.center.y);
       this.ctx.rotate((sideId + 1) * PI / 2);
@@ -28165,19 +28175,19 @@ Visualizer = (function() {
     drawShortestPath(newPath = [], color = 'green') {
       var dir, endPoint, firstIntersection, getIntersections, i, intersect, k, lane, lastIntersection, lastPoint, len, len1, m, n, newPoint, newTrackPath, ref, ref1, segment, startPoint;
       if (newPath instanceof Array && newPath.length >= 2) { // reset trackPath
-        this.world.lenghtOnlyPath = [];
+        this.world.lengthOnlyPath = [];
         for (k = 0, len = newPath.length; k < len; k++) {
           i = newPath[k];
-          this.world.lenghtOnlyPath.push({
+          this.world.lengthOnlyPath.push({
             'intersection': this.checkIfPointOrIntersection(i)
           });
         }
       }
-      if (this.world.lenghtOnlyPath.length < 2) {
+      if (this.world.lengthOnlyPath.length < 2) {
         return;
       }
       getIntersections = [];
-      ref = this.world.lenghtOnlyPath;
+      ref = this.world.lengthOnlyPath;
       for (m = 0, len1 = ref.length; m < len1; m++) {
         i = ref[m];
         getIntersections.push(i['intersection']);

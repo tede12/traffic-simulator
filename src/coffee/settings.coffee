@@ -19,6 +19,7 @@ settings =
     lightsFlipInterval: 160
     gridSize: 14
     mapSize: 4  # default is 2
+    averageCarLength : 4.5
     defaultTimeFactor: 5
     defaultZoomLevel: 6  # Change this value to change the default zoom level (default is 3)
     defaultMap: 'mappa_1'   # null to disable or 'mappa_1' to enable

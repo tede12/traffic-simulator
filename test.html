@@ -9,7 +9,7 @@
 <body style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
 <h1 style="text-align: center">Smart Traffic Simulator</h1>
 <div id="trackPath" style="padding-left: 20px; font: 20px Arial, sans-serif;"></div>
-<div id="lenghtOnlyPath" style="padding-left: 20px; font: 20px Arial, sans-serif;"></div>
+<div id="lengthOnlyPath" style="padding-left: 20px; font: 20px Arial, sans-serif;"></div>
 
 <canvas id="canvas"
         style="position: absolute; padding-bottom: 0; margin-bottom: 0; width: 100%; height: 100%;"></canvas>
@@ -18,12 +18,12 @@
 <script>
     let trackPathElement = document.getElementById('trackPath');
     let trackPath = window.world.trackPath;
-    let lengthOnlyTrackPathElement = document.getElementById('lenghtOnlyPath');
-    let lenghtOnlyPath = window.world.lenghtOnlyPath
+    let lengthOnlyTrackPathElement = document.getElementById('lengthOnlyPath');
+    let lengthOnlyPath = window.world.lengthOnlyPath
 
     setInterval(function () {
         trackPath = window.world.trackPath;
-        lenghtOnlyPath = window.world.lenghtOnlyPath;
+        lengthOnlyPath = window.world.lengthOnlyPath;
         if (trackPath.length > 0) {
             let text = 'Track Path:  ';
             for (let i = 0; i < trackPath.length; i++) {
@@ -31,10 +31,10 @@
             }
             trackPathElement.innerHTML = text;
         }
-        if (lenghtOnlyPath.length > 0) {
+        if (lengthOnlyPath.length > 0) {
             let text = 'Length Only Track Path:  ';
-            for (let i = 0; i < lenghtOnlyPath.length; i++) {
-                text += lenghtOnlyPath[i]['intersection']['id'] + ', ';
+            for (let i = 0; i < lengthOnlyPath.length; i++) {
+                text += lengthOnlyPath[i]['intersection']['id'] + ', ';
             }
             lengthOnlyTrackPathElement.innerHTML = text;
         }
