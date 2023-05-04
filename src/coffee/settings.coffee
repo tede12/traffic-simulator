@@ -45,7 +45,7 @@ settings =
         id: "MACCHINA"
         color: "#000000"
         maxFollowPoints: 1000  # 3000 is the default value, 0 to disable
-        carLine: 'black'
+        carLine: 'white'
 
 #   roads setting
     updateRoadsInterval: 50

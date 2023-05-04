@@ -374,8 +374,8 @@ class Visualizer
 
         for p in car.trackPoints
 # center, radius, width = 0.1, color, fill = false
-            @graphics.drawCircle p, 0.2, 0.1, settings.colors.carLine, true
-            @graphics.fill settings.colors.carLine
+            @graphics.drawCircle p, 0.2, 0.1, settings.myCar.carLine, true
+            @graphics.fill settings.myCar.carLine
         #            @graphics.stroke settings.colors.carLine
 
         @ctx.stroke()
