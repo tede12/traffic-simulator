@@ -25,8 +25,8 @@ class Visualizer
         @canvas = @$canvas[0]
         @ctx = @canvas.getContext('2d')
 
-#        @carImage = new Image()
-#        @carImage.src = 'images/car.png'
+        #        @carImage = new Image()
+        #        @carImage.src = 'images/car.png'
 
         @updateCanvasSize()
         @zoomer = new Zoomer settings.defaultZoomLevel, this, true
@@ -144,10 +144,10 @@ class Visualizer
         sideId = road.targetSideId
         lights = intersection.controlSignals.state[sideId]
 
-#        TODO ADD SIGNALS STATE HERE
-#        lane0 = left
-#        lane1 = forwardRight
-#        lane.signalState = timeToRed or timeToGreen
+        #        TODO ADD SIGNALS STATE HERE
+        #        lane0 = left
+        #        lane1 = forwardRight
+        #        lane.signalState = timeToRed or timeToGreen
 
         @ctx.save()
         @ctx.translate segment.center.x, segment.center.y
@@ -172,9 +172,9 @@ class Visualizer
         if lights[0] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.1, -0.2),
-                        new Point(0.2, -0.4),
-                        new Point(0.3, -0.2)
+                  new Point(0.1, -0.2),
+                  new Point(0.2, -0.4),
+                  new Point(0.3, -0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, -0.3), 0.1)
@@ -185,9 +185,9 @@ class Visualizer
         else if lights[0] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.1, -0.2),
-                        new Point(0.2, -0.4),
-                        new Point(0.3, -0.2)
+                  new Point(0.1, -0.2),
+                  new Point(0.2, -0.4),
+                  new Point(0.3, -0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, -0.3), 0.1)
@@ -196,9 +196,9 @@ class Visualizer
         if lights[1] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.3, -0.1),
-                        new Point(0.5, 0),
-                        new Point(0.3, 0.1)
+                  new Point(0.3, -0.1),
+                  new Point(0.5, 0),
+                  new Point(0.3, 0.1)
                 )
             else
                 @graphics.drawCircle(new Point(0.4, 0), 0.1)
@@ -209,9 +209,9 @@ class Visualizer
         else if lights[1] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.3, -0.1),
-                        new Point(0.5, 0),
-                        new Point(0.3, 0.1)
+                  new Point(0.3, -0.1),
+                  new Point(0.5, 0),
+                  new Point(0.3, 0.1)
                 )
             else
                 @graphics.drawCircle(new Point(0.4, 0), 0.1)
@@ -220,9 +220,9 @@ class Visualizer
         if lights[2] == 1
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.1, 0.2),
-                        new Point(0.2, 0.4),
-                        new Point(0.3, 0.2)
+                  new Point(0.1, 0.2),
+                  new Point(0.2, 0.4),
+                  new Point(0.3, 0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, 0.3), 0.1)
@@ -232,9 +232,9 @@ class Visualizer
         else if lights[2] == 0 and settings.showRedLights
             if settings.triangles
                 @graphics.drawTriangle(
-                        new Point(0.1, 0.2),
-                        new Point(0.2, 0.4),
-                        new Point(0.3, 0.2)
+                  new Point(0.1, 0.2),
+                  new Point(0.2, 0.4),
+                  new Point(0.3, 0.2)
                 )
             else
                 @graphics.drawCircle(new Point(0.2, 0.3), 0.1)
@@ -381,44 +381,45 @@ class Visualizer
         @ctx.stroke()
         @ctx.restore()
 
-    # TODO FIX ...
     updateCanvasSize: ->
         """ For getting the real dimensions of the canvas element as it appears on the page, is needed the use of:
         clientWidth and clientHeight properties instead of width and height.
         These properties return the dimensions of the element including padding but not including border, margin,
         or scroll bars."""
-        canvas = document.getElementById('canvas')
+        canvas = @canvas
 
-        canvas.width = settings.myWidth
-        canvas.height = settings.myHeight
+        """
+        There are two ways to handle the canvas size:
+        1) Set the canvas size width and height properties to 0 and then to the real values (clientWidth and clientHeight)
+            Explanation:
+                This is a strange hack to force the canvas to resize, changing its width and height to 0 and then to the
+                real values. This is needed because the canvas is not resized automatically when the window is resized.
+                Forcing width and height to clientWidth and clientHeight is not enough, because the canvas is trying to get
+                more space possible and those values grow to the maximum possible.
+                So before setting the real values, we need to set width and height to 0.
+            Example:  
+                canvas.width = 0
+                canvas.height = 0
+                
+                canvas.width = canvas.clientWidth
+                canvas.height = canvas.clientHeight
+
+        2) Set the canvas size width and height properties to clientWidth and clientHeight and set display: block in the canvas css:
+            Example:
+                <canvas id="canvas" width="100%" height="100%" style="display: block"></canvas>
+                canvas.width = canvas.clientWidth
+                canvas.height = canvas.clientHeight
+        """
+
+        canvas.width = canvas.clientWidth
+        canvas.height = canvas.clientHeight
+
+        settings.myWidth = canvas.clientWidth
+        settings.myHeight = canvas.clientHeight
+
 #        console.log "Canvas size changed to [#{canvas.width}x#{canvas.height}] scroll version: [#{canvas.scrollWidth}x#{canvas.scrollHeight}]"
         return
 
-#        @$canvas.attr
-#            width: $(window).width()       # <-- this is the old way not working with component version
-#            height: $(window).height()     # <-- this is the old way not working with component version
-
-#        @$canvas.attr
-#            width: canvas.clientWidth
-#            height: canvas.clientHeight
-
-    # TODO FIX resizable canvas (for React component version)
-    updateCanvasSize2: ->
-
-        canvasElement = document.getElementById('canvas')
-
-        width = canvasElement.getAttribute('width')
-        height = canvasElement.getAttribute('height')
-
-        clientWidth = canvasElement.clientWidth
-        clientHeight = canvasElement.clientHeight
-
-        if width != clientWidth or height != clientHeight
-            canvasElement.setAttribute('width', clientWidth)
-            canvasElement.setAttribute('height', clientHeight)
-            console.log "Canvas size changed from [#{width}x#{height}] to [#{clientWidth}x#{clientHeight}]"
-        else
-            console.log "Canvas size is already [#{clientWidth}x#{clientHeight}]"
 
     draw: (time) =>
         if @running

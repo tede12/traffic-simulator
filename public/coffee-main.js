@@ -22151,7 +22151,7 @@ waitForElements = function(ids, callback) {
 };
 
 waitForElements(['canvas', 'gui'], function() {
-  var canvas, gui, guiSavedMaps, guiVisualizer, guiWorld, mapData, mapName, targetElement;
+  var gui, guiSavedMaps, guiVisualizer, guiWorld, mapData, mapName, targetElement;
   // Created in the React component
   //  canvas = $('<canvas />', {id: 'canvas'})
   //  $(document.body).append(canvas)
@@ -22159,14 +22159,6 @@ waitForElements(['canvas', 'gui'], function() {
   // App code
   console.log('App started --> ' + new Date().toLocaleTimeString());
   window.settings = settings;
-  // todo fix ------------------------------------------------------------
-  canvas = document.getElementById('canvas');
-  settings.myWidth = canvas.clientWidth;
-  settings.myHeight = canvas.clientHeight;
-  canvas.width = settings.myWidth;
-  canvas.height = settings.myHeight;
-  console.log(`canvas size: ${settings.myWidth} x ${settings.myHeight}`);
-  // ---------------------------------------------------------------------
   window.world = new World();
   // load default map if it exists
   if (settings.defaultMap && savedMaps[settings.defaultMap]) {
@@ -26739,12 +26731,8 @@ settings = {
   defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
   connectedMap: true, // enable to generate only connected maps (all intersections are connected)
   debug: true,
-  //   See updateCanvasSize() in visualizer.coffee
-  canvasWidth: 1400, // fullscreen == true -> $(window).width
-  canvasHeight: 1100, // fullscreen == true -> $(window).height
   myWidth: 0,
   myHeight: 0,
-  fullScreen: true,
   //   signals settings
   showRedLights: true,
   triangles: true, // false -> circles
@@ -26766,7 +26754,7 @@ settings = {
   pathFinderUrl: 'http://localhost:8000/pathFinder',
   mapUrl: 'http://localhost:8000/map',
   roadsUrl: 'http://localhost:8000/roads',
-  //   debug
+  //   debug       # todo check if the element exists before setting the value
   debugTestHtml: document.getElementById('test') !== null // true if I am in the test.html page
 };
 
@@ -27616,6 +27604,7 @@ settings = require('../settings');
 Visualizer = (function() {
   class Visualizer {
     constructor(world1) {
+      //        console.log "Canvas size changed to [#{canvas.width}x#{canvas.height}] scroll version: [#{canvas.scrollWidth}x#{canvas.scrollHeight}]"
       this.draw = this.draw.bind(this);
       this.world = world1;
       this.$canvas = $('#canvas');
@@ -28020,42 +28009,37 @@ Visualizer = (function() {
       return this.ctx.restore();
     }
 
-    // TODO FIX ...
     updateCanvasSize() {
       ` For getting the real dimensions of the canvas element as it appears on the page, is needed the use of:
 clientWidth and clientHeight properties instead of width and height.
 These properties return the dimensions of the element including padding but not including border, margin,
 or scroll bars.`;
       var canvas;
-      canvas = document.getElementById('canvas');
-      canvas.width = settings.myWidth;
-      canvas.height = settings.myHeight;
-    }
+      canvas = this.canvas;
+      `There are two ways to handle the canvas size:
+1) Set the canvas size width and height properties to 0 and then to the real values (clientWidth and clientHeight)
+    Explanation:
+        This is a strange hack to force the canvas to resize, changing its width and height to 0 and then to the
+        real values. This is needed because the canvas is not resized automatically when the window is resized.
+        Forcing width and height to clientWidth and clientHeight is not enough, because the canvas is trying to get
+        more space possible and those values grow to the maximum possible.
+        So before setting the real values, we need to set width and height to 0.
+    Example:  
+        canvas.width = 0
+        canvas.height = 0
+        
+        canvas.width = canvas.clientWidth
+        canvas.height = canvas.clientHeight
 
-    //        @$canvas.attr
-    //            width: $(window).width()       # <-- this is the old way not working with component version
-    //            height: $(window).height()     # <-- this is the old way not working with component version
-
-      //        @$canvas.attr
-    //            width: canvas.clientWidth
-    //            height: canvas.clientHeight
-
-      // TODO FIX resizable canvas (for React component version)
-    //        console.log "Canvas size changed to [#{canvas.width}x#{canvas.height}] scroll version: [#{canvas.scrollWidth}x#{canvas.scrollHeight}]"
-    updateCanvasSize2() {
-      var canvasElement, clientHeight, clientWidth, height, width;
-      canvasElement = document.getElementById('canvas');
-      width = canvasElement.getAttribute('width');
-      height = canvasElement.getAttribute('height');
-      clientWidth = canvasElement.clientWidth;
-      clientHeight = canvasElement.clientHeight;
-      if (width !== clientWidth || height !== clientHeight) {
-        canvasElement.setAttribute('width', clientWidth);
-        canvasElement.setAttribute('height', clientHeight);
-        return console.log(`Canvas size changed from [${width}x${height}] to [${clientWidth}x${clientHeight}]`);
-      } else {
-        return console.log(`Canvas size is already [${clientWidth}x${clientHeight}]`);
-      }
+2) Set the canvas size width and height properties to clientWidth and clientHeight and set display: block in the canvas css:
+    Example:
+        <canvas id="canvas" width="100%" height="100%" style="display: block"></canvas>
+        canvas.width = canvas.clientWidth
+        canvas.height = canvas.clientHeight`;
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+      settings.myWidth = canvas.clientWidth;
+      settings.myHeight = canvas.clientHeight;
     }
 
     draw(time) {

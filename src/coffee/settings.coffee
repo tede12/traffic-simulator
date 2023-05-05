@@ -27,13 +27,8 @@ settings =
     connectedMap: true  # enable to generate only connected maps (all intersections are connected)
     debug: true
 
-#   See updateCanvasSize() in visualizer.coffee
-    canvasWidth: 1400    # fullscreen == true -> $(window).width
-    canvasHeight: 1100   # fullscreen == true -> $(window).height
-
     myWidth: 0
     myHeight: 0
-    fullScreen: true
 
 #   signals settings
     showRedLights: true
@@ -59,7 +54,7 @@ settings =
     mapUrl: 'http://localhost:8000/map'
     roadsUrl: 'http://localhost:8000/roads'
 
-#   debug
+#   debug       # todo check if the element exists before setting the value
     debugTestHtml: document.getElementById('test') != null  # true if I am in the test.html page
 
 
