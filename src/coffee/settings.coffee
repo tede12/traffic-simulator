@@ -1,5 +1,6 @@
 'use strict'
 
+
 settings =
     colors:
         background: '#FFFFFF'  # 97a1a1'
@@ -19,9 +20,9 @@ settings =
     lightsFlipInterval: 160
     gridSize: 14
     mapSize: 4  # default is 2
-    averageCarLength : 4.5
+    averageCarLength: 4.5
     defaultTimeFactor: 5
-    defaultZoomLevel: 6  # Change this value to change the default zoom level (default is 3)
+    defaultZoomLevel: 3  # Change this value to change the default zoom level (default is 3)
     defaultMap: 'mappa_1'   # null to disable or 'mappa_1' to enable
     connectedMap: true  # enable to generate only connected maps (all intersections are connected)
     debug: true
@@ -29,6 +30,9 @@ settings =
 #   See updateCanvasSize() in visualizer.coffee
     canvasWidth: 1400    # fullscreen == true -> $(window).width
     canvasHeight: 1100   # fullscreen == true -> $(window).height
+
+    myWidth: 0
+    myHeight: 0
     fullScreen: true
 
 #   signals settings
@@ -55,6 +59,8 @@ settings =
     mapUrl: 'http://localhost:8000/map'
     roadsUrl: 'http://localhost:8000/roads'
 
+#   debug
+    debugTestHtml: document.getElementById('test') != null  # true if I am in the test.html page
 
 
 module.exports = settings

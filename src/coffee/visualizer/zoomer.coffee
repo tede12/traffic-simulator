@@ -8,26 +8,6 @@ Tool = require './tool.coffee'
 settings = require '../settings.coffee'
 Point = require '../geom/point.coffee'
 
-# VERSION MODIFIED FOR BUILDING JAVASCRIPT
-#   constructor: (@defaultZoom, visualizer, args) ->
-#    super visualizer, args
-#    @ctx = visualizer.ctx
-#    @canvas = @ctx.canvas
-#    @_scale = 1
-#    @screenCenter = new Point @canvas.width / 2, @canvas.height / 2
-#    @center = new Point @canvas.width / 2, @canvas.height / 2
-
-
-# ----------------------------------------
-# VERSION MODIFIED FOR BUILDING COFFEE
-#constructor: (@defaultZoom, @visualizer, args...) ->
-#    super @visualizer, args...
-#    @ctx = @visualizer.ctx
-#    @canvas = @ctx.canvas
-#    @_scale = 1
-#    @screenCenter = new Point @canvas.width / 2, @canvas.height / 2
-#    @center = new Point @canvas.width / 2, @canvas.height / 2
-
 
 class Zoomer extends Tool
     constructor: (@defaultZoom, visualizer, args) ->
@@ -35,14 +15,15 @@ class Zoomer extends Tool
         @ctx = visualizer.ctx
         @canvas = @ctx.canvas
         @_scale = 1
-        @screenCenter = new Point @canvas.width / 2, @canvas.height / 2
-        @center = new Point @canvas.width / 2, @canvas.height / 2
+        @screenCenter = new Point settings.myWidth / 2, settings.myHeight / 2
+        @center = new Point settings.myWidth / 2, settings.myHeight / 2
 
     @property 'scale',
         get: -> @_scale
         set: (scale) -> @zoom scale, @screenCenter
 
     toCellCoords: (point) ->
+        """Cell coordinates of a point on the canvas."""
         gridSize = settings.gridSize
         centerOffset = point.subtract(@center).divide(@scale)
         x = centerOffset.x // (@defaultZoom * gridSize) * gridSize
@@ -58,7 +39,7 @@ class Zoomer extends Tool
 
     getBoundingBox: (cell1, cell2) ->
         cell1 ?= @toCellCoords new Point 0, 0
-        cell2 ?= @toCellCoords new Point @canvas.width, @canvas.height
+        cell2 ?= @toCellCoords new Point settings.myWidth, settings.myHeight
         x1 = cell1.x
         y1 = cell1.y
         x2 = cell2.x
@@ -84,7 +65,7 @@ class Zoomer extends Tool
         @center = @center.add offset
 
     mousewheel: (e) ->
-# Original code: e.deltaY * - e.deltaFactor. These values are not available anymore.
+#       Original code: e.deltaY * - e.deltaFactor. These values are not available anymore.
         offset = e.originalEvent.deltaY * -e.originalEvent.eventPhase
         zoomFactor = 2 ** (0.001 * offset)
         @zoom @scale * zoomFactor, @getPoint e

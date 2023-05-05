@@ -33,9 +33,18 @@ waitForElements ['canvas', 'gui'], ->
 #  canvas = $('<canvas />', {id: 'canvas'})
 #  $(document.body).append(canvas)
 
-# App code
+    # App code
     console.log 'App started --> ' + new Date().toLocaleTimeString()
     window.settings = settings
+
+    # todo fix ------------------------------------------------------------
+    canvas = document.getElementById('canvas')
+    settings.myWidth = canvas.clientWidth
+    settings.myHeight = canvas.clientHeight
+    canvas.width = settings.myWidth
+    canvas.height = settings.myHeight
+    console.log "canvas size: #{settings.myWidth} x #{settings.myHeight}"
+    # ---------------------------------------------------------------------
     window.world = new World()
 
     # load default map if it exists

@@ -7,13 +7,14 @@ export default class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            carsNumber: 0,
+            carsNumber: 0
         }
 
     }
 
     componentDidMount() {
         this.timer = setInterval(() => {
+            if (window.world === undefined) return
             let carsNumber = Object.keys(window.world.cars.objects).length
             this.setState({carsNumber: carsNumber})
         }, 1000)

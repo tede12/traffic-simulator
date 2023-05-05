@@ -75,13 +75,6 @@ class World
         return unless data?
         @clear()
 
-        #clear trackPath
-        @trackPath = []
-        trackPathElement = document.getElementById('trackPath');
-        trackPathElement.innerHTML = '';
-        @lengthOnlyPath = []
-        lengthOnlyPathElement = document.getElementById('lengthOnlyPath');
-        lengthOnlyPathElement.innerHTML = '';
 
         @carsNumber = data.carsNumber or 0
         for id, intersection of data.intersections
@@ -99,14 +92,6 @@ class World
     generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
         @clear()
 
-        # clear trackPath
-        @trackPath = []
-        trackPathElement = document.getElementById('trackPath');
-        trackPathElement.innerHTML = '';
-        # clear lengthOnlyPath
-        @lengthOnlyPath = []
-        lengthOnlyPathElement = document.getElementById('lengthOnlyPath');
-        lengthOnlyPathElement.innerHTML = '';
 
         intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0
         map = {}
@@ -260,6 +245,15 @@ class World
         # set to 0 all property of mapsIdCounter
         for key, value of mapsIdCounter
             mapsIdCounter[key] = 0
+
+        # clear trackPath
+        @trackPath = []
+        # clear lengthOnlyPath
+        @lengthOnlyPath = []
+
+        if settings.debugTestHtml
+            document.getElementById('trackPath').innerHTML = '';
+            document.getElementById('lengthOnlyPath').innerHTML = '';
 
 
     onTick: (delta) =>

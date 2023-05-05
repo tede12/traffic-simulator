@@ -381,19 +381,44 @@ class Visualizer
         @ctx.stroke()
         @ctx.restore()
 
+    # TODO FIX ...
     updateCanvasSize: ->
-#       Check settings.fullScreen
-        if settings.fullScreen is true
-            canvasWidth = $(window).width()
-            canvasHeight = $(window).height()
-        else
-            canvasWidth = settings.canvasWidth
-            canvasHeight = settings.canvasHeight
+        """ For getting the real dimensions of the canvas element as it appears on the page, is needed the use of:
+        clientWidth and clientHeight properties instead of width and height.
+        These properties return the dimensions of the element including padding but not including border, margin,
+        or scroll bars."""
+        canvas = document.getElementById('canvas')
 
-        if @$canvas.attr('width') isnt canvasWidth or @$canvas.attr('height') isnt canvasHeight
-            @$canvas.attr
-                width: canvasWidth
-                height: canvasHeight
+        canvas.width = settings.myWidth
+        canvas.height = settings.myHeight
+#        console.log "Canvas size changed to [#{canvas.width}x#{canvas.height}] scroll version: [#{canvas.scrollWidth}x#{canvas.scrollHeight}]"
+        return
+
+#        @$canvas.attr
+#            width: $(window).width()       # <-- this is the old way not working with component version
+#            height: $(window).height()     # <-- this is the old way not working with component version
+
+#        @$canvas.attr
+#            width: canvas.clientWidth
+#            height: canvas.clientHeight
+
+    # TODO FIX resizable canvas (for React component version)
+    updateCanvasSize2: ->
+
+        canvasElement = document.getElementById('canvas')
+
+        width = canvasElement.getAttribute('width')
+        height = canvasElement.getAttribute('height')
+
+        clientWidth = canvasElement.clientWidth
+        clientHeight = canvasElement.clientHeight
+
+        if width != clientWidth or height != clientHeight
+            canvasElement.setAttribute('width', clientWidth)
+            canvasElement.setAttribute('height', clientHeight)
+            console.log "Canvas size changed from [#{width}x#{height}] to [#{clientWidth}x#{clientHeight}]"
+        else
+            console.log "Canvas size is already [#{clientWidth}x#{clientHeight}]"
 
     draw: (time) =>
         if @running
