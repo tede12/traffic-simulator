@@ -1,13 +1,13 @@
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
 import {Component} from "react";
+import {Box, Grid} from '@mui/material';
+import Connection from "./components/Connection";
 
 
 export default class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            carsNumber: 0
+            carsNumber: 0,
         }
 
     }
@@ -31,25 +31,28 @@ export default class App extends Component {
                     <h2 style={{textAlign: "center"}}>Smart Traffic Simulator</h2>
                 </header>
 
-                <Box sx={{flexGrow: 1}}>
+                <Box>
                     <Grid container spacing={2}>
-                        <Grid item xs={10} padding={2}>
-                            {/* CANVAS */}
+                        {/* CANVAS */}
+                        <Grid item xs={10}>
                             <canvas id="canvas" style={{
                                 top: 0,
                                 left: 0,
                                 width: "100%",
-                                height: "100%",
+                                // Height should be in px and the 90% of the window height
+                                height: window.innerHeight * 0.85 + "px",
                                 display: "block"        // Absolutely needed
                                 // position: "relative"
                             }}/>
                         </Grid>
-                        <Grid item xs={2} padding={2}>
 
+                        {/* GUI */}
+                        <Grid item xs={2} padding={1}>
                             <h4>Debug options</h4>
-                            {/* GUI */}
+
                             <div id="gui" style={{
                                 // position: "absolute"
+                                height: window.innerHeight * 0.6 + "px",
                             }}/>
 
                             <h2>Alive cars: <br/>
@@ -57,8 +60,13 @@ export default class App extends Component {
                             </h2>
 
                         </Grid>
+                        {/* ----- CONNECTION ----- */}
+                        <Connection/>
                     </Grid>
+
+
                 </Box>
+
 
             </div>
 

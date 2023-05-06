@@ -12,9 +12,12 @@
     }
   },
   "dependencies": {
+    "@ant-design/icons": "^5.0.1",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
+    "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.11.13",
+    "axios": "^1.4.0",
     "blanket": "^1.2.3",
     "chai": "^4.3.7",
     "chroma-js": "^2.4.2",

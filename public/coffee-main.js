@@ -26703,7 +26703,9 @@ module.exports = World;
 
 },{"../geom/rect":27,"../helpers":29,"../maps":30,"../mapsIdCounter":31,"../settings":41,"./car":32,"./intersection":34,"./pool":37,"./road":38,"underscore":7,"uuid":8}],41:[function(require,module,exports){
 'use strict';
-var settings;
+var apiUrl, settings;
+
+apiUrl = 'http://localhost:8000/api';
 
 settings = {
   colors: {
@@ -26751,9 +26753,9 @@ settings = {
   //   roads setting
   updateRoadsInterval: 50,
   //   API
-  pathFinderUrl: 'http://localhost:8000/pathFinder',
-  mapUrl: 'http://localhost:8000/map',
-  roadsUrl: 'http://localhost:8000/roads',
+  pathFinderUrl: apiUrl + '/pathFinder',
+  mapUrl: apiUrl + '/map',
+  roadsUrl: apiUrl + '/roads',
   //   debug       # todo check if the element exists before setting the value
   debugTestHtml: document.getElementById('test') !== null // true if I am in the test.html page
 };

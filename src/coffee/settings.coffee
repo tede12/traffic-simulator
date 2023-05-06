@@ -1,6 +1,9 @@
 'use strict'
 
 
+
+apiUrl = 'http://localhost:8000/api';
+
 settings =
     colors:
         background: '#FFFFFF'  # 97a1a1'
@@ -50,9 +53,9 @@ settings =
     updateRoadsInterval: 50
 
 #   API
-    pathFinderUrl: 'http://localhost:8000/pathFinder'
-    mapUrl: 'http://localhost:8000/map'
-    roadsUrl: 'http://localhost:8000/roads'
+    pathFinderUrl: apiUrl + '/pathFinder'
+    mapUrl: apiUrl + '/map'
+    roadsUrl: apiUrl + '/roads'
 
 #   debug       # todo check if the element exists before setting the value
     debugTestHtml: document.getElementById('test') != null  # true if I am in the test.html page
