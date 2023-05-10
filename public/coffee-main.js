@@ -25569,8 +25569,10 @@ Lane = (function() {
     toJSON() {
       var obj;
       obj = _.extend({}, this);
-      delete obj.carsPositions;
-      return obj;
+      return {
+        id: obj.id,
+        carsNumber: obj.carsNumber
+      };
     }
 
     update() {
@@ -25828,6 +25830,9 @@ Road = (function() {
         }), 0),
         lanesCarNumbers: this.lanes.map(function(lane) {
           return lane.carsNumber;
+        }),
+        lanes: this.lanes.map(function(lane) {
+          return lane.toJSON();
         })
       };
     }
@@ -26236,6 +26241,7 @@ clearCounters = require('../helpers');
 World = (function() {
   class World {
     constructor() {
+      this.addCarCallBack = this.addCarCallBack.bind(this);
       this.onTick = this.onTick.bind(this);
       this.set({});
       this.createDynamicMapMethods();
@@ -26281,13 +26287,13 @@ World = (function() {
     save(forRequest = false) {
       var data;
       data = _.extend({}, this);
-      delete data.cars;
       if (forRequest) {
         //           get only intersections, roads
         return JSON.stringify({
           mapId: data.mapId,
           intersections: data.intersections,
           roads: data.roads,
+          //                lanes: data.lanes
           carsNumber: data.carsNumber,
           time: data.time
         });
@@ -26322,7 +26328,7 @@ World = (function() {
         this.addRoad(road);
       }
       this.mapId = mapName;
-      return this.newRequest(settings.mapUrl, 'POST', null, {
+      return this.asyncRequest(settings.mapUrl, 'POST', null, {
         map: this.save(true)
       });
     }
@@ -26392,7 +26398,7 @@ World = (function() {
       this.mapId = uuid.v4(); // generate new map id
       console.log('Map generated');
       // Send new map to server
-      return this.newRequest(settings.mapUrl, 'POST', null, {
+      return this.asyncRequest(settings.mapUrl, 'POST', null, {
         map: this.save(true)
       });
     }
@@ -26435,44 +26441,116 @@ World = (function() {
       }
     }
 
-    newRequest(url, method = 'GET', params = null, data = null) {
+    syncRequest(url, method = 'GET', params = null, data = null, callBack = null) {
       `xmlHttpRequest with CORS prevention`;
-      var error, xhr;
+      var xhr;
       // add params to url as query string parameters
       if (params) {
         url = url + '?' + new URLSearchParams(params).toString();
       }
       xhr = new XMLHttpRequest();
-      xhr.open(method, url, false); // Change async to false
+      xhr.open(method, url, true); // Change async to true for asynchronous execution
       if (data) {
         xhr.setRequestHeader('Content-Type', 'application/json');
         data = JSON.stringify(data);
       }
       xhr.cors = true;
-      try {
-        //           Send request synchronously
-        xhr.send(data);
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-          if (xhr.status === 200) {
-            return xhr.responseText;
-          } else {
-            console.log(`[Request Error]: ${xhr.status}`);
-            return false;
+      // Send Asynchronously
+      xhr.onload = function() {
+        var responseData;
+        responseData = null;
+        if (xhr.responseText) {
+          responseData = JSON.parse(xhr.responseText);
+        }
+        if (xhr.status === 200) {
+          if (callBack) {
+            return callBack({
+              ok: true,
+              status: xhr.status,
+              response: responseData
+            });
+          }
+        } else {
+          console.log(`[Request Error]: ${xhr.status}`);
+          if (callBack) {
+            return callBack({
+              ok: false,
+              status: xhr.status,
+              response: responseData
+            });
           }
         }
-      } catch (error1) {
-        error = error1;
-        console.log(`[Request Error]: ${error}`);
-        return false;
+      };
+      xhr.onerror = function() {
+        console.log(`[Request Error]: ${xhr.status}`);
+        if (callBack) {
+          return callBack({
+            ok: false,
+            status: xhr.status,
+            response: null
+          });
+        }
+      };
+      return xhr.send(data);
+    }
+
+    asyncRequest(url, method = 'GET', params = null, data = null, callBack) {
+      `xmlHttpRequest with CORS prevention`;
+      var promise;
+      // add params to url as query string parameters
+      if (params) {
+        url = url + '?' + new URLSearchParams(params).toString();
       }
+      // Send Asynchronously
+      promise = new Promise(function(resolve, reject) {
+        var xhr;
+        xhr = new XMLHttpRequest();
+        xhr.cors = true;
+        xhr.onload = function() {
+          var responseData;
+          responseData = null;
+          if (xhr.responseText) {
+            responseData = JSON.parse(xhr.responseText);
+          }
+          if (xhr.status === 200) {
+            return resolve(callBack ? callBack({
+              ok: true,
+              status: xhr.status,
+              response: responseData
+            }) : void 0);
+          } else {
+            console.log(`[Request Error]: ${xhr.status}`);
+            return reject(callBack ? callBack({
+              ok: false,
+              status: xhr.status,
+              response: responseData
+            }) : void 0);
+          }
+        };
+        xhr.onerror = function() {
+          console.log(`[Request Error]: ${xhr.status}`);
+          return reject(callBack ? callBack({
+            ok: false,
+            status: xhr.status,
+            response: null
+          }) : void 0);
+        };
+        xhr.open(method, url, true); // Change async to true for asynchronous execution
+        if (data) {
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          data = JSON.stringify(data);
+        }
+        return xhr.send(data);
+      });
+      return promise;
     }
 
     getShortestPathAPI(lengthOnly = "false") {
       `lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads`;
-      var data, params, sourceId, sourceId_prefix, targetId, targetId_prefix;
+      var params, sourceId, sourceId_prefix, targetId, targetId_prefix;
       // send api post request to update carsNumber of each road
       if (lengthOnly === "false") {
-        this.newRequest(settings.roadsUrl, 'PATCH', null, {
+        this.asyncRequest(settings.roadsUrl, 'PATCH', null, {
           mapId: this.mapId,
           roads: this.roads.all()
         });
@@ -26487,22 +26565,27 @@ World = (function() {
         'toIntersection': targetId,
         'lengthOnly': lengthOnly
       };
-      data = this.newRequest(settings.pathFinderUrl, 'GET', params, null);
-      if (data) {
-        data = JSON.parse(data);
-        if (data['status'] === 'ok') {
-          return data['path'];
-        } else {
-          return console.log(`Error: ${data['message']}`);
-        }
-      } else {
-        return console.log('Error: No data received from server');
-      }
+      return this.asyncRequest(settings.pathFinderUrl, 'GET', params, null, this.addCarCallBack);
     }
 
     addMyCarAPI() {
+      return this.getShortestPathAPI();
+    }
+
+    addCarCallBack(data) {
       var i, len, path, ref, road, source_int, source_road;
-      path = this.getShortestPathAPI();
+      if (!data || !data['ok']) {
+        if (data['response']['mapId']) {
+          console.log('Error: Map not found on API server... Sending the current map to API server');
+          this.asyncRequest(settings.mapUrl, 'POST', null, {
+            map: this.save(true)
+          });
+          return this.getShortestPathAPI();
+        }
+        console.log('Error: No path received from server.');
+        return;
+      }
+      path = data['response']['path'];
       this.carObject.lastTimeSpawn = this.time;
       console.log(`Best Path: ${path}`);
       visualizer.drawTrackPath(path, 'yellow'); // draw the best path on the map

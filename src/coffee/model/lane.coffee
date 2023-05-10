@@ -19,8 +19,10 @@ class Lane
 
     toJSON: ->
         obj = _.extend {}, this
-        delete obj.carsPositions
-        obj
+        return {
+            id: obj.id
+            carsNumber: obj.carsNumber
+        }
 
     @property 'sourceSideId',
         get: -> @road.sourceSideId

@@ -53,7 +53,6 @@ class World
 
     save: (forRequest = false) ->
         data = _.extend {}, this
-        delete data.cars
 
         if forRequest
 #           get only intersections, roads
@@ -61,6 +60,7 @@ class World
                 mapId: data.mapId
                 intersections: data.intersections
                 roads: data.roads
+#                lanes: data.lanes
                 carsNumber: data.carsNumber
                 time: data.time
 #                controlSignals: data.controlSignals
@@ -87,7 +87,7 @@ class World
             @addRoad road
 
         @mapId = mapName
-        @newRequest settings.mapUrl, 'POST', null, {map: @save(true)}
+        @asyncRequest settings.mapUrl, 'POST', null, {map: @save(true)}
 
     generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
         @clear()
@@ -134,7 +134,7 @@ class World
         @mapId = uuid.v4() # generate new map id
         console.log 'Map generated'
         # Send new map to server
-        @newRequest(settings.mapUrl, 'POST', null, {map: @save(true)})
+        @asyncRequest(settings.mapUrl, 'POST', null, {map: @save(true)})
 
     addMyCar: (road, laneId = 0) ->
         if road instanceof Road
@@ -168,41 +168,108 @@ class World
             car.path.push(intersection)
         return
 
-
-    newRequest: (url, method = 'GET', params = null, data = null) ->
+    syncRequest: (url, method = 'GET', params = null, data = null, callBack = null) ->
         """xmlHttpRequest with CORS prevention"""
         # add params to url as query string parameters
         if params
             url = url + '?' + new URLSearchParams(params).toString()
 
         xhr = new XMLHttpRequest()
-        xhr.open(method, url, false) # Change async to false
+        xhr.open(method, url, true) # Change async to true for asynchronous execution
         if data
             xhr.setRequestHeader('Content-Type', 'application/json')
-            data = JSON.stringify data
+            data = JSON.stringify(data)
 
         xhr.cors = true
 
-        try
-#           Send request synchronously
-            xhr.send(data)
+        # Send Asynchronously
+        xhr.onload = ->
+            responseData = null
+            if xhr.responseText
+                responseData = JSON.parse(xhr.responseText)
 
-            if xhr.readyState == XMLHttpRequest.DONE
+            if xhr.status == 200
+                callBack({
+                    ok: true
+                    status: xhr.status
+                    response: responseData
+                }) if callBack
+            else
+                console.log "[Request Error]: #{xhr.status}"
+                callBack({
+                    ok: false
+                    status: xhr.status
+                    response: responseData
+                }) if callBack
+
+        xhr.onerror = ->
+            console.log "[Request Error]: #{xhr.status}"
+            callBack({
+                ok: false
+                status: xhr.status
+                response: null
+            }) if callBack
+
+        xhr.send(data)
+
+    asyncRequest: (url, method = 'GET', params = null, data = null, callBack) ->
+        """xmlHttpRequest with CORS prevention"""
+        # add params to url as query string parameters
+        if params
+            url = url + '?' + new URLSearchParams(params).toString()
+
+        # Send Asynchronously
+        promise = new Promise (resolve, reject) ->
+            xhr = new XMLHttpRequest()
+            xhr.cors = true
+
+            xhr.onload = ->
+                responseData = null
+                if xhr.responseText
+                    responseData = JSON.parse(xhr.responseText)
+
                 if xhr.status == 200
-                    return xhr.responseText
+                    resolve(
+                      callBack({
+                          ok: true
+                          status: xhr.status
+                          response: responseData
+                      }) if callBack
+                    )
                 else
                     console.log "[Request Error]: #{xhr.status}"
-                    return false
-        catch error
-            console.log "[Request Error]: #{error}"
-            return false
+                    reject(
+                      callBack({
+                          ok: false
+                          status: xhr.status
+                          response: responseData
+                      }) if callBack
+                    )
+
+            xhr.onerror = ->
+                console.log "[Request Error]: #{xhr.status}"
+                reject(
+                  callBack({
+                      ok: false
+                      status: xhr.status
+                      response: null
+                  })  if callBack
+                )
+
+            xhr.open(method, url, true) # Change async to true for asynchronous execution
+            if data
+                xhr.setRequestHeader('Content-Type', 'application/json')
+                data = JSON.stringify(data)
+            xhr.send(data)
+
+        promise
 
     getShortestPathAPI: (lengthOnly = "false") ->
         """lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads"""
 
         # send api post request to update carsNumber of each road
         if lengthOnly == "false"
-            @newRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
+            @asyncRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
 
         sourceId_prefix = @trackPath[0]['intersection'].id
         targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)
@@ -215,19 +282,24 @@ class World
             'toIntersection': targetId,
             'lengthOnly': lengthOnly
         }
-        data = @newRequest settings.pathFinderUrl, 'GET', params, null
-        if data
-            data = JSON.parse data
-            if data['status'] == 'ok'
-                return data['path']
-            else
-                console.log "Error: #{data['message']}"
-        else
-            console.log 'Error: No data received from server'
+        @asyncRequest settings.pathFinderUrl, 'GET', params, null, @addCarCallBack
+
 
 
     addMyCarAPI: () ->
-        path = @getShortestPathAPI()
+        @getShortestPathAPI()
+
+    addCarCallBack: (data) =>
+        if not data or not data['ok']
+            if data['response']['mapId']
+                console.log 'Error: Map not found on API server... Sending the current map to API server'
+                @asyncRequest(settings.mapUrl, 'POST', null, {map: @save(true)})
+                return @getShortestPathAPI()
+
+            console.log 'Error: No path received from server.'
+            return
+
+        path = data['response']['path']
         @carObject.lastTimeSpawn = @time
         console.log "Best Path: #{path}"
         visualizer.drawTrackPath path, 'yellow' # draw the best path on the map
