@@ -27,6 +27,8 @@ class Intersection
             id: @id
             rect: @rect
             controlSignals: @controlSignals
+            roads: @roads
+            inRoads: @inRoads
 
     update: ->
         road.update() for road in @roads
