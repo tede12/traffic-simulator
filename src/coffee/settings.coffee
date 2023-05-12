@@ -57,6 +57,7 @@ settings =
     pathFinderUrl: apiUrl + '/pathFinder'
     mapUrl: apiUrl + '/map'
     roadsUrl: apiUrl + '/roads'
+    onlinePathFinderUrl: apiUrl + '/onlinePathFinder'
 
 #   debug       # todo check if the element exists before setting the value
     debugTestHtml: document.getElementById('test') != null  # true if I am in the test.html page

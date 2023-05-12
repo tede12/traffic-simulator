@@ -26322,7 +26322,7 @@ World = (function() {
     }
 
     generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
-      var gridSize, i, id, intersection, intersectionsNumber, j, k, l, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, x, y;
+      var gridSize, id, intersection, intersectionsNumber, j, k, l, m, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, x, y;
       this.clear();
       intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0;
       map = {};
@@ -26339,9 +26339,9 @@ World = (function() {
           intersectionsNumber -= 1;
         }
       }
-      for (x = i = ref = minX, ref1 = maxX; (ref <= ref1 ? i <= ref1 : i >= ref1); x = ref <= ref1 ? ++i : --i) {
+      for (x = j = ref = minX, ref1 = maxX; (ref <= ref1 ? j <= ref1 : j >= ref1); x = ref <= ref1 ? ++j : --j) {
         previous = null;
-        for (y = j = ref2 = minY, ref3 = maxY; (ref2 <= ref3 ? j <= ref3 : j >= ref3); y = ref2 <= ref3 ? ++j : --j) {
+        for (y = k = ref2 = minY, ref3 = maxY; (ref2 <= ref3 ? k <= ref3 : k >= ref3); y = ref2 <= ref3 ? ++k : --k) {
           intersection = map[[x, y]];
           if (intersection != null) {
             if (random() < 0.9) {
@@ -26356,9 +26356,9 @@ World = (function() {
           }
         }
       }
-      for (y = k = ref4 = minY, ref5 = maxY; (ref4 <= ref5 ? k <= ref5 : k >= ref5); y = ref4 <= ref5 ? ++k : --k) {
+      for (y = l = ref4 = minY, ref5 = maxY; (ref4 <= ref5 ? l <= ref5 : l >= ref5); y = ref4 <= ref5 ? ++l : --l) {
         previous = null;
-        for (x = l = ref6 = minX, ref7 = maxX; (ref6 <= ref7 ? l <= ref7 : l >= ref7); x = ref6 <= ref7 ? ++l : --l) {
+        for (x = m = ref6 = minX, ref7 = maxX; (ref6 <= ref7 ? m <= ref7 : m >= ref7); x = ref6 <= ref7 ? ++m : --m) {
           intersection = map[[x, y]];
           if (intersection != null) {
             if (random() < 0.9) {
@@ -26392,7 +26392,7 @@ World = (function() {
     }
 
     addMyCar(road, laneId = 0) {
-      var car, i, intersection, lane, len, obj, ref, roadId;
+      var car, intersection, j, lane, len, obj, ref, roadId;
       if (road instanceof Road) {
         roadId = road.id;
       } else {
@@ -26410,8 +26410,8 @@ World = (function() {
         car.id = settings.myCar.id;
         car.color = settings.myCar.color;
         ref = this.trackPath;
-        for (i = 0, len = ref.length; i < len; i++) {
-          obj = ref[i];
+        for (j = 0, len = ref.length; j < len; j++) {
+          obj = ref[j];
           intersection = obj['intersection'];
           this.addIntersectionToMyCarPath(intersection.id, car);
         }
@@ -26590,48 +26590,12 @@ World = (function() {
       return this.asyncRequest(settings.pathFinderUrl, 'GET', params, null, this.addCarCallBack);
     }
 
-    getOnlineShortestPathAPI() {
-      //devi fare un nuovo endpoint su api in cui non mandi l'intersezione ma mandi la lane e poi da lì usi le lane per trovare il percorso nuovo su api
-      `lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads`;
-      var i, len, lengthOnly, myCar, myCarTrackPath, params, ref, road, sourceId, sourceId_prefix, target, targetId, targetId_prefix;
-      lengthOnly = "false";
-      myCar = this.getCar(settings.myCar.id);
-      myCarTrackPath = myCar.path;
-      myCar.trajectory.current.lane.road.carsNumber = -1;
-      target = myCar.trajectory.current.lane.road.target;
-      ref = target.roads;
-      for (i = 0, len = ref.length; i < len; i++) {
-        road = ref[i];
-        if (road.target === myCarTrackPath[0]) {
-          road.carsNumber = -1;
-        }
-      }
-      // send api post request to update carsNumber of each road
-      if (lengthOnly === "false") {
-        this.asyncRequest(settings.roadsUrl, 'PATCH', null, {
-          mapId: this.mapId,
-          roads: this.roads.all()
-        });
-      }
-      sourceId_prefix = myCarTrackPath[0].id;
-      targetId_prefix = myCarTrackPath[myCarTrackPath.length - 1].id; // get the last intersection in the track path (allow to repeat the command more than once)
-      sourceId = sourceId_prefix.slice('intersection'.length);
-      targetId = targetId_prefix.slice('intersection'.length);
-      params = {
-        'fromIntersection': sourceId,
-        'mapId': this.mapId,
-        'toIntersection': targetId,
-        'lengthOnly': lengthOnly
-      };
-      return this.asyncRequest(settings.pathFinderUrl, 'GET', params, null, this.updateOnlinePathCallBack);
-    }
-
     addMyCarAPI() {
       return this.getShortestPathAPI();
     }
 
     addCarCallBack(data) {
-      var i, len, path, ref, road, source_int, source_road;
+      var j, len, path, ref, road, source_int, source_road;
       if (!data || !data['ok']) {
         if (data['response']['mapId']) {
           console.log('Error: Map not found on API server... Sending the current map to API server');
@@ -26650,8 +26614,8 @@ World = (function() {
       source_int = this.getIntersection(path[0]);
       source_road = null;
       ref = source_int.roads;
-      for (i = 0, len = ref.length; i < len; i++) {
-        road = ref[i];
+      for (j = 0, len = ref.length; j < len; j++) {
+        road = ref[j];
         if (road.target.id === path[1]) {
           source_road = road;
           break;
@@ -26660,22 +26624,143 @@ World = (function() {
       return this.addMyCar(source_road, 0);
     }
 
-    updateOnlinePathCallBack(data) {
-      var i, intersection, len, myCar, newPath;
+    getOnlineShortestPathAPI() {
+      `lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads`;
+      var j, len, lengthOnly, myCar, myCarTrackPath, params, ref, ref1, road, sourceLaneId, target, targetId, targetId_prefix;
+      lengthOnly = "false";
       myCar = this.getCar(settings.myCar.id);
-      newPath = data['response']['path'];
-      if (myCar.path.length > 2 && (myCar.path[0] === this.getIntersection(newPath[0]))) {
-        myCar.path = [];
-        for (i = 0, len = newPath.length; i < len; i++) {
-          intersection = newPath[i];
-          myCar.path.push(this.getIntersection(intersection));
-        }
-        this.onlinePath = myCar.path;
-        console.log(`Updated best Path: ${this.onlinePath}`);
-        return visualizer.drawOnlinePath(this.onlinePath, 'red'); // draw the best path on the map
+      if (!(myCar != null ? (ref = myCar.nextLane) != null ? ref.id : void 0 : void 0)) {
+        return;
       }
+      myCarTrackPath = myCar.path;
+      myCar.trajectory.current.lane.road.carsNumber = -1;
+      target = myCar.trajectory.current.lane.road.target;
+      ref1 = target.roads;
+      for (j = 0, len = ref1.length; j < len; j++) {
+        road = ref1[j];
+        if (road.target === myCarTrackPath[0]) {
+          road.carsNumber = -1;
+        }
+      }
+      // send api post request to update carsNumber of each road
+      if (lengthOnly === "false") {
+        this.asyncRequest(settings.roadsUrl, 'PATCH', null, {
+          mapId: this.mapId,
+          roads: this.roads.all()
+        });
+      }
+      sourceLaneId = myCar.nextLane.id;
+      targetId_prefix = myCarTrackPath[myCarTrackPath.length - 1].id; // get the last intersection in the track path (allow to repeat the command more than once)
+      targetId = targetId_prefix.slice('intersection'.length);
+      params = {
+        'fromLaneId': sourceLaneId,
+        'mapId': this.mapId,
+        'toIntersection': targetId,
+        'lengthOnly': lengthOnly
+      };
+      return this.asyncRequest(settings.onlinePathFinderUrl, 'GET', params, null, this.updateOnlinePathCallBack);
     }
 
+    updateOnlinePathCallBack(data) {
+      var carPath, i, index, intersection, j, k, l, len, len1, len2, myCar, newPath, path, ref, stringPath, updatedPath;
+      myCar = this.getCar(settings.myCar.id);
+      if (!myCar) {
+        return;
+      }
+      if (myCar.path.length <= 2) {
+        return;
+      }
+      newPath = data['response']['path'];
+      console.log(`Received new best path form /online api: ${newPath}`);
+      //convert myCar.path to array of intersection ids
+      carPath = [];
+      ref = myCar.path;
+      for (j = 0, len = ref.length; j < len; j++) {
+        path = ref[j];
+        carPath.push(path.id);
+      }
+      console.log(`My car path: ${carPath}`);
+      //find the index of the first intersection in the current path that is also in the new path
+      updatedPath = [];
+      i = 0;
+      for (k = 0, len1 = carPath.length; k < len1; k++) {
+        intersection = carPath[k];
+        index = newPath.indexOf(intersection);
+        if (index >= 0) {
+          console.log(`Found intersection ${intersection} in new path at index ${index}`);
+          newPath = newPath.slice(index);
+          console.log(`newPath: ${newPath}`);
+          newPath = newPath.map((id) => {
+            return this.getIntersection(id);
+          });
+          console.log(`newPath: ${newPath}`);
+          updatedPath.push(...newPath);
+          console.log(`updatedPath: ${updatedPath}`);
+          break;
+        } else {
+          updatedPath.push(this.getIntersection(intersection));
+        }
+      }
+      for (l = 0, len2 = updatedPath.length; l < len2; l++) {
+        path = updatedPath[l];
+        console.log(`updatedPath: ${path}`);
+      }
+      this.onlinePath = [];
+      this.onlinePath.push(myCar.trajectory.current.lane.road.source.id);
+      this.onlinePath.push(myCar.trajectory.current.lane.road.target.id);
+      if (myCar.nextLane) {
+        this.onlinePath.push(myCar.nextLane.road.target.id);
+      }
+      stringPath = updatedPath.map(function(path) {
+        return path.id;
+      });
+      console.log(`Updated best path in red: ${stringPath}`);
+      this.onlinePath.push(...stringPath);
+      myCar.path = updatedPath;
+      return visualizer.drawOnlinePath(this.onlinePath, 'red'); // draw the best path on the map
+    }
+
+    
+      //        myCar = @getCar(settings.myCar.id)
+    //        newPath = data['response']['path']
+    //        console.log "Updated best Path: #{newPath}"
+    //        for inter in myCar.path
+    //            console.log "myCar.path: #{inter.id}"
+
+    //        if myCar.path.length > 2
+    //            findIndexOfFirstOccurrence = (list1, list2) ->
+    //                for str1 in list1
+    //                    index = list2.indexOf(str1)
+    //                    if index >= 0
+    //                        return index
+    //                return -1
+    //            carPath = []
+    //            for path in myCar.path
+    //                carPath.push path.id
+
+    //            indexIntersectionCarPath = findIndexOfFirstOccurrence(newPath, carPath)
+    //            indexIntersectionNewPath = newPath.indexOf(carPath[indexIntersectionCarPath])
+    //            console.log "indexIntersectionCarPath: #{indexIntersectionCarPath}"
+    //            console.log "indexIntersectionNewPath: #{indexIntersectionNewPath}"
+
+    //            if indexIntersectionCarPath >= 0 and indexIntersectionNewPath >= 0 and indexIntersectionCarPath < carPath.length - 1
+    //                newUpdatedPath = carPath.slice 0, indexIntersectionCarPath
+
+    //                newPath = newPath.slice indexIntersectionNewPath, newPath.length
+    //                for intersection in newPath
+    //                    intersectionObj = @getIntersection(intersection)
+    //                    newUpdatedPath.push intersectionObj
+    //                    console.log "newCarPath after update: #{intersectionObj.id}"
+
+    //                myCar.path = newUpdatedPath
+    //                @onlinePath = []
+    //                @onlinePath.push(myCar.trajectory.current.lane.road.source.id)
+    //                @onlinePath.push(myCar.trajectory.current.lane.road.target.id)
+    //                @onlinePath.push(myCar.nextLane.road.target.id)
+    //                for intersection in myCar.path
+    //                    @onlinePath.push intersection.id
+    //                console.log "Updated best Path in red: #{@onlinePath}"
+    //                visualizer.drawOnlinePath @onlinePath, 'red' # draw the best path on the map
     clear() {
       var key, value;
       this.set({});
@@ -26689,6 +26774,8 @@ World = (function() {
       this.trackPath = [];
       // clear lengthOnlyPath
       this.lengthOnlyPath = [];
+      // clear onlinePath
+      this.onlinePath = [];
       if (settings.debugTestHtml) {
         document.getElementById('trackPath').innerHTML = '';
         return document.getElementById('lengthOnlyPath').innerHTML = '';
@@ -26696,7 +26783,7 @@ World = (function() {
     }
 
     onTick(delta) {
-      var car, flipInterval, i, id, intersection, lane, len, lightTime, lights, ratio, ref, ref1, ref2, ref3, ref4, ref5, ref6, results, road, roadCarsNumber, sideId;
+      var car, flipInterval, id, intersection, j, lane, len, lightTime, lights, ratio, ref, ref1, ref2, ref3, ref4, ref5, ref6, results, road, roadCarsNumber, sideId;
       if (delta > 1) {
         throw Error('delta > 1');
       }
@@ -26719,9 +26806,9 @@ World = (function() {
         if (this.time - this.lastOnlinePathUpdate > settings.onlinePathUpdateInterval) {
           if (car.id === settings.myCar.id && car.path.length > 2) {
             this.lastOnlinePathUpdate = this.time;
+            this.getOnlineShortestPathAPI();
           }
         }
-        //@getOnlineShortestPathAPI()
         car.move(delta);
         if (!car.alive) {
           this.removeCar(car);
@@ -26735,8 +26822,8 @@ World = (function() {
         if (settings.trafficHighlight) {
           roadCarsNumber = 0;
           ref5 = road.lanes;
-          for (i = 0, len = ref5.length; i < len; i++) {
-            lane = ref5[i];
+          for (j = 0, len = ref5.length; j < len; j++) {
+            lane = ref5[j];
             ratio = lane.carsNumber / (road.length / settings.averageCarLength);
             if ((0 <= ratio && ratio <= 0.5)) {
               lane.color = settings.colors.road; // should be the 'green' version of traffic
@@ -26752,14 +26839,14 @@ World = (function() {
         } else {
           [
             (function() {
-              var j,
+              var k,
             len1,
             ref6,
             results1;
               ref6 = road.lanes;
               results1 = [];
-              for (j = 0, len1 = ref6.length; j < len1; j++) {
-                lane = ref6[j];
+              for (k = 0, len1 = ref6.length; k < len1; k++) {
+                lane = ref6[k];
                 results1.push(lane.color = settings.colors.road);
               }
               return results1;
@@ -26939,6 +27026,7 @@ settings = {
   pathFinderUrl: apiUrl + '/pathFinder',
   mapUrl: apiUrl + '/map',
   roadsUrl: apiUrl + '/roads',
+  onlinePathFinderUrl: apiUrl + '/onlinePathFinder',
   //   debug       # todo check if the element exists before setting the value
   debugTestHtml: document.getElementById('test') !== null // true if I am in the test.html page
 };
@@ -27506,6 +27594,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
     if (e.altKey && e.keyCode === 67) { // character 'c'
       console.log('Add MyCar with API');
       this.visualizer.world.addMyCarAPI();
+      this.visualizer.world.onlinePath = [];
       e.stopImmediatePropagation();
     }
     if (e.altKey && e.keyCode === 71) { // character 'g'

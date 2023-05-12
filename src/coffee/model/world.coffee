@@ -316,37 +316,6 @@ class World
         @asyncRequest settings.pathFinderUrl, 'GET', params, null, @addCarCallBack
 
 
-    getOnlineShortestPathAPI: () ->
-        #devi fare un nuovo endpoint su api in cui non mandi l'intersezione ma mandi la lane e poi da lì usi le lane per trovare il percorso nuovo su api
-
-        """lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads"""
-        lengthOnly = "false"
-
-        myCar = @getCar(settings.myCar.id)
-        myCarTrackPath = myCar.path
-        myCar.trajectory.current.lane.road.carsNumber = -1
-        target = myCar.trajectory.current.lane.road.target
-        for road in target.roads
-            if road.target == myCarTrackPath[0]
-                road.carsNumber = -1
-        # send api post request to update carsNumber of each road
-        if lengthOnly == "false"
-            @asyncRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
-
-        sourceId_prefix = myCarTrackPath[0].id
-        targetId_prefix = myCarTrackPath[myCarTrackPath.length - 1].id # get the last intersection in the track path (allow to repeat the command more than once)
-        sourceId = sourceId_prefix.slice 'intersection'.length
-        targetId = targetId_prefix.slice 'intersection'.length
-
-        params = {
-            'fromIntersection': sourceId,
-            'mapId': @mapId,
-            'toIntersection': targetId,
-            'lengthOnly': lengthOnly
-        }
-        @asyncRequest settings.pathFinderUrl, 'GET', params, null, @updateOnlinePathCallBack
-
-
     addMyCarAPI: () ->
         @getShortestPathAPI()
 
@@ -372,17 +341,85 @@ class World
                 break
         @addMyCar(source_road, 0)
 
+    getOnlineShortestPathAPI: () ->
+        """lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads"""
+        lengthOnly = "false"
+
+        myCar = @getCar(settings.myCar.id)
+        if not myCar?.nextLane?.id
+            return
+        myCarTrackPath = myCar.path
+        myCar.trajectory.current.lane.road.carsNumber = -1
+        target = myCar.trajectory.current.lane.road.target
+        for road in target.roads
+            if road.target == myCarTrackPath[0]
+                road.carsNumber = -1
+        # send api post request to update carsNumber of each road
+        if lengthOnly == "false"
+            @asyncRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
+
+        sourceLaneId = myCar.nextLane.id
+        targetId_prefix = myCarTrackPath[myCarTrackPath.length - 1].id # get the last intersection in the track path (allow to repeat the command more than once)
+        targetId = targetId_prefix.slice 'intersection'.length
+
+        params = {
+            'fromLaneId': sourceLaneId,
+            'mapId': @mapId,
+            'toIntersection': targetId,
+            'lengthOnly': lengthOnly
+        }
+        @asyncRequest settings.onlinePathFinderUrl, 'GET', params, null, @updateOnlinePathCallBack
+
+
     updateOnlinePathCallBack: (data) =>
         myCar = @getCar(settings.myCar.id)
-        newPath = data['response']['path']
-        if myCar.path.length > 2 and (myCar.path[0] == @getIntersection(newPath[0]))
-            myCar.path = []
-            for intersection in newPath
-                myCar.path.push @getIntersection(intersection)
-            @onlinePath = myCar.path
-            console.log "Updated best Path: #{@onlinePath}"
-            visualizer.drawOnlinePath @onlinePath, 'red' # draw the best path on the map
+        if not myCar
+            return
+        if myCar.path.length <= 2
+            return
 
+        newPath = data['response']['path']
+        console.log "Received new best path form /online api: #{newPath}"
+
+        #convert myCar.path to array of intersection ids
+        carPath = []
+        for path in myCar.path
+            carPath.push path.id
+        console.log "My car path: #{carPath}"
+
+        #find the index of the first intersection in the current path that is also in the new path
+        updatedPath = []
+        i=0
+        for intersection in carPath
+            index = newPath.indexOf(intersection)
+            if index >= 0
+                console.log "Found intersection #{intersection} in new path at index #{index}"
+                newPath = newPath.slice(index)
+                console.log "newPath: #{newPath}"
+                newPath = newPath.map((id) => @getIntersection(id))
+                console.log "newPath: #{newPath}"
+                updatedPath.push(...newPath)
+                console.log "updatedPath: #{updatedPath}"
+                break
+            else
+                updatedPath.push @getIntersection(intersection)
+
+        for path in updatedPath
+            console.log "updatedPath: #{path}"
+
+        @onlinePath = []
+        @onlinePath.push(myCar.trajectory.current.lane.road.source.id)
+        @onlinePath.push(myCar.trajectory.current.lane.road.target.id)
+        if myCar.nextLane
+            @onlinePath.push(myCar.nextLane.road.target.id)
+        stringPath = updatedPath.map((path) -> path.id)
+        console.log "Updated best path in red: #{stringPath}"
+        @onlinePath.push(...stringPath)
+
+        myCar.path = updatedPath
+        visualizer.drawOnlinePath @onlinePath, 'red' # draw the best path on the map
+
+#
 
     clear: ->
         @set {}
@@ -395,6 +432,8 @@ class World
         @trackPath = []
         # clear lengthOnlyPath
         @lengthOnlyPath = []
+        # clear onlinePath
+        @onlinePath = []
 
         if settings.debugTestHtml
             document.getElementById('trackPath').innerHTML = '';
@@ -417,8 +456,8 @@ class World
         for id, car of @cars.all()
             if @time - @lastOnlinePathUpdate > settings.onlinePathUpdateInterval
                 if car.id == settings.myCar.id  and car.path.length > 2
-                        @lastOnlinePathUpdate = @time
-                        #@getOnlineShortestPathAPI()
+                    @lastOnlinePathUpdate = @time
+                    @getOnlineShortestPathAPI()
             car.move delta
             @removeCar car unless car.alive
 
