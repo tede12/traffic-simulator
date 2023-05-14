@@ -43,6 +43,36 @@ class Visualizer
         @trackPath = world.trackPath
         @lengthOnlyTrackPath = world.lengthOnlyTrackPath
 
+    updateVirtualScreen: ()->
+# add to window the information about the car settings.myCar.id
+        myCar = null
+        for id, car of @world.cars.all()
+            if id == settings.myCar.id
+                myCar = car
+                break
+
+        if not myCar
+            return
+
+
+        carTrajectory = myCar.trajectory
+        nextLane = myCar.trajectory.next?.lane
+
+        window.virtualScreen = {
+            carPosition: myCar.coords
+
+#           if new car direction is not defined, use the previous one
+            carDirection: myCar.trajectory.stringDirection or window.virtualScreen?.carDirection
+
+#           speed and acceleration  get only 2 decimals fixed
+            carSpeed: if myCar.speed != null then myCar.speed.toFixed(2) else null
+            carAcceleration: if myCar.getAcceleration() then myCar.getAcceleration().toFixed(2) else null
+            carLane: carTrajectory.lane.id
+            carRoad: carTrajectory.lane?.road?.id  # carTrajectory.lane could be undefined
+            carTargetLane: if nextLane then nextLane.id else window.virtualScreen?.carTargetLane
+        }
+
+
     drawIntersection: (intersection, alpha) ->
         color = intersection.color or settings.colors.intersection
         @graphics.drawRect intersection.rect
@@ -412,7 +442,7 @@ class Visualizer
         settings.myWidth = canvas.clientWidth
         settings.myHeight = canvas.clientHeight
 
-#        console.log "Canvas size changed to [#{canvas.width}x#{canvas.height}] scroll version: [#{canvas.scrollWidth}x#{canvas.scrollHeight}]"
+        #        console.log "Canvas size changed to [#{canvas.width}x#{canvas.height}] scroll version: [#{canvas.scrollWidth}x#{canvas.scrollHeight}]"
         return
 
 
@@ -445,6 +475,8 @@ class Visualizer
         @drawShortestPath([], 'green')
         @drawTrackPath([], 'yellow')
         @drawOnlinePath([], 'red')
+
+        @updateVirtualScreen()
         # ------------------------------------------------------------------------
         @graphics.restore()
 

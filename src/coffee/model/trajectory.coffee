@@ -27,6 +27,9 @@ class Trajectory
     @property 'direction',
         get: -> @lane.getDirection @relativePosition
 
+    @property 'stringDirection',
+        get: -> @lane.stringDirection
+
     @property 'coords',
         get: -> @lane.getPoint @relativePosition
 

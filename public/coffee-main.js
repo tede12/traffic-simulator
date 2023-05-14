@@ -21246,6 +21246,24 @@ return jQuery;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+Object.defineProperty(exports, "NIL", {
+  enumerable: true,
+  get: function () {
+    return _nil.default;
+  }
+});
+Object.defineProperty(exports, "parse", {
+  enumerable: true,
+  get: function () {
+    return _parse.default;
+  }
+});
+Object.defineProperty(exports, "stringify", {
+  enumerable: true,
+  get: function () {
+    return _stringify.default;
+  }
+});
 Object.defineProperty(exports, "v1", {
   enumerable: true,
   get: function () {
@@ -21270,34 +21288,16 @@ Object.defineProperty(exports, "v5", {
     return _v4.default;
   }
 });
-Object.defineProperty(exports, "NIL", {
-  enumerable: true,
-  get: function () {
-    return _nil.default;
-  }
-});
-Object.defineProperty(exports, "version", {
-  enumerable: true,
-  get: function () {
-    return _version.default;
-  }
-});
 Object.defineProperty(exports, "validate", {
   enumerable: true,
   get: function () {
     return _validate.default;
   }
 });
-Object.defineProperty(exports, "stringify", {
+Object.defineProperty(exports, "version", {
   enumerable: true,
   get: function () {
-    return _stringify.default;
-  }
-});
-Object.defineProperty(exports, "parse", {
-  enumerable: true,
-  get: function () {
-    return _parse.default;
+    return _version.default;
   }
 });
 
@@ -21320,7 +21320,7 @@ var _stringify = _interopRequireDefault(require("./stringify.js"));
 var _parse = _interopRequireDefault(require("./parse.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./nil.js":10,"./parse.js":11,"./stringify.js":15,"./v1.js":16,"./v3.js":17,"./v4.js":19,"./v5.js":20,"./validate.js":21,"./version.js":22}],9:[function(require,module,exports){
+},{"./nil.js":11,"./parse.js":12,"./stringify.js":16,"./v1.js":17,"./v3.js":18,"./v4.js":20,"./v5.js":21,"./validate.js":22,"./version.js":23}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21551,9 +21551,21 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _default = '00000000-0000-0000-0000-000000000000';
+const randomUUID = typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+var _default = {
+  randomUUID
+};
 exports.default = _default;
 },{}],11:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = '00000000-0000-0000-0000-000000000000';
+exports.default = _default;
+},{}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21599,7 +21611,7 @@ function parse(uuid) {
 
 var _default = parse;
 exports.default = _default;
-},{"./validate.js":21}],12:[function(require,module,exports){
+},{"./validate.js":22}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21608,7 +21620,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
 exports.default = _default;
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21624,9 +21636,8 @@ const rnds8 = new Uint8Array(16);
 function rng() {
   // lazy load so that environments that need to polyfill have a chance to do so
   if (!getRandomValues) {
-    // getRandomValues needs to be invoked in a context where "this" is a Crypto implementation. Also,
-    // find the complete implementation of crypto (msCrypto) on IE11.
-    getRandomValues = typeof crypto !== 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto) || typeof msCrypto !== 'undefined' && typeof msCrypto.getRandomValues === 'function' && msCrypto.getRandomValues.bind(msCrypto);
+    // getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
+    getRandomValues = typeof crypto !== 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
 
     if (!getRandomValues) {
       throw new Error('crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported');
@@ -21635,7 +21646,7 @@ function rng() {
 
   return getRandomValues(rnds8);
 }
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21740,13 +21751,14 @@ function sha1(bytes) {
 
 var _default = sha1;
 exports.default = _default;
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+exports.unsafeStringify = unsafeStringify;
 
 var _validate = _interopRequireDefault(require("./validate.js"));
 
@@ -21759,13 +21771,17 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const byteToHex = [];
 
 for (let i = 0; i < 256; ++i) {
-  byteToHex.push((i + 0x100).toString(16).substr(1));
+  byteToHex.push((i + 0x100).toString(16).slice(1));
+}
+
+function unsafeStringify(arr, offset = 0) {
+  // Note: Be careful editing this code!  It's been tuned for performance
+  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
 }
 
 function stringify(arr, offset = 0) {
-  // Note: Be careful editing this code!  It's been tuned for performance
-  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  const uuid = unsafeStringify(arr, offset); // Consistency check for valid UUID.  If this throws, it's likely due to one
   // of the following:
   // - One or more input array values don't map to a hex octet (leading to
   // "undefined" in the uuid)
@@ -21780,7 +21796,7 @@ function stringify(arr, offset = 0) {
 
 var _default = stringify;
 exports.default = _default;
-},{"./validate.js":21}],16:[function(require,module,exports){
+},{"./validate.js":22}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21790,7 +21806,7 @@ exports.default = void 0;
 
 var _rng = _interopRequireDefault(require("./rng.js"));
 
-var _stringify = _interopRequireDefault(require("./stringify.js"));
+var _stringify = require("./stringify.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -21883,12 +21899,12 @@ function v1(options, buf, offset) {
     b[i + n] = node[n];
   }
 
-  return buf || (0, _stringify.default)(b);
+  return buf || (0, _stringify.unsafeStringify)(b);
 }
 
 var _default = v1;
 exports.default = _default;
-},{"./rng.js":13,"./stringify.js":15}],17:[function(require,module,exports){
+},{"./rng.js":14,"./stringify.js":16}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21905,16 +21921,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const v3 = (0, _v.default)('v3', 0x30, _md.default);
 var _default = v3;
 exports.default = _default;
-},{"./md5.js":9,"./v35.js":18}],18:[function(require,module,exports){
+},{"./md5.js":9,"./v35.js":19}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = _default;
 exports.URL = exports.DNS = void 0;
+exports.default = v35;
 
-var _stringify = _interopRequireDefault(require("./stringify.js"));
+var _stringify = require("./stringify.js");
 
 var _parse = _interopRequireDefault(require("./parse.js"));
 
@@ -21937,8 +21953,10 @@ exports.DNS = DNS;
 const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 exports.URL = URL;
 
-function _default(name, version, hashfunc) {
+function v35(name, version, hashfunc) {
   function generateUUID(value, namespace, buf, offset) {
+    var _namespace;
+
     if (typeof value === 'string') {
       value = stringToBytes(value);
     }
@@ -21947,7 +21965,7 @@ function _default(name, version, hashfunc) {
       namespace = (0, _parse.default)(namespace);
     }
 
-    if (namespace.length !== 16) {
+    if (((_namespace = namespace) === null || _namespace === void 0 ? void 0 : _namespace.length) !== 16) {
       throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
     } // Compute hash of namespace and value, Per 4.3
     // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
@@ -21971,7 +21989,7 @@ function _default(name, version, hashfunc) {
       return buf;
     }
 
-    return (0, _stringify.default)(bytes);
+    return (0, _stringify.unsafeStringify)(bytes);
   } // Function#name is not settable on some platforms (#270)
 
 
@@ -21984,7 +22002,7 @@ function _default(name, version, hashfunc) {
   generateUUID.URL = URL;
   return generateUUID;
 }
-},{"./parse.js":11,"./stringify.js":15}],19:[function(require,module,exports){
+},{"./parse.js":12,"./stringify.js":16}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21992,13 +22010,19 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _native = _interopRequireDefault(require("./native.js"));
+
 var _rng = _interopRequireDefault(require("./rng.js"));
 
-var _stringify = _interopRequireDefault(require("./stringify.js"));
+var _stringify = require("./stringify.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function v4(options, buf, offset) {
+  if (_native.default.randomUUID && !buf && !options) {
+    return _native.default.randomUUID();
+  }
+
   options = options || {};
 
   const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
@@ -22017,12 +22041,12 @@ function v4(options, buf, offset) {
     return buf;
   }
 
-  return (0, _stringify.default)(rnds);
+  return (0, _stringify.unsafeStringify)(rnds);
 }
 
 var _default = v4;
 exports.default = _default;
-},{"./rng.js":13,"./stringify.js":15}],20:[function(require,module,exports){
+},{"./native.js":10,"./rng.js":14,"./stringify.js":16}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22039,7 +22063,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const v5 = (0, _v.default)('v5', 0x50, _sha.default);
 var _default = v5;
 exports.default = _default;
-},{"./sha1.js":14,"./v35.js":18}],21:[function(require,module,exports){
+},{"./sha1.js":15,"./v35.js":19}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22057,7 +22081,7 @@ function validate(uuid) {
 
 var _default = validate;
 exports.default = _default;
-},{"./regex.js":12}],22:[function(require,module,exports){
+},{"./regex.js":13}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22074,12 +22098,12 @@ function version(uuid) {
     throw TypeError('Invalid UUID');
   }
 
-  return parseInt(uuid.substr(14, 1), 16);
+  return parseInt(uuid.slice(14, 15), 16);
 }
 
 var _default = version;
 exports.default = _default;
-},{"./validate.js":21}],23:[function(require,module,exports){
+},{"./validate.js":22}],24:[function(require,module,exports){
 'use strict';
 var $, DAT, Visualizer, World, _, savedMaps, settings, waitForElements;
 
@@ -22127,7 +22151,7 @@ waitForElements = function(ids, callback) {
 };
 
 waitForElements(['canvas', 'gui'], function() {
-  var gui, guiSavedMaps, guiVisualizer, guiWorld, mapData, mapName, targetElement;
+  var gui, guiSavedMaps, guiVisualizer, guiWorld, mapData, mapName, results, targetElement;
   // Created in the React component
   //  canvas = $('<canvas />', {id: 'canvas'})
   //  $(document.body).append(canvas)
@@ -22181,15 +22205,18 @@ waitForElements(['canvas', 'gui'], function() {
   guiWorld.add(world, 'activeCars').listen();
   gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen();
   guiSavedMaps = gui.addFolder('saved maps');
+  results = [];
   for (mapName in savedMaps) {
     mapData = savedMaps[mapName];
-    guiSavedMaps.add(world, mapName);
+    results.push(guiSavedMaps.add(world, mapName));
   }
-  return guiSavedMaps.open();
+  return results;
 });
 
+//    guiSavedMaps.open()
 
-},{"./helpers":28,"./maps":29,"./model/world":39,"./settings":40,"./visualizer/visualizer":48,"dat-gui":2,"jquery":6,"underscore":7}],24:[function(require,module,exports){
+
+},{"./helpers":29,"./maps":30,"./model/world":40,"./settings":41,"./visualizer/visualizer":49,"dat-gui":2,"jquery":6,"underscore":7}],25:[function(require,module,exports){
 'use strict';
 var Curve, Segment;
 
@@ -22261,7 +22288,7 @@ Curve = (function() {
 module.exports = Curve;
 
 
-},{"../helpers":28,"./segment":27}],25:[function(require,module,exports){
+},{"../helpers":29,"./segment":28}],26:[function(require,module,exports){
 'use strict';
 var Point, atan2, sqrt;
 
@@ -22319,7 +22346,7 @@ Point = (function() {
 module.exports = Point;
 
 
-},{"../helpers":28}],26:[function(require,module,exports){
+},{"../helpers":29}],27:[function(require,module,exports){
 'use strict';
 var Point, Rect, Segment, _, abs;
 
@@ -22460,7 +22487,7 @@ Rect = class Rect {
 module.exports = Rect;
 
 
-},{"../helpers":28,"./point":25,"./segment":27,"underscore":7}],27:[function(require,module,exports){
+},{"../helpers":29,"./point":26,"./segment":28,"underscore":7}],28:[function(require,module,exports){
 'use strict';
 var Segment;
 
@@ -22537,7 +22564,7 @@ Segment = (function() {
 module.exports = Segment;
 
 
-},{"../helpers":28}],28:[function(require,module,exports){
+},{"../helpers":29}],29:[function(require,module,exports){
 'use strict';
 var mapsIdCounter, uniqueId;
 
@@ -22564,7 +22591,7 @@ uniqueId = function(prefix) {
 module.exports = uniqueId;
 
 
-},{"./mapsIdCounter":30}],29:[function(require,module,exports){
+},{"./mapsIdCounter":31}],30:[function(require,module,exports){
 'use strict';
 var savedMaps;
 
@@ -24967,7 +24994,7 @@ savedMaps = {
 module.exports = savedMaps;
 
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 var mapsIdCounter;
 
@@ -24982,7 +25009,7 @@ mapsIdCounter = {
 module.exports = mapsIdCounter;
 
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 var Car, Trajectory, _, max, min, random, settings, sqrt, uniqueId;
 
@@ -25251,7 +25278,7 @@ Car = (function() {
 module.exports = Car;
 
 
-},{"../helpers":28,"../settings":40,"./trajectory":38,"underscore":7}],32:[function(require,module,exports){
+},{"../helpers":29,"../settings":41,"./trajectory":39,"underscore":7}],33:[function(require,module,exports){
 'use strict';
 var ControlSignals, random, settings,
   indexOf = [].indexOf;
@@ -25361,7 +25388,7 @@ ControlSignals = (function() {
 module.exports = ControlSignals;
 
 
-},{"../helpers":28,"../settings":40}],33:[function(require,module,exports){
+},{"../helpers":29,"../settings":41}],34:[function(require,module,exports){
 'use strict';
 var ControlSignals, Intersection, Rect, _, uniqueId;
 
@@ -25427,7 +25454,7 @@ Intersection = class Intersection {
 module.exports = Intersection;
 
 
-},{"../geom/rect":26,"../helpers":28,"./control-signals":32,"underscore":7}],34:[function(require,module,exports){
+},{"../geom/rect":27,"../helpers":29,"./control-signals":33,"underscore":7}],35:[function(require,module,exports){
 'use strict';
 var LanePosition, _, uniqueId;
 
@@ -25514,7 +25541,7 @@ LanePosition = (function() {
 module.exports = LanePosition;
 
 
-},{"../helpers":28,"underscore":7}],35:[function(require,module,exports){
+},{"../helpers":29,"underscore":7}],36:[function(require,module,exports){
 'use strict';
 var Lane, Rect, Segment, _, uniqueId;
 
@@ -25695,7 +25722,7 @@ Lane = (function() {
 module.exports = Lane;
 
 
-},{"../geom/rect":26,"../geom/segment":27,"../helpers":28,"underscore":7}],36:[function(require,module,exports){
+},{"../geom/rect":27,"../geom/segment":28,"../helpers":29,"underscore":7}],37:[function(require,module,exports){
 'use strict';
 var Pool;
 
@@ -25762,7 +25789,7 @@ Pool = (function() {
 module.exports = Pool;
 
 
-},{"../helpers":28}],37:[function(require,module,exports){
+},{"../helpers":29}],38:[function(require,module,exports){
 'use strict';
 var Lane, Point, Rect, Road, Segment, _, max, min, settings, uniqueId;
 
@@ -25926,7 +25953,7 @@ Road = (function() {
 module.exports = Road;
 
 
-},{"../geom/point":25,"../geom/rect":26,"../geom/segment":27,"../helpers":28,"../settings":40,"./lane":35,"underscore":7}],38:[function(require,module,exports){
+},{"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers":29,"../settings":41,"./lane":36,"underscore":7}],39:[function(require,module,exports){
 'use strict';
 var Curve, LanePosition, Trajectory, _, max, min;
 
@@ -26145,6 +26172,12 @@ Trajectory = (function() {
     }
   });
 
+  Trajectory.property('stringDirection', {
+    get: function() {
+      return this.lane.stringDirection;
+    }
+  });
+
   Trajectory.property('coords', {
     get: function() {
       return this.lane.getPoint(this.relativePosition);
@@ -26192,7 +26225,7 @@ Trajectory = (function() {
 module.exports = Trajectory;
 
 
-},{"../geom/curve":24,"../helpers":28,"./lane-position":34,"underscore":7}],39:[function(require,module,exports){
+},{"../geom/curve":25,"../helpers":29,"./lane-position":35,"underscore":7}],40:[function(require,module,exports){
 'use strict';
 var Car, Intersection, Pool, Rect, Road, World, _, clearCounters, mapsIdCounter, random, savedMaps, settings, uuid;
 
@@ -26721,46 +26754,6 @@ World = (function() {
     }
 
     
-      //        myCar = @getCar(settings.myCar.id)
-    //        newPath = data['response']['path']
-    //        console.log "Updated best Path: #{newPath}"
-    //        for inter in myCar.path
-    //            console.log "myCar.path: #{inter.id}"
-
-    //        if myCar.path.length > 2
-    //            findIndexOfFirstOccurrence = (list1, list2) ->
-    //                for str1 in list1
-    //                    index = list2.indexOf(str1)
-    //                    if index >= 0
-    //                        return index
-    //                return -1
-    //            carPath = []
-    //            for path in myCar.path
-    //                carPath.push path.id
-
-    //            indexIntersectionCarPath = findIndexOfFirstOccurrence(newPath, carPath)
-    //            indexIntersectionNewPath = newPath.indexOf(carPath[indexIntersectionCarPath])
-    //            console.log "indexIntersectionCarPath: #{indexIntersectionCarPath}"
-    //            console.log "indexIntersectionNewPath: #{indexIntersectionNewPath}"
-
-    //            if indexIntersectionCarPath >= 0 and indexIntersectionNewPath >= 0 and indexIntersectionCarPath < carPath.length - 1
-    //                newUpdatedPath = carPath.slice 0, indexIntersectionCarPath
-
-    //                newPath = newPath.slice indexIntersectionNewPath, newPath.length
-    //                for intersection in newPath
-    //                    intersectionObj = @getIntersection(intersection)
-    //                    newUpdatedPath.push intersectionObj
-    //                    console.log "newCarPath after update: #{intersectionObj.id}"
-
-    //                myCar.path = newUpdatedPath
-    //                @onlinePath = []
-    //                @onlinePath.push(myCar.trajectory.current.lane.road.source.id)
-    //                @onlinePath.push(myCar.trajectory.current.lane.road.target.id)
-    //                @onlinePath.push(myCar.nextLane.road.target.id)
-    //                for intersection in myCar.path
-    //                    @onlinePath.push intersection.id
-    //                console.log "Updated best Path in red: #{@onlinePath}"
-    //                visualizer.drawOnlinePath @onlinePath, 'red' # draw the best path on the map
     clear() {
       var key, value;
       this.set({});
@@ -26970,7 +26963,7 @@ World = (function() {
 module.exports = World;
 
 
-},{"../geom/rect":26,"../helpers":28,"../maps":29,"../mapsIdCounter":30,"../settings":40,"./car":31,"./intersection":33,"./pool":36,"./road":37,"underscore":7,"uuid":8}],40:[function(require,module,exports){
+},{"../geom/rect":27,"../helpers":29,"../maps":30,"../mapsIdCounter":31,"../settings":41,"./car":32,"./intersection":34,"./pool":37,"./road":38,"underscore":7,"uuid":8}],41:[function(require,module,exports){
 'use strict';
 var apiUrl, settings;
 
@@ -27034,7 +27027,7 @@ settings = {
 module.exports = settings;
 
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 var Curve, Graphics, PI, Point, Rect, Segment, settings;
 
@@ -27237,7 +27230,7 @@ Graphics = class Graphics {
 module.exports = Graphics;
 
 
-},{"../geom/curve":24,"../geom/point":25,"../geom/rect":26,"../geom/segment":27,"../helpers.coffee":28,"../settings":40}],42:[function(require,module,exports){
+},{"../geom/curve":25,"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers.coffee":29,"../settings":41}],43:[function(require,module,exports){
 'use strict';
 var Point, Tool, ToolHighlighter, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27339,7 +27332,7 @@ ToolHighlighter = class ToolHighlighter extends Tool {
 module.exports = ToolHighlighter;
 
 
-},{"../geom/point.coffee":25,"../helpers.coffee":28,"../settings.coffee":40,"./tool.coffee":47}],43:[function(require,module,exports){
+},{"../geom/point.coffee":26,"../helpers.coffee":29,"../settings.coffee":41,"./tool.coffee":48}],44:[function(require,module,exports){
 'use strict';
 var Intersection, Tool, ToolIntersectionBuilder,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27407,7 +27400,7 @@ ToolIntersectionBuilder = class ToolIntersectionBuilder extends Tool {
 module.exports = ToolIntersectionBuilder;
 
 
-},{"../helpers.coffee":28,"../model/intersection.coffee":33,"./tool.coffee":47}],44:[function(require,module,exports){
+},{"../helpers.coffee":29,"../model/intersection.coffee":34,"./tool.coffee":48}],45:[function(require,module,exports){
 'use strict';
 var Tool, ToolIntersectionMover,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27462,7 +27455,7 @@ ToolIntersectionMover = class ToolIntersectionMover extends Tool {
 module.exports = ToolIntersectionMover;
 
 
-},{"../helpers.coffee":28,"./tool.coffee":47}],45:[function(require,module,exports){
+},{"../helpers.coffee":29,"./tool.coffee":48}],46:[function(require,module,exports){
 'use strict';
 var Mover, Tool,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27516,7 +27509,7 @@ Mover = class Mover extends Tool {
 module.exports = Mover;
 
 
-},{"../helpers.coffee":28,"./tool.coffee":47}],46:[function(require,module,exports){
+},{"../helpers.coffee":29,"./tool.coffee":48}],47:[function(require,module,exports){
 'use strict';
 var Car, Road, Tool, ToolRoadBuilder, _, settings,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -27669,7 +27662,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
 module.exports = ToolRoadBuilder;
 
 
-},{"../helpers.coffee":28,"../model/car.coffee":31,"../model/road.coffee":37,"../settings.coffee":40,"./tool.coffee":47,"underscore":7}],47:[function(require,module,exports){
+},{"../helpers.coffee":29,"../model/car.coffee":32,"../model/road.coffee":38,"../settings.coffee":41,"./tool.coffee":48,"underscore":7}],48:[function(require,module,exports){
 'use strict';
 var $, DOCUMENT_METHODS, METHODS, Point, Rect, Tool, _;
 
@@ -27835,7 +27828,7 @@ Tool = class Tool {
 module.exports = Tool;
 
 
-},{"../geom/point":25,"../geom/rect":26,"../helpers":28,"jquery":6,"jquery-mousewheel":5,"underscore":7}],48:[function(require,module,exports){
+},{"../geom/point":26,"../geom/rect":27,"../helpers":29,"jquery":6,"jquery-mousewheel":5,"underscore":7}],49:[function(require,module,exports){
 'use strict';
 var $, Graphics, Intersection, PI, Point, Rect, Segment, ToolHighlighter, ToolIntersectionBuilder, ToolIntersectionMover, ToolMover, ToolRoadBuilder, Visualizer, Zoomer, _, chroma, settings;
 
@@ -27897,6 +27890,36 @@ Visualizer = (function() {
       this.timeFactor = settings.defaultTimeFactor;
       this.trackPath = world.trackPath;
       this.lengthOnlyTrackPath = world.lengthOnlyTrackPath;
+    }
+
+    updateVirtualScreen() {
+      var car, carTrajectory, id, myCar, nextLane, ref, ref1, ref2, ref3, ref4, ref5;
+      // add to window the information about the car settings.myCar.id
+      myCar = null;
+      ref = this.world.cars.all();
+      for (id in ref) {
+        car = ref[id];
+        if (id === settings.myCar.id) {
+          myCar = car;
+          break;
+        }
+      }
+      if (!myCar) {
+        return;
+      }
+      carTrajectory = myCar.trajectory;
+      nextLane = (ref1 = myCar.trajectory.next) != null ? ref1.lane : void 0;
+      return window.virtualScreen = {
+        carPosition: myCar.coords,
+        //           if new car direction is not defined, use the previous one
+        carDirection: myCar.trajectory.stringDirection || ((ref2 = window.virtualScreen) != null ? ref2.carDirection : void 0),
+        //           speed and acceleration  get only 2 decimals fixed
+        carSpeed: myCar.speed !== null ? myCar.speed.toFixed(2) : null,
+        carAcceleration: myCar.getAcceleration() ? myCar.getAcceleration().toFixed(2) : null,
+        carLane: carTrajectory.lane.id,
+        carRoad: (ref3 = carTrajectory.lane) != null ? (ref4 = ref3.road) != null ? ref4.id : void 0 : void 0, // carTrajectory.lane could be undefined
+        carTargetLane: nextLane ? nextLane.id : (ref5 = window.virtualScreen) != null ? ref5.carTargetLane : void 0
+      };
     }
 
     drawIntersection(intersection, alpha) {
@@ -28362,6 +28385,7 @@ or scroll bars.`;
       this.drawShortestPath([], 'green');
       this.drawTrackPath([], 'yellow');
       this.drawOnlinePath([], 'red');
+      this.updateVirtualScreen();
       // ------------------------------------------------------------------------
       this.graphics.restore();
       // get active cars number for each car get alive attribute
@@ -28681,7 +28705,7 @@ or scroll bars.`;
 module.exports = Visualizer;
 
 
-},{"../geom/point":25,"../geom/rect":26,"../geom/segment":27,"../helpers":28,"../model/intersection":33,"../settings":40,"./graphics":41,"./highlighter":42,"./intersection-builder":43,"./intersection-mover":44,"./mover":45,"./road-builder":46,"./zoomer":49,"chroma-js":1,"jquery":6,"underscore":7}],49:[function(require,module,exports){
+},{"../geom/point":26,"../geom/rect":27,"../geom/segment":28,"../helpers":29,"../model/intersection":34,"../settings":41,"./graphics":42,"./highlighter":43,"./intersection-builder":44,"./intersection-mover":45,"./mover":46,"./road-builder":47,"./zoomer":50,"chroma-js":1,"jquery":6,"underscore":7}],50:[function(require,module,exports){
 'use strict';
 var Point, Rect, Tool, Zoomer, max, min, settings;
 
@@ -28797,6 +28821,6 @@ Zoomer = (function() {
 module.exports = Zoomer;
 
 
-},{"../geom/point.coffee":25,"../geom/rect.coffee":26,"../helpers.coffee":28,"../settings.coffee":40,"./tool.coffee":47}]},{},[23])
+},{"../geom/point.coffee":26,"../geom/rect.coffee":27,"../helpers.coffee":29,"../settings.coffee":41,"./tool.coffee":48}]},{},[24])
 
 //# sourceMappingURL=coffee-main.js.map

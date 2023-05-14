@@ -265,7 +265,7 @@ class World
 
         promise
 
-    getShortestPathLengthOnlyAPI:()->
+    getShortestPathLengthOnlyAPI: ()->
         sourceId_prefix = @trackPath[0]['intersection'].id
         targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)
         sourceId = sourceId_prefix.slice 'intersection'.length
@@ -389,7 +389,7 @@ class World
 
         #find the index of the first intersection in the current path that is also in the new path
         updatedPath = []
-        i=0
+        i = 0
         for intersection in carPath
             index = newPath.indexOf(intersection)
             if index >= 0
@@ -455,7 +455,7 @@ class World
 
         for id, car of @cars.all()
             if @time - @lastOnlinePathUpdate > settings.onlinePathUpdateInterval
-                if car.id == settings.myCar.id  and car.path.length > 2
+                if car.id == settings.myCar.id and car.path.length > 2
                     @lastOnlinePathUpdate = @time
                     @getOnlineShortestPathAPI()
             car.move delta

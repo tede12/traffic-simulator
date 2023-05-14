@@ -86,6 +86,6 @@ waitForElements ['canvas', 'gui'], ->
     guiSavedMaps = gui.addFolder('saved maps')
     for mapName, mapData of savedMaps
         guiSavedMaps.add(world, mapName)
-    guiSavedMaps.open()
+#    guiSavedMaps.open()
 
 
