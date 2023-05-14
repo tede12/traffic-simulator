@@ -31,7 +31,6 @@ class Road
             target: @target.id
             length: @length
             carsNumber: @lanes.reduce ((sum, lane) -> sum + lane.carsNumber), 0
-            lanesCarNumbers: @lanes.map (lane) -> lane.carsNumber
             lanes: @lanes.map (lane) -> lane.toJSON()
 
     @property 'length',

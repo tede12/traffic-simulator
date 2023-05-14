@@ -15,14 +15,22 @@ class Lane
         @rightmostAdjacent = null
         @carsPositions = {}
         @carsNumber = 0
+        @controlSignalState = null
+        @greenLightDuration = 0
+        @redLightDuration = 0
+        @controlSignalTime = 0
         @update()
 
     toJSON: ->
-        obj = _.extend {}, this
-        return {
-            id: obj.id
-            carsNumber: obj.carsNumber
-        }
+#        obj = _.extend {}, this
+#        delete obj.carsPositions
+        obj =
+            id: @id
+            carsNumber: @carsNumber
+            controlSignalState: @controlSignalState
+            greenLightDuration: @greenLightDuration
+            redLightDuration: @redLightDuration
+            controlSignalTime: @controlSignalTime
 
     @property 'sourceSideId',
         get: -> @road.sourceSideId

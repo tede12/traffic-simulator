@@ -144,11 +144,6 @@ class Visualizer
         sideId = road.targetSideId
         lights = intersection.controlSignals.state[sideId]
 
-        #        TODO ADD SIGNALS STATE HERE
-        #        lane0 = left
-        #        lane1 = forwardRight
-        #        lane.signalState = timeToRed or timeToGreen
-
         @ctx.save()
         @ctx.translate segment.center.x, segment.center.y
         @ctx.rotate (sideId + 1) * PI / 2
@@ -449,6 +444,7 @@ class Visualizer
         # ------------------------------------------------------------------------
         @drawShortestPath([], 'green')
         @drawTrackPath([], 'yellow')
+        @drawOnlinePath([], 'red')
         # ------------------------------------------------------------------------
         @graphics.restore()
 
@@ -512,6 +508,56 @@ class Visualizer
             for lane in road.lanes
                 if lane.stringDirection == direction
                     return lane
+
+    drawOnlinePath: (newPath = [], color = 'red') ->
+        if newPath instanceof Array and newPath.length >= 2     # reset trackPath
+            @world.onlinePath = []
+            for i in newPath
+                @world.onlinePath.push({'intersection': @checkIfPointOrIntersection(i)})
+
+        if @world.onlinePath.length < 2
+            return
+
+        getIntersections = []
+        for i in @world.onlinePath
+            getIntersections.push(i['intersection'])
+
+        firstIntersection = @checkIfPointOrIntersection(getIntersections[0])
+        startPoint = firstIntersection.rect.center() # first intersection
+
+        lastIntersection = @checkIfPointOrIntersection(getIntersections[getIntersections.length - 1])
+        endPoint = lastIntersection.rect.center() # last last intersection
+
+        newTrackPath = {'startPoint': startPoint}
+        lastPoint = startPoint
+
+        dir = @checkBeforeAndNextPath(getIntersections, 0)
+        lane = @getIntersectionLaneByDirection(firstIntersection, dir)
+
+        for i in [1..getIntersections.length - 2]
+            intersect = @checkIfPointOrIntersection(getIntersections[i])
+            newPoint = intersect?.rect.center()
+            if newPoint is undefined
+                console.log 'Intersection ' + intersect.id + ' not found'
+                return
+
+            dir = @checkBeforeAndNextPath(getIntersections, i)
+            lane = @getIntersectionLaneByDirection(intersect, dir)
+
+            # good version
+            segment = new Segment lastPoint, newPoint
+            newTrackPath[intersect.id] = segment
+            lastPoint = newPoint
+
+            # if the last point add last segment and endPoint
+            if i == getIntersections.length - 2
+                segment = new Segment lastPoint, endPoint
+                newTrackPath['lastSegment'] = segment
+                newTrackPath['endPoint'] = endPoint
+
+        @graphics.drawPolylineFeatures newTrackPath, 0.7, color
+        @graphics.restore()
+
 
     drawShortestPath: (newPath = [], color = 'green') ->
         if newPath instanceof Array and newPath.length >= 2     # reset trackPath
@@ -610,7 +656,6 @@ class Visualizer
                 newTrackPath['endPoint'] = endPoint
 
         @graphics.drawPolylineFeatures newTrackPath, 0.7, color
-        @graphics.restore()
 
 
     _testDrawTrackPath: ->

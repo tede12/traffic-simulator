@@ -54,12 +54,12 @@ class ToolRoadBuilder extends Tool
         if e.altKey and e.keyCode is 67  # character 'c'
             console.log 'Add MyCar with API'
             @visualizer.world.addMyCarAPI()
+            @visualizer.world.onlinePath = []
             e.stopImmediatePropagation()
 
         if e.altKey and e.keyCode is 71  # character 'g'
             console.log 'Get Shortest Path based only on length with API'
-            path = @visualizer.world.getShortestPathAPI('true')
-            @visualizer.drawShortestPath path, 'green'
+            @visualizer.world.getShortestPathLengthOnlyAPI()
             e.stopImmediatePropagation()
 
     mouseup: (e) =>

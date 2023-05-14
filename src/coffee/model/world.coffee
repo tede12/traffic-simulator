@@ -19,11 +19,13 @@ class World
         @set {}
         @createDynamicMapMethods()
         @trackPath = []
+        @onlinePath = []
         @bestPath = []
         @lengthOnlyPath = []
         @carObject = {
             lastTimeSpawn: null     # time when last car was spawned
         }
+        @lastOnlinePathUpdate = 0
         @activeCars = 0
         @roadsUpdateCounterInterval = 0
 
@@ -53,6 +55,7 @@ class World
 
     save: (forRequest = false) ->
         data = _.extend {}, this
+        delete data.cars
 
         if forRequest
 #           get only intersections, roads
@@ -60,7 +63,6 @@ class World
                 mapId: data.mapId
                 intersections: data.intersections
                 roads: data.roads
-#                lanes: data.lanes
                 carsNumber: data.carsNumber
                 time: data.time
 #                controlSignals: data.controlSignals
@@ -91,8 +93,6 @@ class World
 
     generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
         @clear()
-
-
         intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0
         map = {}
         gridSize = settings.gridSize
@@ -167,6 +167,7 @@ class World
         if intersection
             car.path.push(intersection)
         return
+
 
     syncRequest: (url, method = 'GET', params = null, data = null, callBack = null) ->
         """xmlHttpRequest with CORS prevention"""
@@ -264,9 +265,39 @@ class World
 
         promise
 
-    getShortestPathAPI: (lengthOnly = "false") ->
-        """lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads"""
+    getShortestPathLengthOnlyAPI:()->
+        sourceId_prefix = @trackPath[0]['intersection'].id
+        targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)
+        sourceId = sourceId_prefix.slice 'intersection'.length
+        targetId = targetId_prefix.slice 'intersection'.length
 
+        params = {
+            'fromIntersection': sourceId,
+            'mapId': @mapId,
+            'toIntersection': targetId,
+            'lengthOnly': "true"
+        }
+        @asyncRequest settings.pathFinderUrl, 'GET', params, null, @drawShortestPathLengthOnlyCallback
+
+
+    drawShortestPathLengthOnlyCallback: (data) =>
+        if not data or not data['ok']
+            if data['response']['mapId']
+                console.log 'Error: Map not found on API server... Sending the current map to API server'
+                @asyncRequest(settings.mapUrl, 'POST', null, {map: @save(true)})
+                return @getShortestPathAPI()
+
+            console.log 'Error: No path received from server.'
+            return
+
+        path = data['response']['path']
+        console.log "Shortest Path Length only: #{path}"
+        visualizer.drawShortestPath path, 'green'
+
+
+    getShortestPathAPI: () ->
+        """lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads"""
+        lengthOnly = "false"
         # send api post request to update carsNumber of each road
         if lengthOnly == "false"
             @asyncRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
@@ -283,7 +314,6 @@ class World
             'lengthOnly': lengthOnly
         }
         @asyncRequest settings.pathFinderUrl, 'GET', params, null, @addCarCallBack
-
 
 
     addMyCarAPI: () ->
@@ -311,6 +341,86 @@ class World
                 break
         @addMyCar(source_road, 0)
 
+    getOnlineShortestPathAPI: () ->
+        """lengthOnly: compute shortest path only based on length of roads, otherwise based on number of cars on roads and length of roads"""
+        lengthOnly = "false"
+
+        myCar = @getCar(settings.myCar.id)
+        if not myCar?.nextLane?.id
+            return
+        myCarTrackPath = myCar.path
+        myCar.trajectory.current.lane.road.carsNumber = -1
+        target = myCar.trajectory.current.lane.road.target
+        for road in target.roads
+            if road.target == myCarTrackPath[0]
+                road.carsNumber = -1
+        # send api post request to update carsNumber of each road
+        if lengthOnly == "false"
+            @asyncRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
+
+        sourceLaneId = myCar.nextLane.id
+        targetId_prefix = myCarTrackPath[myCarTrackPath.length - 1].id # get the last intersection in the track path (allow to repeat the command more than once)
+        targetId = targetId_prefix.slice 'intersection'.length
+
+        params = {
+            'fromLaneId': sourceLaneId,
+            'mapId': @mapId,
+            'toIntersection': targetId,
+            'lengthOnly': lengthOnly
+        }
+        @asyncRequest settings.onlinePathFinderUrl, 'GET', params, null, @updateOnlinePathCallBack
+
+
+    updateOnlinePathCallBack: (data) =>
+        myCar = @getCar(settings.myCar.id)
+        if not myCar
+            return
+        if myCar.path.length <= 2
+            return
+
+        newPath = data['response']['path']
+        console.log "Received new best path form /online api: #{newPath}"
+
+        #convert myCar.path to array of intersection ids
+        carPath = []
+        for path in myCar.path
+            carPath.push path.id
+        console.log "My car path: #{carPath}"
+
+        #find the index of the first intersection in the current path that is also in the new path
+        updatedPath = []
+        i=0
+        for intersection in carPath
+            index = newPath.indexOf(intersection)
+            if index >= 0
+                console.log "Found intersection #{intersection} in new path at index #{index}"
+                newPath = newPath.slice(index)
+                console.log "newPath: #{newPath}"
+                newPath = newPath.map((id) => @getIntersection(id))
+                console.log "newPath: #{newPath}"
+                updatedPath.push(...newPath)
+                console.log "updatedPath: #{updatedPath}"
+                break
+            else
+                updatedPath.push @getIntersection(intersection)
+
+        for path in updatedPath
+            console.log "updatedPath: #{path}"
+
+        @onlinePath = []
+        @onlinePath.push(myCar.trajectory.current.lane.road.source.id)
+        @onlinePath.push(myCar.trajectory.current.lane.road.target.id)
+        if myCar.nextLane
+            @onlinePath.push(myCar.nextLane.road.target.id)
+        stringPath = updatedPath.map((path) -> path.id)
+        console.log "Updated best path in red: #{stringPath}"
+        @onlinePath.push(...stringPath)
+
+        myCar.path = updatedPath
+        visualizer.drawOnlinePath @onlinePath, 'red' # draw the best path on the map
+
+#
+
     clear: ->
         @set {}
         @carObject.lastTimeSpawn = null
@@ -322,6 +432,8 @@ class World
         @trackPath = []
         # clear lengthOnlyPath
         @lengthOnlyPath = []
+        # clear onlinePath
+        @onlinePath = []
 
         if settings.debugTestHtml
             document.getElementById('trackPath').innerHTML = '';
@@ -342,6 +454,10 @@ class World
             intersection.controlSignals.onTick delta
 
         for id, car of @cars.all()
+            if @time - @lastOnlinePathUpdate > settings.onlinePathUpdateInterval
+                if car.id == settings.myCar.id  and car.path.length > 2
+                    @lastOnlinePathUpdate = @time
+                    @getOnlineShortestPathAPI()
             car.move delta
             @removeCar car unless car.alive
 
@@ -363,6 +479,29 @@ class World
                 road.carsNumber = roadCarsNumber
             else
                 [lane.color = settings.colors.road for lane in road.lanes]
+
+            # update traffic light time for each road
+            sideId = road.targetSideId
+            intersection = @getIntersection(road.target.id)
+            lights = intersection.controlSignals.state[sideId]
+            flipInterval = intersection.controlSignals.flipInterval
+            lightTime = intersection.controlSignals.time
+
+            if lights[0] is 1 #L=green and FR=red
+                road.lanes[0].controlSignalState = 'green'
+                road.lanes[1].controlSignalState = 'red'
+
+            else if lights[1] == lights[2] == 1 #L=red and FR=green
+                road.lanes[1].controlSignalState = 'green'
+                road.lanes[0].controlSignalState = 'red'
+
+            road.lanes[0].greenLightDuration = flipInterval
+            road.lanes[0].redLightDuration = flipInterval
+            road.lanes[0].controlSignalTime = lightTime
+
+            road.lanes[1].greenLightDuration = flipInterval
+            road.lanes[1].redLightDuration = flipInterval
+            road.lanes[1].controlSignalTime = lightTime
 
     refreshCars: ->
         @addRandomCar() if @cars.length < @carsNumber

@@ -20,7 +20,7 @@ settings =
         hoveredGrid: '#f4e8e1'
         hoveredLane: '#dbd0ca'
     fps: 30
-    lightsFlipInterval: 160
+    lightsFlipInterval: 320
     gridSize: 14
     mapSize: 4  # default is 2
     averageCarLength: 4.5
@@ -51,11 +51,13 @@ settings =
 
 #   roads setting
     updateRoadsInterval: 50
+    onlinePathUpdateInterval : 100
 
 #   API
     pathFinderUrl: apiUrl + '/pathFinder'
     mapUrl: apiUrl + '/map'
     roadsUrl: apiUrl + '/roads'
+    onlinePathFinderUrl: apiUrl + '/onlinePathFinder'
 
 #   debug       # todo check if the element exists before setting the value
     debugTestHtml: document.getElementById('test') != null  # true if I am in the test.html page
