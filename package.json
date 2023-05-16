@@ -24,6 +24,7 @@
     "dat-gui": "^0.5.0",
     "jquery": "^3.6.4",
     "jquery-mousewheel": "^3.1.13",
+    "mqtt": "^4.3.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "three": "^0.150.1",

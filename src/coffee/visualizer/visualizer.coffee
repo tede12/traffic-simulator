@@ -19,6 +19,15 @@ ToolHighlighter = require './highlighter'
 Zoomer = require './zoomer'
 settings = require '../settings'
 
+
+port = 8883
+protocol: "mqtt"
+host = 'io.adafruit.com'
+username = "sirmat"
+password = "aio_CcIX34dhmTJxDN8msWlCWnciTmGd"
+topic = username + "/feeds/path"
+Client = require "../client"
+
 class Visualizer
     constructor: (@world) ->
         @$canvas = $('#canvas')
@@ -39,9 +48,12 @@ class Visualizer
         @_running = true
         @previousTime = 0
         @timeFactor = settings.defaultTimeFactor
+        @lastMqttRequest = 0
 
         @trackPath = world.trackPath
         @lengthOnlyTrackPath = world.lengthOnlyTrackPath
+        @client = new Client(host, port, username, password)
+
 
     updateVirtualScreen: ()->
 # add to window the information about the car settings.myCar.id
@@ -54,9 +66,8 @@ class Visualizer
         if not myCar
             return
 
-
-        carTrajectory = myCar.trajectory
-        nextLane = myCar.trajectory.next?.lane
+        carCurrentTrajectory = myCar.trajectory.current
+        nextLane = myCar.nextLane
 
         window.virtualScreen = {
             carPosition: myCar.coords
@@ -67,10 +78,39 @@ class Visualizer
 #           speed and acceleration  get only 2 decimals fixed
             carSpeed: if myCar.speed != null then myCar.speed.toFixed(2) else null
             carAcceleration: if myCar.getAcceleration() then myCar.getAcceleration().toFixed(2) else null
-            carLane: carTrajectory.lane.id
-            carRoad: carTrajectory.lane?.road?.id  # carTrajectory.lane could be undefined
+            carLane: if carCurrentTrajectory.lane.id then carCurrentTrajectory.lane.id else ""
+            carRoad: if carCurrentTrajectory.lane?.road?.id  then carCurrentTrajectory.lane.road.id else ""
             carTargetLane: if nextLane then nextLane.id else window.virtualScreen?.carTargetLane
         }
+
+        #mqtt publish
+        if @lastMqttRequest + 2000 < Date.now()
+            @lastMqttRequest = Date.now()
+            direction = null
+            switch (window.virtualScreen.carDirection)
+                when 'up'
+                    direction = "0"
+                    break
+                when 'right'
+                    direction = "1"
+                    break
+                when 'down'
+                    direction = "2"
+                    break
+                when 'left'
+                    direction = "3"
+                    break
+
+            payload = {
+                #carPosition: window.virtualScreen.carPosition
+                carDirection: direction
+                #carSpeed: window.virtualScreen.carSpeed
+                #carAcceleration: window.virtualScreen.carAcceleration
+                carLane:  window.virtualScreen.carLane
+                carRoad:  window.virtualScreen.carRoad
+                carTargetLane:  window.virtualScreen.carTargetLane
+            }
+            @client.publishTo(topic, payload)
 
 
     drawIntersection: (intersection, alpha) ->
