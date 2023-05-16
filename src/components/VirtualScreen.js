@@ -45,7 +45,7 @@ const VirtualScreen = () => {
                             <div style={{
                                 transition: 'transform 0.5s'
                             }}>
-                                {virtualScreen.carDirection === 'up' ? <ArrowUpward fontSize="large"/> : <></>}
+                                {virtualScreen.carDirection === 'forward' ? <ArrowUpward fontSize="large"/> : <></>}
                                 {virtualScreen.carDirection === 'down' ? <ArrowDownward fontSize="large"/> : <></>}
                                 {virtualScreen.carDirection === 'left' ? <TurnLeft fontSize="large"/> : <></>}
                                 {virtualScreen.carDirection === 'right' ? <TurnRight fontSize="large"/> : <></>}

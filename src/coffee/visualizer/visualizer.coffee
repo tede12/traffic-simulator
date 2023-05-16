@@ -68,13 +68,25 @@ class Visualizer
 
         carCurrentTrajectory = myCar.trajectory.current
         nextLane = myCar.nextLane
+        currentRoad = myCar.trajectory.current.lane.road
+        if nextLane and currentRoad
+            direction = currentRoad.getTurnDirection nextLane.road
+            switch (direction)
+                when 0
+                    direction = "left"
+                    break
+                when 1
+                    direction = "forward"
+                    break
+                when 2
+                    direction = "right"
+                    break
 
         window.virtualScreen = {
             carPosition: myCar.coords
 
 #           if new car direction is not defined, use the previous one
-            carDirection: myCar.trajectory.stringDirection or window.virtualScreen?.carDirection
-
+            carDirection: direction or window.virtualScreen?.carDirection
 #           speed and acceleration  get only 2 decimals fixed
             carSpeed: if myCar.speed != null then myCar.speed.toFixed(2) else null
             carAcceleration: if myCar.getAcceleration() then myCar.getAcceleration().toFixed(2) else null
@@ -88,17 +100,14 @@ class Visualizer
             @lastMqttRequest = Date.now()
             direction = null
             switch (window.virtualScreen.carDirection)
-                when 'up'
+                when 'left'
+                    direction = "3"
+                    break
+                when 'forward'
                     direction = "0"
                     break
                 when 'right'
                     direction = "1"
-                    break
-                when 'down'
-                    direction = "2"
-                    break
-                when 'left'
-                    direction = "3"
                     break
 
             payload = {

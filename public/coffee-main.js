@@ -48454,7 +48454,7 @@ Visualizer = (function() {
     }
 
     updateVirtualScreen() {
-      var car, carCurrentTrajectory, direction, id, myCar, nextLane, payload, ref, ref1, ref2, ref3, ref4;
+      var car, carCurrentTrajectory, currentRoad, direction, id, myCar, nextLane, payload, ref, ref1, ref2, ref3;
       // add to window the information about the car settings.myCar.id
       myCar = null;
       ref = this.world.cars.all();
@@ -48470,33 +48470,46 @@ Visualizer = (function() {
       }
       carCurrentTrajectory = myCar.trajectory.current;
       nextLane = myCar.nextLane;
+      currentRoad = myCar.trajectory.current.lane.road;
+      if (nextLane && currentRoad) {
+        direction = currentRoad.getTurnDirection(nextLane.road);
+        switch (direction) {
+          case 0:
+            direction = "left";
+            break;
+          case 1:
+            direction = "up";
+            break;
+          case 2:
+            direction = "right";
+            break;
+        }
+      }
       window.virtualScreen = {
         carPosition: myCar.coords,
         //           if new car direction is not defined, use the previous one
-        carDirection: myCar.trajectory.stringDirection || ((ref1 = window.virtualScreen) != null ? ref1.carDirection : void 0),
+        //carDirection: myCar.trajectory.current.lane.stringDirection or window.virtualScreen?.carDirection
+        carDirection: direction || "",
         //           speed and acceleration  get only 2 decimals fixed
         carSpeed: myCar.speed !== null ? myCar.speed.toFixed(2) : null,
         carAcceleration: myCar.getAcceleration() ? myCar.getAcceleration().toFixed(2) : null,
         carLane: carCurrentTrajectory.lane.id ? carCurrentTrajectory.lane.id : "",
-        carRoad: ((ref2 = carCurrentTrajectory.lane) != null ? (ref3 = ref2.road) != null ? ref3.id : void 0 : void 0) ? carCurrentTrajectory.lane.road.id : "",
-        carTargetLane: nextLane ? nextLane.id : (ref4 = window.virtualScreen) != null ? ref4.carTargetLane : void 0
+        carRoad: ((ref1 = carCurrentTrajectory.lane) != null ? (ref2 = ref1.road) != null ? ref2.id : void 0 : void 0) ? carCurrentTrajectory.lane.road.id : "",
+        carTargetLane: nextLane ? nextLane.id : (ref3 = window.virtualScreen) != null ? ref3.carTargetLane : void 0
       };
       //mqtt publish
       if (this.lastMqttRequest + 2000 < Date.now()) {
         this.lastMqttRequest = Date.now();
         direction = null;
         switch (window.virtualScreen.carDirection) {
+          case 'left':
+            direction = "3";
+            break;
           case 'up':
             direction = "0";
             break;
           case 'right':
             direction = "1";
-            break;
-          case 'down':
-            direction = "2";
-            break;
-          case 'left':
-            direction = "3";
             break;
         }
         payload = {
