@@ -33,7 +33,7 @@ waitForElements ['canvas', 'gui'], ->
 #  canvas = $('<canvas />', {id: 'canvas'})
 #  $(document.body).append(canvas)
 
-    # App code
+# App code
     console.log 'App started --> ' + new Date().toLocaleTimeString()
     window.settings = settings
     window.world = new World()
@@ -50,40 +50,71 @@ waitForElements ['canvas', 'gui'], ->
     window.visualizer = new Visualizer world
     visualizer.start()
 
-    #  -------------------------------------------------------------------------------------------------------------------
+    #  -----------------------------------------------------------------------------------------------------------------
     # create the GUI with custom configuration
-    gui = new DAT.GUI({autoPlace: false})
+    gui = new DAT.GUI({autoPlace: false, closeOnTop: false})
     gui.domElement.id = 'dat_gui'
     targetElement = document.getElementById('gui')
     targetElement.appendChild(gui.domElement)
+
+    # remove class="close-button" from the GUI  -> "Close Controls"
+    document.getElementsByClassName('close-button')[0].remove()
 
     ## style the GUI using CSS
     #  style = document.createElement('style')
     #  style.innerHTML = "#dat_gui { border: red;}"
     #  document.head.appendChild(style)
-    # --------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
 
-    guiWorld = gui.addFolder 'world'
+    changeSetup = (setup) ->
+        """
+        LightFlipInterval > is more time between lights flip, < is less time between lights flip
+        TimeFactor > car goes faster, < car goes slower
+        """
+        switch parseInt(setup)
+            when 0
+                # Normal
+                visualizer.timeFactor = settings.defaultTimeFactor
+                settings.lightsFlipInterval = 260
+            when 1
+                # Slow
+                visualizer.timeFactor = 2
+                settings.lightsFlipInterval = 170
+            when 2
+                # Fast
+                visualizer.timeFactor = 5
+                settings.lightsFlipInterval = 130
+            else
+                # Normal
+                visualizer.timeFactor = 5
+                settings.lightsFlipInterval = 260
+
+    qs = {
+        QuickSetup: 0
+    }
+
+    guiWorld = gui.addFolder 'Map'
     guiWorld.open()
     guiWorld.add world, 'save'
     guiWorld.add world, 'load'
     guiWorld.add world, 'clear'
     guiWorld.add world, 'generateMap'
-    guiVisualizer = gui.addFolder 'visualizer'
-#    guiVisualizer.open()
+    guiVisualizer = gui.addFolder 'Visualizer'
+    guiVisualizer.open()
     guiVisualizer.add(visualizer, 'running').listen()
+    gui.add(qs, 'QuickSetup', { Normal: 0, Slow: 1, Fast: 2 }).onChange(changeSetup)
     gui.add(settings, 'debug').listen()
     gui.add(settings, 'showRedLights').listen()
     gui.add(settings, 'triangles').listen()
     gui.add(settings, 'trafficHighlight').listen()
-    guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen()
+    guiVisualizer.add(visualizer.zoomer, 'scale', settings.minZoomLevel, settings.maxZoomLevel).listen()
     guiVisualizer.add(visualizer, 'timeFactor', 0.1, 10).listen()
     guiWorld.add(world, 'carsNumber').min(0).max(1000).step(1).listen()
     guiWorld.add(world, 'instantSpeed').step(0.00001).listen()
     guiWorld.add(world, 'time').listen()
     guiWorld.add(world, 'activeCars').listen()
     gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen()
-    guiSavedMaps = gui.addFolder('saved maps')
+    guiSavedMaps = gui.addFolder('Saved maps')
     for mapName, mapData of savedMaps
         guiSavedMaps.add(world, mapName)
 #    guiSavedMaps.open()

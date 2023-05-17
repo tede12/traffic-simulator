@@ -27,6 +27,8 @@ const settings = {
     averageCarLength: 4.5,
     defaultTimeFactor: 5,
     defaultZoomLevel: 3, // Change this value to change the default zoom level (default is 3)
+    maxZoomLevel: 20,
+    minZoomLevel: 0.1,
     defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
     connectedMap: true, // enable to generate only connected maps (all intersections are connected)
     debug: true,

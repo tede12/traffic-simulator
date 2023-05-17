@@ -107,7 +107,7 @@ function Connection() {
     return (
         <CardContent>
             <Box sx={{position: 'relative'}}>   {/*  sx={{position: 'relative', height: 200}}>*/}
-                <div style={{minHeight: '50px', display: 'flex', justifyContent: 'left', alignItems: 'center'}}>
+                <div style={{minHeight: '30px', display: 'flex', justifyContent: 'left', alignItems: 'center'}}>
                     <div
                         style={{marginLeft: '10px', width: '20px', height: '20px', borderRadius: '10px',}}> {connected ?
                         <CustomizedCircleIcon sx={{color: green[700]}} fontSize="small"/> :

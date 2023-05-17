@@ -1,7 +1,7 @@
 import {Component} from "react";
-import {Box, Grid} from '@mui/material';
 import Connection from "./components/Connection";
 import VirtualScreen from "./components/VirtualScreen";
+import {Box, Grid} from '@mui/material';
 
 
 export default class App extends Component {
@@ -29,33 +29,45 @@ export default class App extends Component {
         return (
             <div className="App">
                 <header className="App-header">
-                    <h2 style={{textAlign: "center"}}>Smart Traffic Simulator</h2>
+                    <h3 style={{textAlign: "center"}}>Smart Traffic Simulator</h3>
                 </header>
 
                 <Box>
                     <Grid container>
                         {/* CANVAS */}
                         <Grid item xs={10}>
-                            <canvas id="canvas" style={{
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                // Height should be in px and the 90% of the window height
-                                height: window.innerHeight * 0.85 + "px",
-                                display: "block",        // Absolutely needed
-                                // position: "relative"
-                                // overflow: "hidden"
-                            }}/>
+                            <canvas
+                                id="canvas"
+                                style={{
+                                    top: 0,
+                                    left: 0,
+                                    width: "100%",
+                                    // Height should be in px and the 90% of the window height
+                                    height: window.innerHeight * 0.87 + "px",
+                                    display: "block", // Absolutely needed
+                                    // position: "relative"
+                                    // overflow: "hidden"
+                                }}
+                            />
                         </Grid>
 
-                        {/* GUI */}
                         <Grid item xs={2} padding={1}>
-                            <h4>Debug options</h4>
+                            {/*<h4>Debug options</h4>*/}
+                            {/* GUI */}
 
-                            <div id="gui" style={{
-                                // position: "absolute"
-                                height: window.innerHeight * 0.55 + "px",
-                            }}/>
+                            <Grid item xs={12}>
+                                <div
+                                    id="gui-container"
+                                    style={{
+                                        height: window.innerHeight * 0.6 + "px",
+                                        overflowY: "auto", // Enable vertical scrolling
+                                        overflowX: "hidden",    // Disable horizontal scrolling
+                                        // padding: "10px", // Add padding for aesthetics
+                                    }}
+                                >
+                                    <div id="gui"/>
+                                </div>
+                            </Grid>
 
                             {/* VIRTUAL SCREEN */}
                             <VirtualScreen/>
@@ -64,11 +76,7 @@ export default class App extends Component {
                         {/* ----- CONNECTION ----- */}
                         <Connection/>
                     </Grid>
-
-
                 </Box>
-
-
             </div>
 
         );

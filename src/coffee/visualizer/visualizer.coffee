@@ -410,7 +410,7 @@ class Visualizer
             l = 0.90 - 0.30 * car.speed / car.maxSpeed
             style = chroma(car.color, 0.8, l, 'hsl').hex()
 
-        # @graphics.drawImage @carImage, rect
+        #        @graphics.drawImage @carImage, rect
         @graphics.fillRect boundRect, style
         @graphics.restore()
         if settings.debug

@@ -30,7 +30,6 @@ const VirtualScreen = () => {
             }, 500
         );
 
-
     }, []);
 
     return (
@@ -41,11 +40,8 @@ const VirtualScreen = () => {
                 </Typography>
                 <Grid container alignItems="center">
                     <Grid item xs={12} sm={6} md={4}>
-                        <Grid direction="column" alignItems="center" justifyContent="center">
-                            {/*    Add distance from virtualScreen.distance */}
-                            <Typography variant="h6" component="div">
-                                {virtualScreen.carDistanceToEnd || ''}
-                            </Typography>
+                        <Grid container direction="column" alignItems="center" justifyContent="center"
+                              columnSpacing={{xs: 1, sm: 2, md: 3}}>
 
                             <div style={{
                                 transition: 'transform 0.5s'
@@ -55,6 +51,10 @@ const VirtualScreen = () => {
                                 {virtualScreen.carDirection === 'left' ? <TurnLeft fontSize="large"/> : <></>}
                                 {virtualScreen.carDirection === 'right' ? <TurnRight fontSize="large"/> : <></>}
                             </div>
+                            <Typography variant="h6" component="div">
+                                {virtualScreen.carDistanceToEnd || ''}
+                            </Typography>
+
 
                             <div style={{transition: 'left 0.5s'}}>
                                 <DirectionsCar fontSize="large"/>

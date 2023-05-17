@@ -4,9 +4,32 @@ This is a fork of [RoadTrafficSimulator](https://github.com/volkhin/RoadTrafficS
 
 The main purpose of this project is to simulate traffic on a map and to find the best path for a car to reach its destination.
 
+<div align="center">
+  <p><b>Simulator Preview</b></p>
+</div>
 <p align="center">
    <img src="./assets/images/preview.png" width="70%"/><br/>
 </p>
+
+[//]: # (<div align="center">)
+
+[//]: # (  <p><b>Traffic Highlights</b></p>)
+
+[//]: # (</div>)
+
+[//]: # (<p align="center">)
+
+[//]: # (   <img src="./assets/images/traffic-highlight.png" width="70%"/><br/>)
+
+[//]: # (</p>)
+
+<div align="center">
+  <p><b>Best Path Finder</b></p>
+</div>
+<p align="center">
+   <img src="./assets/images/bestPath.png" width="70%"/><br/>
+</p>
+
 
 # How to run
 
@@ -52,9 +75,9 @@ For running the pathFinder server, you need to have installed [ITAS-API](https:/
 - [ ] Set new weights and get the current best path when car is moving
   - [x] endpoint on API in order to set new weights or an updated version of the map object
   - [x] get number of cars on each road (don't overcomplicate things with lane based on next intersection)
-  - [ ] get traffic lights status for each intersection and improve the algorithm with this info
-- [ ] Socket for checking if pathFinder server is running
-- [ ] Integrate MQTT with correct request protocol (meeting required)
+  - [x] get traffic lights status for each intersection and improve the algorithm with this info
+- [x] Socket for checking if pathFinder server is running
+- [x] Integrate MQTT with correct request protocol (meeting required)
 
 - [ ] Control my car with arrow keys
 

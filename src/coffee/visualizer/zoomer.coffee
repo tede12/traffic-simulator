@@ -19,8 +19,21 @@ class Zoomer extends Tool
         @center = new Point settings.myWidth / 2, settings.myHeight / 2
 
     @property 'scale',
-        get: -> @_scale
-        set: (scale) -> @zoom scale, @screenCenter
+        get: ->
+            if @_scale > settings.maxZoomLevel
+                @_scale = settings.maxZoomLevel
+            else if @_scale < settings.minZoomLevel
+                @_scale = settings.minZoomLevel
+            else
+                @_scale
+
+        set: (scale) ->
+            if scale > settings.maxZoomLevel
+                scale = settings.maxZoomLevel
+            else if scale < settings.minZoomLevel
+                scale = settings.minZoomLevel
+
+            @zoom scale, @screenCenter
 
     toCellCoords: (point) ->
         """Cell coordinates of a point on the canvas."""
@@ -56,6 +69,11 @@ class Zoomer extends Tool
         @ctx.scale k, k
 
     zoom: (k, zoomCenter) ->
+        if k > settings.maxZoomLevel
+            k = settings.maxZoomLevel
+        else if k < settings.minZoomLevel
+            k = settings.minZoomLevel
+
         k ?= 1
         offset = @center.subtract zoomCenter
         @center = zoomCenter.add offset.mult k / @_scale

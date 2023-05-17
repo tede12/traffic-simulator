@@ -42677,7 +42677,7 @@ waitForElements = function(ids, callback) {
 };
 
 waitForElements(['canvas', 'gui'], function() {
-  var gui, guiSavedMaps, guiVisualizer, guiWorld, mapData, mapName, results, targetElement;
+  var changeSetup, gui, guiSavedMaps, guiVisualizer, guiWorld, mapData, mapName, qs, results, targetElement;
   // Created in the React component
   //  canvas = $('<canvas />', {id: 'canvas'})
   //  $(document.body).append(canvas)
@@ -42697,40 +42697,73 @@ waitForElements(['canvas', 'gui'], function() {
   }
   window.visualizer = new Visualizer(world);
   visualizer.start();
-  //  -------------------------------------------------------------------------------------------------------------------
+  //  -----------------------------------------------------------------------------------------------------------------
   // create the GUI with custom configuration
   gui = new DAT.GUI({
-    autoPlace: false
+    autoPlace: false,
+    closeOnTop: false
   });
   gui.domElement.id = 'dat_gui';
   targetElement = document.getElementById('gui');
   targetElement.appendChild(gui.domElement);
+  // remove class="close-button" from the GUI  -> "Close Controls"
+  document.getElementsByClassName('close-button')[0].remove();
   //# style the GUI using CSS
   //  style = document.createElement('style')
   //  style.innerHTML = "#dat_gui { border: red;}"
   //  document.head.appendChild(style)
-  // --------------------------------------------------------------------------------------------------------------------
-  guiWorld = gui.addFolder('world');
+  // ------------------------------------------------------------------------------------------------------------------
+  changeSetup = function(setup) {
+    `LightFlipInterval > is more time between lights flip, < is less time between lights flip
+TimeFactor > car goes faster, < car goes slower`;
+    switch (parseInt(setup)) {
+      case 0:
+        // Normal
+        visualizer.timeFactor = settings.defaultTimeFactor;
+        return settings.lightsFlipInterval = 260;
+      case 1:
+        // Slow
+        visualizer.timeFactor = 2;
+        return settings.lightsFlipInterval = 170;
+      case 2:
+        // Fast
+        visualizer.timeFactor = 5;
+        return settings.lightsFlipInterval = 130;
+      default:
+        // Normal
+        visualizer.timeFactor = 5;
+        return settings.lightsFlipInterval = 260;
+    }
+  };
+  qs = {
+    QuickSetup: 0
+  };
+  guiWorld = gui.addFolder('Map');
   guiWorld.open();
   guiWorld.add(world, 'save');
   guiWorld.add(world, 'load');
   guiWorld.add(world, 'clear');
   guiWorld.add(world, 'generateMap');
-  guiVisualizer = gui.addFolder('visualizer');
-  //    guiVisualizer.open()
+  guiVisualizer = gui.addFolder('Visualizer');
+  guiVisualizer.open();
   guiVisualizer.add(visualizer, 'running').listen();
+  gui.add(qs, 'QuickSetup', {
+    Normal: 0,
+    Slow: 1,
+    Fast: 2
+  }).onChange(changeSetup);
   gui.add(settings, 'debug').listen();
   gui.add(settings, 'showRedLights').listen();
   gui.add(settings, 'triangles').listen();
   gui.add(settings, 'trafficHighlight').listen();
-  guiVisualizer.add(visualizer.zoomer, 'scale', 0.1, 2).listen();
+  guiVisualizer.add(visualizer.zoomer, 'scale', settings.minZoomLevel, settings.maxZoomLevel).listen();
   guiVisualizer.add(visualizer, 'timeFactor', 0.1, 10).listen();
   guiWorld.add(world, 'carsNumber').min(0).max(1000).step(1).listen();
   guiWorld.add(world, 'instantSpeed').step(0.00001).listen();
   guiWorld.add(world, 'time').listen();
   guiWorld.add(world, 'activeCars').listen();
   gui.add(settings, 'lightsFlipInterval', 0, 400, 0.01).listen();
-  guiSavedMaps = gui.addFolder('saved maps');
+  guiSavedMaps = gui.addFolder('Saved maps');
   results = [];
   for (mapName in savedMaps) {
     mapData = savedMaps[mapName];
@@ -47560,6 +47593,8 @@ const settings = {
     averageCarLength: 4.5,
     defaultTimeFactor: 5,
     defaultZoomLevel: 3, // Change this value to change the default zoom level (default is 3)
+    maxZoomLevel: 20,
+    minZoomLevel: 0.1,
     defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
     connectedMap: true, // enable to generate only connected maps (all intersections are connected)
     debug: true,
@@ -48875,7 +48910,7 @@ Visualizer = (function() {
         l = 0.90 - 0.30 * car.speed / car.maxSpeed;
         style = chroma(car.color, 0.8, l, 'hsl').hex();
       }
-      // @graphics.drawImage @carImage, rect
+      //        @graphics.drawImage @carImage, rect
       this.graphics.fillRect(boundRect, style);
       this.graphics.restore();
       if (settings.debug) {
@@ -49422,6 +49457,11 @@ Zoomer = (function() {
 
     zoom(k, zoomCenter) {
       var offset;
+      if (k > settings.maxZoomLevel) {
+        k = settings.maxZoomLevel;
+      } else if (k < settings.minZoomLevel) {
+        k = settings.minZoomLevel;
+      }
       if (k == null) {
         k = 1;
       }
@@ -49447,9 +49487,20 @@ Zoomer = (function() {
 
   Zoomer.property('scale', {
     get: function() {
-      return this._scale;
+      if (this._scale > settings.maxZoomLevel) {
+        return this._scale = settings.maxZoomLevel;
+      } else if (this._scale < settings.minZoomLevel) {
+        return this._scale = settings.minZoomLevel;
+      } else {
+        return this._scale;
+      }
     },
     set: function(scale) {
+      if (scale > settings.maxZoomLevel) {
+        scale = settings.maxZoomLevel;
+      } else if (scale < settings.minZoomLevel) {
+        scale = settings.minZoomLevel;
+      }
       return this.zoom(scale, this.screenCenter);
     }
   });
