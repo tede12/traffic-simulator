@@ -33,7 +33,7 @@ export default class App extends Component {
                 </header>
 
                 <Box>
-                    <Grid container spacing={2}>
+                    <Grid container>
                         {/* CANVAS */}
                         <Grid item xs={10}>
                             <canvas id="canvas" style={{
@@ -54,12 +54,8 @@ export default class App extends Component {
 
                             <div id="gui" style={{
                                 // position: "absolute"
-                                height: window.innerHeight * 0.6 + "px",
+                                height: window.innerHeight * 0.55 + "px",
                             }}/>
-
-                            {/*<h2>Alive cars: <br/>*/}
-                            {/*    <span>{this.state.carsNumber}</span>*/}
-                            {/*</h2>*/}
 
                             {/* VIRTUAL SCREEN */}
                             <VirtualScreen/>

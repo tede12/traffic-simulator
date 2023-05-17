@@ -32,14 +32,13 @@ const VirtualScreen = () => {
 
     }, []);
 
-
     return (
         <Card>
             <CardContent>
                 <Typography variant="h6" gutterBottom>
                     Navigator
                 </Typography>
-                <Grid container spacing={2} alignItems="center">
+                <Grid container alignItems="center">
                     <Grid item xs={12} sm={6} md={4}>
                         <Grid direction="column" alignItems="center" justifyContent="center">
                             <div style={{

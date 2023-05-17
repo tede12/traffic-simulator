@@ -18,14 +18,6 @@ ToolRoadBuilder = require './road-builder'
 ToolHighlighter = require './highlighter'
 Zoomer = require './zoomer'
 settings = require '../settings'
-
-
-port = 8883
-protocol: "mqtt"
-host = 'io.adafruit.com'
-username = "sirmat"
-password = "aio_CcIX34dhmTJxDN8msWlCWnciTmGd"
-topic = username + "/feeds/path"
 Client = require "../client"
 
 class Visualizer
@@ -52,11 +44,11 @@ class Visualizer
 
         @trackPath = world.trackPath
         @lengthOnlyTrackPath = world.lengthOnlyTrackPath
-        @client = new Client(host, port, username, password)
+        @client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password)
 
 
     updateVirtualScreen: ()->
-# add to window the information about the car settings.myCar.id
+#       add to window the information about the car settings.myCar.id
         myCar = null
         for id, car of @world.cars.all()
             if id == settings.myCar.id
@@ -111,15 +103,15 @@ class Visualizer
                     break
 
             payload = {
-                #carPosition: window.virtualScreen.carPosition
+#carPosition: window.virtualScreen.carPosition
                 carDirection: direction
-                #carSpeed: window.virtualScreen.carSpeed
-                #carAcceleration: window.virtualScreen.carAcceleration
-                carLane:  window.virtualScreen.carLane
-                carRoad:  window.virtualScreen.carRoad
-                carTargetLane:  window.virtualScreen.carTargetLane
+#carSpeed: window.virtualScreen.carSpeed
+#carAcceleration: window.virtualScreen.carAcceleration
+                carLane: window.virtualScreen.carLane
+                carRoad: window.virtualScreen.carRoad
+                carTargetLane: window.virtualScreen.carTargetLane
             }
-            @client.publishTo(topic, payload)
+            @client.publishTo(settings.mqtt.topic, payload)
 
 
     drawIntersection: (intersection, alpha) ->

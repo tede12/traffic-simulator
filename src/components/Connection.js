@@ -4,6 +4,7 @@ import {styled} from '@mui/material/styles';
 import CircleIcon from '@mui/icons-material/Circle';
 import {Box, CardContent} from "@mui/material";
 import {green, red} from '@mui/material/colors';
+import {apiUrl} from "../coffee/settings";
 
 
 const CustomizedCircleIcon = styled(CircleIcon)`
@@ -18,13 +19,11 @@ const CustomizedCircleIcon = styled(CircleIcon)`
 
 
 function Connection() {
-    const [data, setData] = useState([]);
+    // const [data, setData] = useState([]);
     const [connected, setConnected] = useState(false);
     const [lastConnection, setLastConnection] = useState(null);
-    const [timePassed, settimePassed] = useState(null);
-    const [animate, setAnimate] = useState(false);
+    const [timePassed, setTimePassed] = useState(null);
 
-    const API_URL = 'http://127.0.0.1:8000/api/';
 
     const displayTime = (seconds, granularity = 2) => {
         let result = [];
@@ -64,7 +63,7 @@ function Connection() {
     };
 
     const fetchDataSync = () => {
-        axios.get(API_URL + 'isConnected', {
+        axios.get(apiUrl + '/isConnected', {
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -72,7 +71,7 @@ function Connection() {
             timeout: 3000,
         }).then((res) => {
 
-            setData(res.data);
+            // setData(res.data);
 
             setConnected(true);
             setLastConnection(new Date());
@@ -85,30 +84,25 @@ function Connection() {
     };
 
     useEffect(() => {
+        // first fetch (for setting the initial state)
         fetchDataSync();
-        const intervalId = setInterval(fetchDataSync, 5000);
-        return () => clearInterval(intervalId);
-    }, []);
 
-    useEffect(() => {
+        // then fetch every 5 seconds
+        const fetchDataInterval = setInterval(() => {
+            fetchDataSync();
+        }, 5000);
 
-        settimePassed(convertTimeToReadable());
-        const intervalId = setInterval(() => {
-            settimePassed(convertTimeToReadable());
-        }, 1000);
-        return () => clearInterval(intervalId);
-
-    }, [connected, convertTimeToReadable, lastConnection]);
-
-    // For animation of connected/disconnected
-    useEffect(() => {
-        let intervalId = setInterval(() => {
-            setAnimate(!animate);
+        // then update the time passed every second
+        const updateTimePassedInterval = setInterval(() => {
+            setTimePassed(convertTimeToReadable());
         }, 1000);
 
-        return () => clearInterval(intervalId);
-    }, [animate]);
-
+        // Cleanup function to clear intervals when the component unmounts or when dependencies change
+        return () => {
+            clearInterval(fetchDataInterval);
+            clearInterval(updateTimePassedInterval);
+        };
+    }); // Empty dependency array ensures that the effect runs only once
 
     return (
         <CardContent>
@@ -123,7 +117,7 @@ function Connection() {
                         <span
                             style={{paddingRight: '20px'}}>Connection {connected ? 'active' : 'inactive'} {timePassed ? '(' + timePassed + ')' : ''} </span>
                         <span style={{paddingRight: '20px'}}> - </span>
-                        <a href={API_URL} target="_blank" rel="noopener noreferrer"> API</a>
+                        <a href={apiUrl} target="_blank" rel="noopener noreferrer"> API</a>
                     </div>
 
                 </div>
