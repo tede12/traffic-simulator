@@ -5,7 +5,7 @@ require '../helpers.coffee'
 Point = require '../geom/point.coffee'
 Rect = require '../geom/rect.coffee'
 Tool = require './tool.coffee'
-settings = require '../settings.coffee'
+settings = require '../settings'
 Point = require '../geom/point.coffee'
 
 

@@ -74,6 +74,15 @@ class Visualizer
                     direction = "right"
                     break
 
+        # calculate distance from the car to the end of the road
+        distanceToEnd = 0
+        if carCurrentTrajectory.lane.road
+            distanceToEnd = carCurrentTrajectory.lane.road.length - carCurrentTrajectory.position
+            # remove the intersection length
+            #            distanceToEnd -= currentRoad.target.rect._width
+            if distanceToEnd < 3.5
+                distanceToEnd = 0
+
         window.virtualScreen = {
             carPosition: myCar.coords
 
@@ -85,6 +94,8 @@ class Visualizer
             carLane: if carCurrentTrajectory.lane.id then carCurrentTrajectory.lane.id else ""
             carRoad: if carCurrentTrajectory.lane?.road?.id  then carCurrentTrajectory.lane.road.id else ""
             carTargetLane: if nextLane then nextLane.id else window.virtualScreen?.carTargetLane
+#           distanceToEnd int
+            carDistanceToEnd: distanceToEnd.toFixed(1) + 'm'
         }
 
         #mqtt publish

@@ -2,7 +2,7 @@
 
 require '../helpers.coffee'
 Tool = require './tool.coffee'
-settings = require '../settings.coffee'
+settings = require '../settings'
 Point = require '../geom/point.coffee'
 
 class ToolHighlighter extends Tool

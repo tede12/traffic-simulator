@@ -11,7 +11,8 @@ const VirtualScreen = () => {
         carLane: undefined,
         carRoad: undefined,
         carSpeed: 0,
-        carTargetLane: undefined
+        carTargetLane: undefined,
+        carDistanceToEnd: undefined,
     });
 
     const getNewData = () => {
@@ -41,6 +42,11 @@ const VirtualScreen = () => {
                 <Grid container alignItems="center">
                     <Grid item xs={12} sm={6} md={4}>
                         <Grid direction="column" alignItems="center" justifyContent="center">
+                            {/*    Add distance from virtualScreen.distance */}
+                            <Typography variant="h6" component="div">
+                                {virtualScreen.carDistanceToEnd || ''}
+                            </Typography>
+
                             <div style={{
                                 transition: 'transform 0.5s'
                             }}>
@@ -75,6 +81,7 @@ const VirtualScreen = () => {
                             <strong>Next Lane:</
                                 strong> {virtualScreen.carTargetLane || 'N/A'}
                         </Typography>
+
                     </Grid>
                 </Grid>
             </CardContent>

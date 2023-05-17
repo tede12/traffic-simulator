@@ -42717,7 +42717,7 @@ waitForElements(['canvas', 'gui'], function() {
   guiWorld.add(world, 'clear');
   guiWorld.add(world, 'generateMap');
   guiVisualizer = gui.addFolder('visualizer');
-  guiVisualizer.open();
+  //    guiVisualizer.open()
   guiVisualizer.add(visualizer, 'running').listen();
   gui.add(settings, 'debug').listen();
   gui.add(settings, 'showRedLights').listen();
@@ -47531,82 +47531,84 @@ module.exports = World;
 
 
 },{"../geom/rect":134,"../helpers":136,"../maps":137,"../mapsIdCounter":138,"../settings":148,"./car":139,"./intersection":141,"./pool":144,"./road":145,"underscore":107,"uuid":111}],148:[function(require,module,exports){
-'use strict';
-var apiUrl, settings;
-
 // Development API
-// apiUrl = 'http://localhost:8000/api';
+// const apiUrl = 'http://localhost:8000/api';
 
 // Production API
-apiUrl = 'https://itas.ddns.net/api';
+const apiUrl = 'https://itas.ddns.net/api';
 
-settings = {
-  colors: {
-    background: '#FFFFFF', // 97a1a1'
-    redLight: 'hsl(0, 100%, 50%)',
-    greenLight: '#85ee00',
-    intersection: '#586970',
-    road: '#586970',
-    roadMarking: '#bbb',
-    hoveredIntersection: '#3d4c53',
-    tempRoad: '#aaa',
-    gridPoint: '#586970',
-    grid1: 'rgba(255, 255, 255, 0.5)',
-    grid2: 'rgba(220, 220, 220, 0.5)',
-    hoveredGrid: '#f4e8e1',
-    hoveredLane: '#dbd0ca'
-  },
-  fps: 30,
-  lightsFlipInterval: 260,
-  gridSize: 14,
-  mapSize: 4, // default is 2
-  averageCarLength: 4.5,
-  defaultTimeFactor: 5,
-  defaultZoomLevel: 3, // Change this value to change the default zoom level (default is 3)
-  defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
-  connectedMap: true, // enable to generate only connected maps (all intersections are connected)
-  debug: true,
-  myWidth: 0,
-  myHeight: 0,
-  //   signals settings
-  showRedLights: true,
-  triangles: true, // false -> circles
-  trafficHighlight: true,
-  carsNumber: 150,
-  carsGap: 5,
-  waitCarSpawn: 40, // time dependent to the canvas time factor, it's not seconds
-  tooLongStop: 1000,
-  //   car settings
-  myCar: {
-    id: "MACCHINA",
-    color: "#000000",
-    maxFollowPoints: 1000, // 3000 is the default value, 0 to disable
-    carLine: 'white'
-  },
-  //   roads setting
-  updateRoadsInterval: 50,
-  onlinePathUpdateInterval: 100,
-  //   API
-  pathFinderUrl: apiUrl + '/pathFinder',
-  mapUrl: apiUrl + '/map',
-  roadsUrl: apiUrl + '/roads',
-  onlinePathFinderUrl: apiUrl + '/onlinePathFinder',
-  //   mqtt settings
-  mqtt: {
-    port: 8883,
-    protocol: "mqtts",
-    host: 'io.adafruit.com',
-    username: "sirmat",
-    password: "aio_CcIX34dhmTJxDN8msWlCWnciTmGd",
-    topic: "sirmat" + "/feeds/path" // username + feed
-  },
-  
-  //   debug       # todo check if the element exists before setting the value
-  debugTestHtml: document.getElementById('test') !== null // true if I am in the test.html page
+const settings = {
+    colors: {
+        background: '#FFFFFF', // 97a1a1'
+        redLight: 'hsl(0, 100%, 50%)',
+        greenLight: '#85ee00',
+        intersection: '#586970',
+        road: '#586970',
+        roadMarking: '#bbb',
+        hoveredIntersection: '#3d4c53',
+        tempRoad: '#aaa',
+        gridPoint: '#586970',
+        grid1: 'rgba(255, 255, 255, 0.5)',
+        grid2: 'rgba(220, 220, 220, 0.5)',
+        hoveredGrid: '#f4e8e1',
+        hoveredLane: '#dbd0ca',
+    },
+    fps: 30,
+    lightsFlipInterval: 260,
+    gridSize: 14,
+    mapSize: 4, // default is 2
+    averageCarLength: 4.5,
+    defaultTimeFactor: 5,
+    defaultZoomLevel: 3, // Change this value to change the default zoom level (default is 3)
+    defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
+    connectedMap: true, // enable to generate only connected maps (all intersections are connected)
+    debug: true,
+    myWidth: 0,
+    myHeight: 0,
+
+    // signals settings
+    showRedLights: true,
+    triangles: true, // false -> circles
+    trafficHighlight: true,
+    carsNumber: 150,
+    carsGap: 5,
+    waitCarSpawn: 40, // time dependent to the canvas time factor, it's not seconds
+    tooLongStop: 1000,
+
+    // car settings
+    myCar: {
+        id: 'MACCHINA',
+        color: '#000000',
+        maxFollowPoints: 1000, // 3000 is the default value, 0 to disable
+        carLine: 'white',
+    },
+
+    // roads setting
+    updateRoadsInterval: 50,
+    onlinePathUpdateInterval: 100,
+
+    // API
+    apiUrl: apiUrl,
+    pathFinderUrl: apiUrl + '/pathFinder',
+    mapUrl: apiUrl + '/map',
+    roadsUrl: apiUrl + '/roads',
+    onlinePathFinderUrl: apiUrl + '/onlinePathFinder',
+
+    // mqtt settings
+    mqtt: {
+        port: 8883,
+        protocol: 'mqtts',
+        host: 'io.adafruit.com',
+        username: 'sirmat',
+        password: 'aio_CcIX34dhmTJxDN8msWlCWnciTmGd',
+        topic: 'sirmat/feeds/path', // username + feed = sirmat + /feeds/path
+    },
+
+    // debug
+    debugTestHtml: document.getElementById('test') != null, // true if I am in the test.html page
 };
 
 module.exports = settings;
-
 
 },{}],149:[function(require,module,exports){
 'use strict';
@@ -47820,7 +47822,7 @@ require('../helpers.coffee');
 
 Tool = require('./tool.coffee');
 
-settings = require('../settings.coffee');
+settings = require('../settings');
 
 Point = require('../geom/point.coffee');
 
@@ -47913,7 +47915,7 @@ ToolHighlighter = class ToolHighlighter extends Tool {
 module.exports = ToolHighlighter;
 
 
-},{"../geom/point.coffee":133,"../helpers.coffee":136,"../settings.coffee":148,"./tool.coffee":155}],151:[function(require,module,exports){
+},{"../geom/point.coffee":133,"../helpers.coffee":136,"../settings":148,"./tool.coffee":155}],151:[function(require,module,exports){
 'use strict';
 var Intersection, Tool, ToolIntersectionBuilder,
   boundMethodCheck = function(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new Error('Bound instance method accessed before binding'); } };
@@ -48105,7 +48107,7 @@ Car = require('../model/car.coffee');
 
 Road = require('../model/road.coffee');
 
-settings = require("../settings.coffee");
+settings = require("../settings");
 
 ToolRoadBuilder = class ToolRoadBuilder extends Tool {
   constructor() {
@@ -48243,7 +48245,7 @@ ToolRoadBuilder = class ToolRoadBuilder extends Tool {
 module.exports = ToolRoadBuilder;
 
 
-},{"../helpers.coffee":136,"../model/car.coffee":139,"../model/road.coffee":145,"../settings.coffee":148,"./tool.coffee":155,"underscore":107}],155:[function(require,module,exports){
+},{"../helpers.coffee":136,"../model/car.coffee":139,"../model/road.coffee":145,"../settings":148,"./tool.coffee":155,"underscore":107}],155:[function(require,module,exports){
 'use strict';
 var $, DOCUMENT_METHODS, METHODS, Point, Rect, Tool, _;
 
@@ -48478,7 +48480,7 @@ Visualizer = (function() {
     }
 
     updateVirtualScreen() {
-      var car, carCurrentTrajectory, currentRoad, direction, id, myCar, nextLane, payload, ref, ref1, ref2, ref3, ref4;
+      var car, carCurrentTrajectory, currentRoad, direction, distanceToEnd, id, myCar, nextLane, payload, ref, ref1, ref2, ref3, ref4;
       //       add to window the information about the car settings.myCar.id
       myCar = null;
       ref = this.world.cars.all();
@@ -48509,6 +48511,16 @@ Visualizer = (function() {
             break;
         }
       }
+      // calculate distance from the car to the end of the road
+      distanceToEnd = 0;
+      if (carCurrentTrajectory.lane.road) {
+        distanceToEnd = carCurrentTrajectory.lane.road.length - carCurrentTrajectory.position;
+        // remove the intersection length
+        //            distanceToEnd -= currentRoad.target.rect._width
+        if (distanceToEnd < 3.5) {
+          distanceToEnd = 0;
+        }
+      }
       window.virtualScreen = {
         carPosition: myCar.coords,
         //           if new car direction is not defined, use the previous one
@@ -48518,7 +48530,9 @@ Visualizer = (function() {
         carAcceleration: myCar.getAcceleration() ? myCar.getAcceleration().toFixed(2) : null,
         carLane: carCurrentTrajectory.lane.id ? carCurrentTrajectory.lane.id : "",
         carRoad: ((ref2 = carCurrentTrajectory.lane) != null ? (ref3 = ref2.road) != null ? ref3.id : void 0 : void 0) ? carCurrentTrajectory.lane.road.id : "",
-        carTargetLane: nextLane ? nextLane.id : (ref4 = window.virtualScreen) != null ? ref4.carTargetLane : void 0
+        carTargetLane: nextLane ? nextLane.id : (ref4 = window.virtualScreen) != null ? ref4.carTargetLane : void 0,
+        //           distanceToEnd int
+        carDistanceToEnd: distanceToEnd.toFixed(1) + 'm'
       };
       //mqtt publish
       if (this.lastMqttRequest + 2000 < Date.now()) {
@@ -49345,7 +49359,7 @@ Rect = require('../geom/rect.coffee');
 
 Tool = require('./tool.coffee');
 
-settings = require('../settings.coffee');
+settings = require('../settings');
 
 Point = require('../geom/point.coffee');
 
@@ -49447,6 +49461,6 @@ Zoomer = (function() {
 module.exports = Zoomer;
 
 
-},{"../geom/point.coffee":133,"../geom/rect.coffee":134,"../helpers.coffee":136,"../settings.coffee":148,"./tool.coffee":155}]},{},[130])
+},{"../geom/point.coffee":133,"../geom/rect.coffee":134,"../helpers.coffee":136,"../settings":148,"./tool.coffee":155}]},{},[130])
 
 //# sourceMappingURL=coffee-main.js.map

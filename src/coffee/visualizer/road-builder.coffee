@@ -5,7 +5,7 @@ _ = require 'underscore'
 Tool = require './tool.coffee'
 Car = require '../model/car.coffee'
 Road = require '../model/road.coffee'
-settings = require("../settings.coffee")
+settings = require("../settings")
 
 class ToolRoadBuilder extends Tool
     constructor: ->

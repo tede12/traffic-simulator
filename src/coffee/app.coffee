@@ -70,7 +70,7 @@ waitForElements ['canvas', 'gui'], ->
     guiWorld.add world, 'clear'
     guiWorld.add world, 'generateMap'
     guiVisualizer = gui.addFolder 'visualizer'
-    guiVisualizer.open()
+#    guiVisualizer.open()
     guiVisualizer.add(visualizer, 'running').listen()
     gui.add(settings, 'debug').listen()
     gui.add(settings, 'showRedLights').listen()
