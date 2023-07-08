@@ -53,6 +53,10 @@
     "gulp-sourcemaps": "^3.0.0",
     "gulp-uglify": "^3.0.2",
     "gulp-util": "^3.0.8",
+    "html-inline-css-webpack-plugin": "^1.11.1",
+    "html-inline-script-webpack-plugin": "^3.2.0",
+    "html-webpack-plugin": "^5.5.3",
+    "react-app-rewired": "^2.2.1",
     "react-scripts": "5.0.1",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
@@ -63,10 +67,15 @@
     "cstart": "gulp watch",
     "cbuild": "gulp build",
     "///": "-----REACT SCRIPTS-----",
-    "start": "react-scripts start",
-    "build": "gulp build; react-scripts build",
+    "start2": "react-scripts start",
+    "build2": "gulp build; react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "////": "-----OVVERIDES SCRIPTS-----",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "/////": "-----OTHER SCRIPTS-----",
+    "gh-pages": "gulp build && npm run build && cp ./build/index.html . && sed -i '' 's|./coffee-main.js|./public/coffee-main.js|g' ./index.html"
   },
   "eslintConfig": {
     "extends": [

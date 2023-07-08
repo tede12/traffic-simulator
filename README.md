@@ -42,6 +42,13 @@ The main purpose of this project is to simulate traffic on a map and to find the
   
 For running the pathFinder server, you need to have installed [ITAS-API](https://github.com/sir3mat/ITAS-API)
 
+## How to build
+`npm run gh-pages` for building the project and publishing it on github pages  
+<br>
+For building the **CoffeeScript** backend just run `npm run cbuild` (or `gulp build`)  
+For building the **ReactJS** frontend just run `npm run build`  
+
+
 # Commands
 
 - shift + click - add new intersection
