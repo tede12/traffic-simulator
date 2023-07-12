@@ -66,7 +66,7 @@ const settings = {
     // mqtt settings
     mqtt: {
         port: 8883,
-        protocol: 'mqtts',
+        protocol: 'mqtt',
         host: 'io.adafruit.com',
         username: 'sirmat',
         password: 'aio_CcIX34dhmTJxDN8msWlCWnciTmGd',
