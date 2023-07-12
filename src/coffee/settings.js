@@ -31,7 +31,7 @@ const settings = {
     minZoomLevel: 0.1,
     defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
     connectedMap: true, // enable to generate only connected maps (all intersections are connected)
-    debug: true,
+    debug: false,
     myWidth: 0,
     myHeight: 0,
 

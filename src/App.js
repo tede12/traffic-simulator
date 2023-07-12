@@ -1,6 +1,7 @@
 import {Component} from "react";
 import Connection from "./components/Connection";
 import VirtualScreen from "./components/VirtualScreen";
+import LegendButton from './components/Legend';
 import {Box, Grid} from '@mui/material';
 
 
@@ -75,6 +76,8 @@ export default class App extends Component {
                         </Grid>
                         {/* ----- CONNECTION ----- */}
                         <Connection/>
+                        {/* ----- LEGEND ----- */}
+                        <LegendButton />
                     </Grid>
                 </Box>
             </div>

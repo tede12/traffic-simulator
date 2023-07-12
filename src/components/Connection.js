@@ -114,8 +114,9 @@ function Connection() {
                         <CustomizedCircleIcon sx={{color: red[700]}} fontSize="small"/>
                     } </div>
                     <div style={{marginLeft: '10px'}}>
-                        <span
-                            style={{paddingRight: '20px'}}>Connection {connected ? 'active' : 'inactive'} {timePassed ? '(' + timePassed + ')' : ''} </span>
+                        <span style={{paddingRight: '20px'}}>
+                            Server Connection {connected ? 'active' : 'inactive'} {timePassed ? '(' + timePassed + ')' : ''}
+                        </span>
                         <span style={{paddingRight: '20px'}}> - </span>
                         <a href={apiUrl} target="_blank" rel="noopener noreferrer"> API</a>
                     </div>

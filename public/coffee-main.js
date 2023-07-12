@@ -47597,7 +47597,7 @@ const settings = {
     minZoomLevel: 0.1,
     defaultMap: 'mappa_1', // null to disable or 'mappa_1' to enable
     connectedMap: true, // enable to generate only connected maps (all intersections are connected)
-    debug: true,
+    debug: false,
     myWidth: 0,
     myHeight: 0,
 
@@ -47632,7 +47632,7 @@ const settings = {
     // mqtt settings
     mqtt: {
         port: 8883,
-        protocol: 'mqtts',
+        protocol: 'mqtt',
         host: 'io.adafruit.com',
         username: 'sirmat',
         password: 'aio_CcIX34dhmTJxDN8msWlCWnciTmGd',
@@ -48511,7 +48511,14 @@ Visualizer = (function() {
       this.lastMqttRequest = 0;
       this.trackPath = world.trackPath;
       this.lengthOnlyTrackPath = world.lengthOnlyTrackPath;
-      this.client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password);
+      // If client is in localhost start client else do nothing
+      if (window.location.hostname === "localhost") {
+        this.client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password);
+        console.log("WS Client started");
+      } else {
+        console.log("WS Client not started"); // todo adafruit.io do not work with ws protocol (need wss)
+        this.client = null;
+      }
     }
 
     updateVirtualScreen() {
