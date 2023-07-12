@@ -48512,13 +48512,13 @@ Visualizer = (function() {
       this.trackPath = world.trackPath;
       this.lengthOnlyTrackPath = world.lengthOnlyTrackPath;
       // If client is in localhost start client else do nothing
-      if (window.location.hostname === "localhost") {
-        this.client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password);
-        console.log("WS Client started");
-      } else {
-        console.log("WS Client not started"); // todo adafruit.io do not work with ws protocol (need wss)
-        this.client = null;
-      }
+      //        if window.location.hostname == "localhost"
+      //            @client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password)
+      //            console.log "WS Client started"
+      //        else
+      //            console.log "WS Client not started"    # todo adafruit.io do not work with ws protocol (need wss)
+      //            @client = null
+      this.client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password);
     }
 
     updateVirtualScreen() {

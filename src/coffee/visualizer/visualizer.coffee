@@ -45,12 +45,15 @@ class Visualizer
         @trackPath = world.trackPath
         @lengthOnlyTrackPath = world.lengthOnlyTrackPath
         # If client is in localhost start client else do nothing
-        if window.location.hostname == "localhost"
-            @client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password)
-            console.log "WS Client started"
-        else
-            console.log "WS Client not started"    # todo adafruit.io do not work with ws protocol (need wss)
-            @client = null
+#        if window.location.hostname == "localhost"
+#            @client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password)
+#            console.log "WS Client started"
+#        else
+#            console.log "WS Client not started"    # todo adafruit.io do not work with ws protocol (need wss)
+#            @client = null
+
+        @client = new Client(settings.mqtt.host, settings.mqtt.port, settings.mqtt.username, settings.mqtt.password)
+
 
     updateVirtualScreen: ()->
 #       add to window the information about the car settings.myCar.id
