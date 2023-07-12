@@ -271,6 +271,10 @@ class World
         promise
 
     getShortestPathLengthOnlyAPI: ()->
+        if @trackPath.length < 2
+            console.log 'Error: Track path is empty'
+            return
+
         sourceId_prefix = @trackPath[0]['intersection'].id
         targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)
         sourceId = sourceId_prefix.slice 'intersection'.length
@@ -306,6 +310,10 @@ class World
         # send api post request to update carsNumber of each road
         if lengthOnly == "false"
             @asyncRequest(settings.roadsUrl, 'PATCH', null, {mapId: @mapId, roads: @roads.all()})
+
+        if @trackPath.length < 2
+            console.log 'Error: Track path is empty.'
+            return
 
         sourceId_prefix = @trackPath[0]['intersection'].id
         targetId_prefix = @trackPath[@trackPath.length - 1]['intersection'].id # get the last intersection in the track path (allow to repeat the command more than once)

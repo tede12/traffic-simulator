@@ -47176,6 +47176,10 @@ World = (function() {
 
     getShortestPathLengthOnlyAPI() {
       var params, sourceId, sourceId_prefix, targetId, targetId_prefix;
+      if (this.trackPath.length < 2) {
+        console.log('Error: Track path is empty');
+        return;
+      }
       sourceId_prefix = this.trackPath[0]['intersection'].id;
       targetId_prefix = this.trackPath[this.trackPath.length - 1]['intersection'].id; // get the last intersection in the track path (allow to repeat the command more than once)
       sourceId = sourceId_prefix.slice('intersection'.length);
@@ -47217,6 +47221,10 @@ World = (function() {
           mapId: this.mapId,
           roads: this.roads.all()
         });
+      }
+      if (this.trackPath.length < 2) {
+        console.log('Error: Track path is empty.');
+        return;
       }
       sourceId_prefix = this.trackPath[0]['intersection'].id;
       targetId_prefix = this.trackPath[this.trackPath.length - 1]['intersection'].id; // get the last intersection in the track path (allow to repeat the command more than once)
