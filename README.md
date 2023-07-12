@@ -44,7 +44,7 @@ destination.
 - alt (or option) + 's' - save and draw track path (if it exists, else remove it)
 - alt (or option) + 'c' - send path to pathFinder, draw path and start car (needs pathFinder server running)
     - repeating the command in different period of time, you will get the best path in the current situation
-- alt (or option) + 'd' - ask the shortest path based only on road length to api and draw path (needs pathFinder server
+- alt (or option) + 'g' - ask the shortest path based only on road length to api and draw path (needs pathFinder server
   running)
 
 ## How to run

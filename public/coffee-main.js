@@ -42744,6 +42744,10 @@ TimeFactor > car goes faster, < car goes slower`;
   guiWorld.add(world, 'load');
   guiWorld.add(world, 'clear');
   guiWorld.add(world, 'generateMap');
+  // mapSize is integer, but the slider is float (settings.mapSize)
+  guiWorld.add(settings, 'mapSize', 1, 8, 1).listen().onChange(function(value) {
+    return settings.mapSize = parseInt(value);
+  });
   guiVisualizer = gui.addFolder('Visualizer');
   guiVisualizer.open();
   guiVisualizer.add(visualizer, 'running').listen();
@@ -46956,6 +46960,10 @@ World = (function() {
 
     generateMap(minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) {
       var gridSize, id, intersection, intersectionsNumber, j, k, l, m, map, previous, rect, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, step, x, y;
+      minX = parseInt(minX);
+      maxX = parseInt(maxX);
+      minY = parseInt(minY);
+      maxY = parseInt(maxY);
       this.clear();
       intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0;
       map = {};

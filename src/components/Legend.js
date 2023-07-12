@@ -28,7 +28,7 @@ const commandList = [
         description: 'Send path to pathFinder, draw path, and start car',
     },
     {
-        icon: DirectionsCar, command: 'Alt + D',
+        icon: DirectionsCar, command: 'Alt + G',
         description: 'Ask the shortest path based on road length and draw path',
     },
 ];

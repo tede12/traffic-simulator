@@ -99,6 +99,9 @@ waitForElements ['canvas', 'gui'], ->
     guiWorld.add world, 'load'
     guiWorld.add world, 'clear'
     guiWorld.add world, 'generateMap'
+    # mapSize is integer, but the slider is float (settings.mapSize)
+    guiWorld.add(settings, 'mapSize', 1, 8, 1).listen().onChange (value) ->
+        settings.mapSize = parseInt(value)
     guiVisualizer = gui.addFolder 'Visualizer'
     guiVisualizer.open()
     guiVisualizer.add(visualizer, 'running').listen()

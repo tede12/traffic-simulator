@@ -92,6 +92,11 @@ class World
         @asyncRequest settings.mapUrl, 'POST', null, {map: @save(true)}
 
     generateMap: (minX = -settings.mapSize, maxX = settings.mapSize, minY = -settings.mapSize, maxY = settings.mapSize) ->
+        minX = parseInt(minX)
+        maxX = parseInt(maxX)
+        minY = parseInt(minY)
+        maxY = parseInt(maxY)
+
         @clear()
         intersectionsNumber = (0.8 * (maxX - minX + 1) * (maxY - minY + 1)) | 0
         map = {}
